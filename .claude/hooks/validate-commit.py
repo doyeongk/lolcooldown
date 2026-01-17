@@ -21,18 +21,18 @@ BLOCKED_PATTERNS = [
 def validate_commit_message(command: str) -> str | None:
     """Returns error message if invalid, None if valid."""
 
-    # Extract commit message from: git commit -m "message" or git commit -m 'message'
-    match = re.search(r'git\s+commit.*?(?:-m|--message)[=\s]+["\'](.+?)["\']', command, re.DOTALL)
-
-    if not match:
-        # Check for HEREDOC style: git commit -m "$(cat <<'EOF'
-        heredoc_match = re.search(r'git\s+commit.*?-m.*?<<.*?EOF(.*?)EOF', command, re.DOTALL)
-        if heredoc_match:
-            message = heredoc_match.group(1).strip()
+    # Check for HEREDOC style first: git commit -m "$(cat <<'EOF' ... EOF)"
+    # Must check before standard match since HEREDOC contains quotes that would match incorrectly
+    heredoc_match = re.search(r"git\s+commit.*?-m.*?<<-?['\"]?EOF['\"]?(.*?)EOF", command, re.DOTALL)
+    if heredoc_match:
+        message = heredoc_match.group(1).strip()
+    else:
+        # Extract commit message from: git commit -m "message" or git commit -m 'message'
+        match = re.search(r'git\s+commit.*?(?:-m|--message)[=\s]+["\'](.+?)["\']', command, re.DOTALL)
+        if match:
+            message = match.group(1)
         else:
             return None  # Not a commit command we can parse
-    else:
-        message = match.group(1)
 
     # Check for blocked patterns (Claude signatures)
     for pattern in BLOCKED_PATTERNS:
