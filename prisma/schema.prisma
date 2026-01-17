@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Champion {
+  id               Int       @id @default(autoincrement())
+  riotId           Int       @unique
+  key              String    @unique
+  name             String
+  title            String?
+  icon             String
+  resource         String
+  attackType       String
+  adaptiveType     String
+  positions        String[]
+  roles            String[]
+  faction          String?
+  releaseDate      String?
+  patchLastChanged String?
+  stats            Json
+  lore             String?
+
+  abilities Ability[]
+  skins     Skin[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Ability {
+  id           Int      @id @default(autoincrement())
+  championId   Int
+  champion     Champion @relation(fields: [championId], references: [id], onDelete: Cascade)
+  slot         String
+  name         String
+  icon         String?
+  targeting    String?
+  affects      String?
+  damageType   String?
+  resource     String?
+  cooldowns    Float[]
+  affectedByCdr Boolean @default(true)
+  costs        Float[]
+  effects      Json?
+  castTime     String?
+  targetRange  String?
+  effectRadius String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([championId, slot])
+}
+
+model Skin {
+  id           Int      @id @default(autoincrement())
+  championId   Int
+  champion     Champion @relation(fields: [championId], references: [id], onDelete: Cascade)
+  riotId       Int
+  name         String
+  isBase       Boolean  @default(false)
+  availability String?
+  rarity       String?
+  cost         Int?
+  releaseDate  String?
+  splashPath   String?
+  tilePath     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([championId, riotId])
+}
