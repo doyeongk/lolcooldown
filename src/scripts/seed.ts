@@ -38,6 +38,7 @@ interface CDragonPassive {
 interface CDragonSpell {
   spellKey: string;
   name: string;
+  description: string;
   abilityIconPath: string;
   cooldownCoefficients: number[];
   costCoefficients: number[];
@@ -86,12 +87,11 @@ async function fetchChampion(id: number): Promise<CDragonChampion> {
 }
 
 function normaliseIconPath(path: string): string {
-  // CDragon paths look like: /lol-game-data/assets/v1/champion-icons/103.png
-  // Convert to full CDragon URL
-  return path.replace(
-    "/lol-game-data/assets/",
-    "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/"
-  );
+  // CDragon paths look like: /lol-game-data/assets/ASSETS/Characters/Ahri/...
+  // The CDN requires lowercase paths
+  const base = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/";
+  const relativePath = path.replace("/lol-game-data/assets/", "");
+  return base + relativePath.toLowerCase();
 }
 
 async function seedChampion(
@@ -150,6 +150,7 @@ async function seedChampion(
           championId: dbChampion.id,
           slot,
           name: spell.name,
+          description: spell.description || null,
           icon: normaliseIconPath(spell.abilityIconPath),
           cooldowns: spell.cooldownCoefficients.slice(0, 5),
           affectedByCdr: !STATIC_COOLDOWN_ABILITIES.has(abilityKey),

@@ -30,3 +30,12 @@ Champion data from [Community Dragon](https://communitydragon.org). Seed with `n
 - Colours: CSS variables in `src/app/globals.css`
 - Buttons: `src/components/ui/`
 - Follow web-design-guidelines and vercel-react-best-practices skills
+
+## Validation
+
+After making changes:
+1. Run `npm run dev` and open the affected page in browser
+2. Verify functionality works (not just that build passes)
+3. Check browser console for errors
+
+For UI changes, describe what you see or ask the user to verify.

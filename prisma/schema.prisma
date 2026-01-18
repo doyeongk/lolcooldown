@@ -28,6 +28,7 @@ model Ability {
   champion      Champion @relation(fields: [championId], references: [id], onDelete: Cascade)
   slot          String
   name          String
+  description   String?
   icon          String?
   cooldowns     Float[]
   affectedByCdr Boolean  @default(true)
