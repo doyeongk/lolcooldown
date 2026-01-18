@@ -1,93 +1,104 @@
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 
-const prisma = new PrismaClient();
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
-const MERAKI_BASE_URL =
-  "https://cdn.merakianalytics.com/riot/lol/resources/latest/en-US";
+const CDRAGON_BASE =
+  "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1";
 
-interface MerakiChampion {
+// CDragon interfaces
+interface CDragonChampionSummary {
   id: number;
-  key: string;
   name: string;
-  title: string;
-  icon: string;
-  resource: string;
-  attackType: string;
-  adaptiveType: string;
-  positions: string[];
+  alias: string;
+  squarePortraitPath: string;
   roles: string[];
-  faction?: string;
-  releaseDate?: string;
-  patchLastChanged?: string;
-  stats: Record<string, unknown>;
-  lore?: string;
-  abilities: Record<string, MerakiAbility[]>;
-  skins: MerakiSkin[];
 }
 
-interface MerakiAbility {
+interface CDragonChampion {
+  id: number;
   name: string;
-  icon: string;
-  targeting?: string;
-  affects?: string;
-  damageType?: string;
-  resource?: string;
-  cooldown?: {
-    modifiers?: Array<{ values: number[] }>;
-    affectedByCdr?: boolean;
-  };
-  cost?: {
-    modifiers?: Array<{ values: number[] }>;
-  };
-  effects?: unknown[];
-  castTime?: string;
-  targetRange?: string;
-  effectRadius?: string;
+  alias: string;
+  title: string;
+  roles: string[];
+  passive: CDragonPassive;
+  spells: CDragonSpell[];
+  skins: CDragonSkin[];
 }
 
-interface MerakiSkin {
+interface CDragonPassive {
+  name: string;
+  abilityIconPath: string;
+}
+
+interface CDragonSpell {
+  spellKey: string;
+  name: string;
+  abilityIconPath: string;
+  cooldownCoefficients: number[];
+  costCoefficients: number[];
+}
+
+interface CDragonSkin {
   id: number;
   name: string;
   isBase: boolean;
-  availability?: string;
-  rarity?: string;
-  cost?: number;
-  releaseDate?: string;
-  splashPath?: string;
-  tilePath?: string;
+  rarity: string;
+  splashPath: string;
+  tilePath: string;
+  isLegacy: boolean;
 }
+
+// Known abilities with static cooldowns (not affected by CDR/ability haste)
+const STATIC_COOLDOWN_ABILITIES = new Set([
+  "Anivia:P", // Rebirth
+  "Zac:P", // Cell Division
+  "Aatrox:P", // Deathbringer Stance
+]);
 
 async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchChampionList(): Promise<Record<string, { key: string }>> {
-  console.log("Fetching champion list...");
-  const response = await fetch(`${MERAKI_BASE_URL}/champions.json`);
+async function fetchChampionList(): Promise<CDragonChampionSummary[]> {
+  console.log("Fetching champion list from CDragon...");
+  const response = await fetch(`${CDRAGON_BASE}/champion-summary.json`);
   if (!response.ok) {
     throw new Error(`Failed to fetch champion list: ${response.statusText}`);
   }
-  return response.json();
+  const data: CDragonChampionSummary[] = await response.json();
+  // Filter out placeholder (id: -1) and non-playable entries (id > 1000)
+  return data.filter((c) => c.id > 0 && c.id < 1000);
 }
 
-async function fetchChampion(key: string): Promise<MerakiChampion> {
-  const response = await fetch(`${MERAKI_BASE_URL}/champions/${key}.json`);
+async function fetchChampion(id: number): Promise<CDragonChampion> {
+  const response = await fetch(`${CDRAGON_BASE}/champions/${id}.json`);
   if (!response.ok) {
-    throw new Error(`Failed to fetch champion ${key}: ${response.statusText}`);
+    throw new Error(
+      `Failed to fetch champion ${id}: ${response.statusText}`
+    );
   }
   return response.json();
 }
 
-function extractCooldowns(ability: MerakiAbility): number[] {
-  return ability.cooldown?.modifiers?.[0]?.values ?? [];
+function normaliseIconPath(path: string): string {
+  // CDragon paths look like: /lol-game-data/assets/v1/champion-icons/103.png
+  // Convert to full CDragon URL
+  return path.replace(
+    "/lol-game-data/assets/",
+    "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/"
+  );
 }
 
-function extractCosts(ability: MerakiAbility): number[] {
-  return ability.cost?.modifiers?.[0]?.values ?? [];
-}
-
-async function seedChampion(champion: MerakiChampion): Promise<void> {
-  const abilitySlots = ["P", "Q", "W", "E", "R"] as const;
+async function seedChampion(
+  summary: CDragonChampionSummary,
+  champion: CDragonChampion
+): Promise<void> {
+  const slotMap: Record<string, string> = { q: "Q", w: "W", e: "E", r: "R" };
 
   await prisma.$transaction(async (tx) => {
     // Upsert champion
@@ -95,36 +106,18 @@ async function seedChampion(champion: MerakiChampion): Promise<void> {
       where: { riotId: champion.id },
       create: {
         riotId: champion.id,
-        key: champion.key,
+        key: champion.alias,
         name: champion.name,
         title: champion.title,
-        icon: champion.icon,
-        resource: champion.resource,
-        attackType: champion.attackType,
-        adaptiveType: champion.adaptiveType,
-        positions: champion.positions,
+        icon: normaliseIconPath(summary.squarePortraitPath),
         roles: champion.roles,
-        faction: champion.faction,
-        releaseDate: champion.releaseDate,
-        patchLastChanged: champion.patchLastChanged,
-        stats: champion.stats,
-        lore: champion.lore,
       },
       update: {
-        key: champion.key,
+        key: champion.alias,
         name: champion.name,
         title: champion.title,
-        icon: champion.icon,
-        resource: champion.resource,
-        attackType: champion.attackType,
-        adaptiveType: champion.adaptiveType,
-        positions: champion.positions,
+        icon: normaliseIconPath(summary.squarePortraitPath),
         roles: champion.roles,
-        faction: champion.faction,
-        releaseDate: champion.releaseDate,
-        patchLastChanged: champion.patchLastChanged,
-        stats: champion.stats,
-        lore: champion.lore,
       },
     });
 
@@ -132,31 +125,35 @@ async function seedChampion(champion: MerakiChampion): Promise<void> {
     await tx.ability.deleteMany({ where: { championId: dbChampion.id } });
     await tx.skin.deleteMany({ where: { championId: dbChampion.id } });
 
-    // Insert abilities
-    for (const slot of abilitySlots) {
-      const abilities = champion.abilities[slot];
-      if (!abilities || abilities.length === 0) continue;
+    // Insert passive (no cooldown data in CDragon passive)
+    const passiveKey = `${champion.name}:P`;
+    await tx.ability.create({
+      data: {
+        championId: dbChampion.id,
+        slot: "P",
+        name: champion.passive.name,
+        icon: normaliseIconPath(champion.passive.abilityIconPath),
+        cooldowns: [],
+        affectedByCdr: !STATIC_COOLDOWN_ABILITIES.has(passiveKey),
+        costs: [],
+      },
+    });
 
-      // Take the first ability for each slot (some champions have multiple forms)
-      const ability = abilities[0];
+    // Insert spells (Q, W, E, R)
+    for (const spell of champion.spells) {
+      const slot = slotMap[spell.spellKey];
+      if (!slot) continue;
 
+      const abilityKey = `${champion.name}:${slot}`;
       await tx.ability.create({
         data: {
           championId: dbChampion.id,
           slot,
-          name: ability.name,
-          icon: ability.icon,
-          targeting: ability.targeting,
-          affects: ability.affects,
-          damageType: ability.damageType,
-          resource: ability.resource,
-          cooldowns: extractCooldowns(ability),
-          affectedByCdr: ability.cooldown?.affectedByCdr ?? true,
-          costs: extractCosts(ability),
-          effects: ability.effects ?? null,
-          castTime: ability.castTime,
-          targetRange: ability.targetRange,
-          effectRadius: ability.effectRadius,
+          name: spell.name,
+          icon: normaliseIconPath(spell.abilityIconPath),
+          cooldowns: spell.cooldownCoefficients.slice(0, 5),
+          affectedByCdr: !STATIC_COOLDOWN_ABILITIES.has(abilityKey),
+          costs: spell.costCoefficients.slice(0, 5),
         },
       });
     }
@@ -169,12 +166,10 @@ async function seedChampion(champion: MerakiChampion): Promise<void> {
           riotId: skin.id,
           name: skin.name,
           isBase: skin.isBase,
-          availability: skin.availability,
-          rarity: skin.rarity,
-          cost: skin.cost,
-          releaseDate: skin.releaseDate,
-          splashPath: skin.splashPath,
-          tilePath: skin.tilePath,
+          rarity: skin.rarity.replace(/^k/, "") || null, // "kMythic" → "Mythic"
+          isLegacy: skin.isLegacy,
+          splashPath: normaliseIconPath(skin.splashPath),
+          tilePath: normaliseIconPath(skin.tilePath),
         },
       });
     }
@@ -182,36 +177,35 @@ async function seedChampion(champion: MerakiChampion): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  console.log("Starting database seed...\n");
+  console.log("Starting database seed (CDragon)...\n");
 
   const championList = await fetchChampionList();
-  const championKeys = Object.keys(championList);
-  console.log(`Found ${championKeys.length} champions to seed\n`);
+  console.log(`Found ${championList.length} champions to seed\n`);
 
   let successCount = 0;
   let errorCount = 0;
   const errors: string[] = [];
 
-  for (let i = 0; i < championKeys.length; i++) {
-    const key = championKeys[i];
-    const progress = `[${i + 1}/${championKeys.length}]`;
+  for (let i = 0; i < championList.length; i++) {
+    const summary = championList[i];
+    const progress = `[${i + 1}/${championList.length}]`;
 
     try {
-      const champion = await fetchChampion(key);
-      await seedChampion(champion);
+      const champion = await fetchChampion(summary.id);
+      await seedChampion(summary, champion);
       console.log(`${progress} ✓ ${champion.name}`);
       successCount++;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      console.error(`${progress} ✗ ${key}: ${errorMessage}`);
-      errors.push(`${key}: ${errorMessage}`);
+      console.error(`${progress} ✗ ${summary.name}: ${errorMessage}`);
+      errors.push(`${summary.name}: ${errorMessage}`);
       errorCount++;
     }
 
-    // Rate limiting: 100ms delay between requests
-    if (i < championKeys.length - 1) {
-      await sleep(100);
+    // Rate limiting: 50ms delay between requests
+    if (i < championList.length - 1) {
+      await sleep(50);
     }
   }
 
@@ -245,4 +239,5 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
+    await pool.end();
   });
