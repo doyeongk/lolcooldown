@@ -149,6 +149,26 @@
   }
 }
 
+@keyframes sheet-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes backdrop-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @layer utilities {
   .animate-cooldown-reveal {
     animation: cooldown-reveal 0.3s ease-out forwards;
@@ -189,6 +209,25 @@
   .animate-tooltip-fade-in {
     animation: tooltip-fade-in 0.2s ease-out forwards;
   }
+
+  .animate-sheet-slide-up {
+    animation: sheet-slide-up 0.3s ease-out forwards;
+  }
+
+  .animate-backdrop-fade-in {
+    animation: backdrop-fade-in 0.2s ease-out forwards;
+  }
+}
+
+/* Ability description styles */
+.ability-description {
+  line-height: 1.6;
+}
+
+.ability-description br {
+  display: block;
+  content: '';
+  margin-top: 0.5em;
 }
 
 /* Reduced motion support */
@@ -202,7 +241,9 @@
   .animate-panel-slide-left,
   .animate-panel-slide-right,
   .animate-number-pop,
-  .animate-tooltip-fade-in {
+  .animate-tooltip-fade-in,
+  .animate-sheet-slide-up,
+  .animate-backdrop-fade-in {
     animation: none;
   }
 }
