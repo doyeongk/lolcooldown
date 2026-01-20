@@ -97,7 +97,7 @@ export function SplitPanel({
         </span>
 
         {/* Cooldown or buttons */}
-        <div className="mt-2 md:mt-6">
+        <div className="mt-2 md:mt-6 md:min-h-[110px] md:flex md:items-center md:justify-center">
           {showCooldown ? (
             <p
               className={`text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg ${
