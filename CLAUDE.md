@@ -39,3 +39,16 @@ After making changes:
 3. Check browser console for errors
 
 For UI changes, describe what you see or ask the user to verify.
+
+## Deployment
+
+### From laptop
+```bash
+npm run deploy
+```
+Requires `DEPLOY_HOST=user@host` in `.env.local`.
+
+### From server
+```bash
+git pull && docker compose -f docker-compose.prod.yml build && docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+```
