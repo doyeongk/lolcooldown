@@ -42,7 +42,7 @@ export function SplitPanel({
       className={`
         relative h-[calc(var(--vh,1vh)*50)] md:h-full md:flex-1 flex flex-col items-center justify-center
         overflow-hidden ${panelAnimation}
-        ${side === 'left' ? 'pt-16 md:pt-0' : ''}
+        ${side === 'left' ? 'pt-16 pb-10 md:pt-0 md:pb-0' : ''}
       `}
     >
       {/* Champion splash background */}
