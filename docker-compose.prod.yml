@@ -1,0 +1,43 @@
+services:
+  app:
+    build: .
+    env_file: .env.prod
+    container_name: lolcooldown-app
+    restart: unless-stopped
+    ports:
+      - "8082:3000"
+    environment:
+      - DATABASE_URL=postgresql://lolcd:${DB_PASSWORD}@postgres:5432/lolcooldown
+      - NODE_ENV=production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - lolcooldown
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: lolcooldown-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lolcd
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: lolcooldown
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lolcd -d lolcooldown"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lolcooldown
+
+volumes:
+  postgres_data:
+
+networks:
+  lolcooldown:
+    driver: bridge

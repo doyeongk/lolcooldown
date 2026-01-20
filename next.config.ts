@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  serverExternalPackages: ['pg', '@prisma/client', '@prisma/adapter-pg'],
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons']
   },
