@@ -28,6 +28,7 @@
   html {
     background-color: var(--gradient-top);
     overscroll-behavior: none;
+    overflow: hidden;
   }
 
   body {
@@ -35,6 +36,8 @@
     min-height: 100vh;
     color: var(--foreground);
     font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+    overflow: hidden;
+    overscroll-behavior: none;
   }
 }
 

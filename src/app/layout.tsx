@@ -28,7 +28,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="min-h-screen border-4 border-white shadow-[inset_0_0_20px_rgba(255,255,255,0.5),inset_0_0_40px_rgba(255,255,255,0.3)]">
+        <div className="fixed inset-0 overflow-hidden">
           {children}
         </div>
       </body>
