@@ -47,9 +47,10 @@ export const getValidAbilities = createCachedFetcher(async (): Promise<AbilityWi
     }))
 })
 
-function getRandomLevel(difficulty: Difficulty): number {
+function getRandomLevel(difficulty: Difficulty, slot: string): number {
   if (difficulty === 'beginner') return 1
-  return Math.floor(Math.random() * 5) + 1
+  const maxRank = slot === 'R' ? 3 : 5
+  return Math.floor(Math.random() * maxRank) + 1
 }
 
 function getCooldownAtLevel(cooldowns: number[], level: number): number {
@@ -72,7 +73,7 @@ function pickRandomAbility(
     attempts++
   } while (exclude && ability.id === exclude.id && attempts < maxAttempts)
 
-  const level = getRandomLevel(difficulty)
+  const level = getRandomLevel(difficulty, ability.slot)
   const cooldown = getCooldownAtLevel(ability.cooldowns, level)
 
   return { ability, level, cooldown }
