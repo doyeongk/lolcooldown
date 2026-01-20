@@ -25,9 +25,7 @@ export const getValidAbilities = createCachedFetcher(async (): Promise<AbilityWi
           name: true,
           icon: true,
           skins: {
-            where: { isBase: true },
             select: { splashPath: true },
-            take: 1,
           },
         },
       },
@@ -36,15 +34,19 @@ export const getValidAbilities = createCachedFetcher(async (): Promise<AbilityWi
 
   return abilities
     .filter(a => a.cooldowns.length > 0 && a.cooldowns.some(cd => cd > 0))
-    .map(a => ({
-      ...a,
-      champion: {
-        id: a.champion.id,
-        name: a.champion.name,
-        icon: a.champion.icon,
-        splash: a.champion.skins[0]?.splashPath ?? null,
-      },
-    }))
+    .map(a => {
+      const skins = a.champion.skins
+      const randomSkin = skins[Math.floor(Math.random() * skins.length)]
+      return {
+        ...a,
+        champion: {
+          id: a.champion.id,
+          name: a.champion.name,
+          icon: a.champion.icon,
+          splash: randomSkin?.splashPath ?? null,
+        },
+      }
+    })
 })
 
 function getRandomLevel(difficulty: Difficulty, slot: string): number {
