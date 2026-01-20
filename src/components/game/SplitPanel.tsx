@@ -5,6 +5,8 @@ import { AbilityIcon } from './AbilityIcon'
 import { GuessButtons } from './GuessButtons'
 import type { GameAbility, GuessChoice } from '@/types/game'
 
+const SPLASH_BLUR = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAACAAoDASIAAhEBAxEB/8QAHAAAAQUBAQEAAAAAAAAAAAAAAAIDBEEDBAUF/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAA8A/9k="
+
 interface SplitPanelProps {
   gameAbility: GameAbility
   showCooldown: boolean
@@ -49,8 +51,11 @@ export function SplitPanel({
             src={champion.splash}
             alt=""
             fill
+            sizes="(min-width: 768px) 50vw, 100vw"
+            quality={60}
+            placeholder="blur"
+            blurDataURL={SPLASH_BLUR}
             className="object-cover object-top"
-            priority
           />
         </div>
       )}

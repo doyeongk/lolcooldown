@@ -3,6 +3,8 @@
 import Image from 'next/image'
 import type { GameAbility } from '@/types/game'
 
+const SPLASH_BLUR = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAACAAoDASIAAhEBAxEB/8QAHAAAAQUBAQEAAAAAAAAAAAAAAAIDBEEDBAUF/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAA8A/9k="
+
 interface AbilityCardProps {
   gameAbility: GameAbility
   showCooldown: boolean
@@ -38,8 +40,11 @@ export function AbilityCard({ gameAbility, showCooldown, alwaysShowCooldown, isC
             src={champion.splash}
             alt=""
             fill
+            sizes="100vw"
+            quality={60}
+            placeholder="blur"
+            blurDataURL={SPLASH_BLUR}
             className="object-cover object-top opacity-30"
-            priority
           />
           <div className="absolute inset-0 bg-gradient-to-t from-dark-blue via-dark-blue/80 to-dark-blue/40" />
         </div>
@@ -54,6 +59,7 @@ export function AbilityCard({ gameAbility, showCooldown, alwaysShowCooldown, isC
             src={champion.icon}
             alt={champion.name}
             fill
+            sizes="(max-width: 640px) 64px, 96px"
             className="object-cover"
           />
         </div>
@@ -70,6 +76,7 @@ export function AbilityCard({ gameAbility, showCooldown, alwaysShowCooldown, isC
               src={ability.icon}
               alt={ability.name}
               fill
+              sizes="(max-width: 640px) 48px, 64px"
               className="object-cover"
             />
           </div>

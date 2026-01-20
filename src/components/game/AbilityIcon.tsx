@@ -43,6 +43,7 @@ export function AbilityIcon({ icon, name, description }: AbilityIconProps) {
             src={icon}
             alt={name}
             fill
+            sizes="(max-width: 640px) 48px, 64px"
             className="object-cover"
           />
         ) : null}
