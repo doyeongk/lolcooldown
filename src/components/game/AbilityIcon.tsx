@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { useIsMobile } from '@/lib/hooks/useMediaQuery'
 import { sanitizeHtml } from '@/lib/utils/sanitizeHtml'
@@ -11,8 +11,15 @@ interface AbilityIconProps {
   description: string | null
 }
 
+interface TooltipPosition {
+  top: number
+  left: number
+}
+
 export function AbilityIcon({ icon, name, description }: AbilityIconProps) {
   const [showTooltip, setShowTooltip] = useState(false)
+  const [tooltipPosition, setTooltipPosition] = useState<TooltipPosition | null>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
   const isMobile = useIsMobile()
 
   const handleClose = useCallback(() => {
@@ -50,7 +57,12 @@ export function AbilityIcon({ icon, name, description }: AbilityIconProps) {
   }
 
   const handleMouseEnter = () => {
-    if (description && !isMobile) {
+    if (description && !isMobile && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setTooltipPosition({
+        top: rect.top,
+        left: rect.left + rect.width / 2,
+      })
       setShowTooltip(true)
     }
   }
@@ -66,6 +78,7 @@ export function AbilityIcon({ icon, name, description }: AbilityIconProps) {
   return (
     <div className="relative">
       <button
+        ref={buttonRef}
         type="button"
         onClick={handleClick}
         onMouseEnter={handleMouseEnter}
@@ -141,9 +154,14 @@ export function AbilityIcon({ icon, name, description }: AbilityIconProps) {
       )}
 
       {/* Desktop: Floating Tooltip */}
-      {showTooltip && description && !isMobile && (
+      {showTooltip && description && !isMobile && tooltipPosition && (
         <div
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 max-w-[calc(100vw-2rem)] p-4 bg-dark-blue/95 backdrop-blur-sm border border-gold/30 rounded-lg shadow-lg animate-tooltip-fade-in z-20"
+          className="fixed w-80 max-w-[calc(100vw-2rem)] p-4 bg-dark-blue/95 backdrop-blur-sm border border-gold/30 rounded-lg shadow-lg animate-tooltip-fade-in z-50"
+          style={{
+            top: tooltipPosition.top,
+            left: tooltipPosition.left,
+            transform: 'translate(-50%, calc(-100% - 8px))',
+          }}
           role="tooltip"
         >
           <div

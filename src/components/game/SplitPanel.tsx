@@ -71,7 +71,7 @@ export function SplitPanel({
       )}
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-4 gap-3 md:gap-4">
+      <div className={`relative z-10 flex flex-col items-center text-center px-4 gap-3 md:gap-4 ${side === 'right' ? 'pb-[env(safe-area-inset-bottom)]' : ''}`}>
         {/* Champion name + slot */}
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg">
           <span className="text-foreground">{champion.name}</span>{' '}
