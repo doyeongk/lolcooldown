@@ -9,7 +9,7 @@ interface GuessButtonsProps {
 
 export function GuessButtons({ onGuess, disabled }: GuessButtonsProps) {
   return (
-    <div className="flex flex-col gap-3 w-48">
+    <div className="hidden md:flex flex-col gap-3 w-48">
       <button
         type="button"
         onClick={() => onGuess('higher')}

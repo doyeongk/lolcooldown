@@ -4,6 +4,7 @@ import { useReducer, useEffect, useCallback, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import { SplitPanel } from './SplitPanel'
 import { VsDivider } from './VsDivider'
+import { MobileGuessButtons } from './MobileGuessButtons'
 import { ScoreDisplay } from './ScoreDisplay'
 import { GameOver } from './GameOver'
 import { useLocalStorage } from '@/lib/hooks/useLocalStorage'
@@ -280,7 +281,7 @@ export function CooldownClash() {
 
       {/* Split container */}
       <div
-        className="flex flex-col md:flex-row h-full w-full"
+        className="flex flex-col md:flex-row h-full w-full pb-20 md:pb-0"
         role="region"
         aria-label="Ability comparison"
       >
@@ -291,6 +292,11 @@ export function CooldownClash() {
           side="left"
           isCorrect={null}
         />
+
+        {/* VS divider - zero-height/width flex item */}
+        <div className="relative z-20 flex items-center justify-center h-0 md:h-auto md:w-0 shrink-0">
+          <VsDivider />
+        </div>
 
         {/* Right panel: Challenger ability + buttons */}
         <SplitPanel
@@ -303,10 +309,10 @@ export function CooldownClash() {
         />
       </div>
 
-      {/* VS divider - absolute centre */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-        <VsDivider />
-      </div>
+      {/* Mobile guess buttons - fixed at bottom, hidden on desktop via CSS */}
+      {!isRevealing && (
+        <MobileGuessButtons onGuess={handleGuess} disabled={state.phase !== 'playing'} />
+      )}
 
       {state.phase === 'gameover' && (
         <GameOver

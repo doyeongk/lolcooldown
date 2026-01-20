@@ -72,7 +72,7 @@ export function SplitPanel({
       )}
 
       {/* Content */}
-      <div className={`relative z-10 flex flex-col items-center text-center px-4 gap-3 md:gap-4 ${side === 'left' ? 'pb-8 md:pb-0' : 'pt-8 md:pt-0 mb-[env(safe-area-inset-bottom)] md:mb-0'}`}>
+      <div className="relative z-10 flex flex-col items-center text-center px-4 gap-3 md:gap-4 py-10 md:py-6">
         {/* Champion name + slot */}
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg">
           <span className="text-foreground">{champion.name}</span>{' '}
@@ -109,9 +109,7 @@ export function SplitPanel({
           ) : onGuess ? (
             <GuessButtons onGuess={onGuess} disabled={guessDisabled} />
           ) : (
-            <p className="text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg">
-              {cooldown}s
-            </p>
+            <p className="text-5xl md:text-6xl lg:text-7xl font-bold text-gold/50 drop-shadow-lg">???</p>
           )}
         </div>
       </div>
