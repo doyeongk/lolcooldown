@@ -40,7 +40,7 @@ export function SplitPanel({
   return (
     <div
       className={`
-        relative flex-1 h-1/2 md:h-full flex flex-col items-center justify-center
+        relative flex-1 min-h-0 flex flex-col items-center justify-center
         overflow-hidden ${panelAnimation}
         ${side === 'left' ? 'pt-16 md:pt-0' : ''}
       `}
