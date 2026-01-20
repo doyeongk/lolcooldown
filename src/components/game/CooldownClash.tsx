@@ -248,36 +248,35 @@ export function CooldownClash() {
   const isNewHighScore = state.score === state.highScore && state.score > storedHighScore
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden">
-      {/* Back button - top left */}
-      <Link
-        href="/"
-        className="absolute top-4 left-4 z-30 p-2 rounded-lg bg-dark-blue/80 hover:bg-dark-blue text-foreground transition-colors"
-        aria-label="Go back to menu"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+    <div className="relative h-dvh w-screen overflow-hidden">
+      {/* Header - back button and score */}
+      <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between gap-2 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-2">
+        <Link
+          href="/"
+          className="p-2 rounded-lg bg-dark-blue/80 hover:bg-dark-blue text-foreground transition-colors"
+          aria-label="Go back to menu"
         >
-          <path d="M19 12H5M12 19l-7-7 7-7" />
-        </svg>
-      </Link>
-
-      {/* Score overlay - top centre */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </Link>
         <ScoreDisplay
           score={state.score}
           highScore={state.highScore}
           lives={state.lives}
         />
-      </div>
+        <div className="w-9" aria-hidden="true" />
+      </header>
 
       {/* Split container */}
       <div

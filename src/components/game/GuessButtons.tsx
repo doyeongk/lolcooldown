@@ -22,6 +22,7 @@ export function GuessButtons({ onGuess, disabled }: GuessButtonsProps) {
           hover:bg-gold-hover hover:scale-105
           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue
           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
+          touch-manipulation
         "
         aria-label="Guess higher cooldown"
       >
@@ -54,6 +55,7 @@ export function GuessButtons({ onGuess, disabled }: GuessButtonsProps) {
           hover:bg-white/20 hover:scale-105
           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue
           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100
+          touch-manipulation
         "
         aria-label="Guess lower cooldown"
       >

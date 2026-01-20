@@ -42,7 +42,7 @@ export function SplitPanel({
       className={`
         relative flex-1 h-1/2 md:h-full flex flex-col items-center justify-center
         overflow-hidden ${panelAnimation}
-        ${side === 'left' ? 'pt-16 md:pt-0' : 'pb-[env(safe-area-inset-bottom)] md:pb-0'}
+        ${side === 'left' ? 'pt-16 md:pt-0' : ''}
       `}
     >
       {/* Champion splash background */}
@@ -72,7 +72,7 @@ export function SplitPanel({
       )}
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-4 gap-3 md:gap-4">
+      <div className={`relative z-10 flex flex-col items-center text-center px-4 gap-3 md:gap-4 ${side === 'left' ? 'pb-8 md:pb-0' : 'pt-8 md:pt-0 mb-[env(safe-area-inset-bottom)] md:mb-0'}`}>
         {/* Champion name + slot */}
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg">
           <span className="text-foreground">{champion.name}</span>{' '}
