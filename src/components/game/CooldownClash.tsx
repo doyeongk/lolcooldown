@@ -249,7 +249,7 @@ export function CooldownClash() {
   const isNewHighScore = state.score === state.highScore && state.score > storedHighScore
 
   return (
-    <div className="relative h-svh w-screen overflow-hidden">
+    <div className="relative h-full w-full overflow-hidden">
       {/* Header - back button and score */}
       <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between gap-2 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-2">
         <Link
