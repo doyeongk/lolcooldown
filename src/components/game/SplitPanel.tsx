@@ -72,7 +72,7 @@ export function SplitPanel({
       )}
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-4 gap-3 md:gap-4 py-10 md:py-6">
+      <div className="relative z-10 flex flex-col items-center text-center px-4 gap-2 md:gap-4 py-4 md:py-6">
         {/* Champion name + slot */}
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg">
           <span className="text-foreground">{champion.name}</span>{' '}
@@ -97,7 +97,7 @@ export function SplitPanel({
         </span>
 
         {/* Cooldown or buttons */}
-        <div className="mt-4 md:mt-6">
+        <div className="mt-2 md:mt-6">
           {showCooldown ? (
             <p
               className={`text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg ${
