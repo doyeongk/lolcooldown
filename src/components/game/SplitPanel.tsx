@@ -143,9 +143,7 @@ export function SplitPanel({
               </p>
             ) : onGuess ? (
               <GuessButtons onGuess={onGuess} disabled={guessDisabled} />
-            ) : (
-              <p className="text-5xl md:text-6xl lg:text-7xl font-bold text-gold/50 drop-shadow-lg">???</p>
-            )}
+            ) : null}
           </div>
         )}
       </div>

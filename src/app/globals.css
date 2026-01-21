@@ -148,13 +148,13 @@
 }
 
 @keyframes mobile-shift-up {
-  from { transform: translateY(0); }
-  to { transform: translateY(-100%); }
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
 @keyframes mobile-enter-up {
-  from { transform: translateY(0); }
-  to { transform: translateY(-100%); }
+  from { transform: translateY(200%); }
+  to { transform: translateY(100%); }
 }
 
 @keyframes number-pop {
