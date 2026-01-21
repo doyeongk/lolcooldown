@@ -1,5 +1,7 @@
 'use client'
 
+import { Heart } from 'lucide-react'
+
 interface ScoreDisplayProps {
   score: number
   highScore: number
@@ -26,13 +28,11 @@ export function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDis
 
       <div className="flex gap-1" aria-label={`${lives} lives remaining`}>
         {Array.from({ length: maxLives }).map((_, i) => (
-          <span
+          <Heart
             key={i}
-            className={`text-lg md:text-xl transition-opacity ${i < lives ? 'opacity-100' : 'opacity-30'}`}
+            className={`w-5 h-5 md:w-6 md:h-6 transition-opacity ${i < lives ? 'opacity-100 fill-red-500 text-red-500' : 'opacity-30 text-red-500/50'}`}
             aria-hidden="true"
-          >
-            ❤️
-          </span>
+          />
         ))}
       </div>
 

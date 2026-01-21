@@ -2,9 +2,10 @@
 
 import { useReducer, useEffect, useCallback, useRef, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { SplitPanel } from './SplitPanel'
 import { VsDivider } from './VsDivider'
-import { MobileGuessButtons } from './MobileGuessButtons'
+import { GuessButtons } from './GuessButtons'
 import { ScoreDisplay } from './ScoreDisplay'
 import { GameOver } from './GameOver'
 import { useLocalStorage } from '@/lib/hooks/useLocalStorage'
@@ -286,19 +287,7 @@ export function CooldownClash() {
           className="p-2 rounded-lg bg-dark-blue/80 hover:bg-dark-blue text-foreground transition-colors"
           aria-label="Go back to menu"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M19 12H5M12 19l-7-7 7-7" />
-          </svg>
+          <ArrowLeft className="w-5 h-5" />
         </Link>
         <ScoreDisplay
           score={state.score}
@@ -448,20 +437,20 @@ export function CooldownClash() {
       </div>
 
       {/* Mobile guess buttons - fixed at bottom, hidden on desktop via CSS */}
-      <MobileGuessButtons
+      <GuessButtons
+        variant="fixed"
         onGuess={handleGuess}
         disabled={state.phase !== 'playing'}
         hidden={isRevealing}
       />
 
-      {state.phase === 'gameover' && (
-        <GameOver
+      <GameOver
+          open={state.phase === 'gameover'}
           score={state.score}
           highScore={state.highScore}
           isNewHighScore={isNewHighScore}
           onRestart={handleRestart}
         />
-      )}
     </div>
   )
 }

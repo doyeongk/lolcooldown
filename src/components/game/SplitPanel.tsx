@@ -1,8 +1,10 @@
 'use client'
 
 import Image from 'next/image'
+import { motion } from 'framer-motion'
 import { AbilityIcon } from './AbilityIcon'
 import { GuessButtons } from './GuessButtons'
+import { numberPop } from '@/lib/motion'
 import type { GameAbility, GuessChoice } from '@/types/game'
 
 const SPLASH_BLUR = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAACAAoDASIAAhEBAxEB/8QAHAAAAQUBAQEAAAAAAAAAAAAAAAIDBEEDBAUF/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAA8A/9k="
@@ -134,13 +136,15 @@ export function SplitPanel({
         {!hideCooldown && (
           <div className="mt-2 md:mt-6 md:min-h-[110px] md:flex md:items-center md:justify-center">
             {showCooldown ? (
-              <p
-                className={`text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg ${
-                  side === 'right' ? 'animate-number-pop' : ''
-                }`}
+              <motion.p
+                key={`cooldown-${cooldown}`}
+                variants={side === 'right' ? numberPop : undefined}
+                initial={side === 'right' ? 'hidden' : false}
+                animate={side === 'right' ? 'visible' : undefined}
+                className="text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg"
               >
                 {cooldown}s
-              </p>
+              </motion.p>
             ) : onGuess ? (
               <GuessButtons onGuess={onGuess} disabled={guessDisabled} />
             ) : null}

@@ -10,7 +10,56 @@
   --color-ring-offset: #172b3b;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Animation keyframes for Radix components */
+  --animate-in: enter 0.2s ease-out;
+  --animate-out: exit 0.2s ease-in;
 }
+
+/* Radix/Shadcn animation utilities */
+@keyframes enter {
+  from { opacity: var(--tw-enter-opacity, 1); transform: translate3d(var(--tw-enter-translate-x, 0), var(--tw-enter-translate-y, 0), 0) scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), var(--tw-enter-scale, 1)) rotate(var(--tw-enter-rotate, 0)); }
+}
+@keyframes exit {
+  to { opacity: var(--tw-exit-opacity, 1); transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0) scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), var(--tw-exit-scale, 1)) rotate(var(--tw-exit-rotate, 0)); }
+}
+
+@utility animate-in {
+  animation-name: enter;
+  animation-duration: 150ms;
+  --tw-enter-opacity: initial;
+  --tw-enter-scale: initial;
+  --tw-enter-rotate: initial;
+  --tw-enter-translate-x: initial;
+  --tw-enter-translate-y: initial;
+}
+
+@utility animate-out {
+  animation-name: exit;
+  animation-duration: 150ms;
+  --tw-exit-opacity: initial;
+  --tw-exit-scale: initial;
+  --tw-exit-rotate: initial;
+  --tw-exit-translate-x: initial;
+  --tw-exit-translate-y: initial;
+}
+
+@utility fade-in-0 { --tw-enter-opacity: 0; }
+@utility fade-out-0 { --tw-exit-opacity: 0; }
+@utility zoom-in-95 { --tw-enter-scale: .95; }
+@utility zoom-out-95 { --tw-exit-scale: .95; }
+@utility slide-in-from-top { --tw-enter-translate-y: -100%; }
+@utility slide-in-from-top-2 { --tw-enter-translate-y: -0.5rem; }
+@utility slide-in-from-bottom { --tw-enter-translate-y: 100%; }
+@utility slide-in-from-bottom-2 { --tw-enter-translate-y: 0.5rem; }
+@utility slide-in-from-left { --tw-enter-translate-x: -100%; }
+@utility slide-in-from-left-2 { --tw-enter-translate-x: -0.5rem; }
+@utility slide-in-from-right { --tw-enter-translate-x: 100%; }
+@utility slide-in-from-right-2 { --tw-enter-translate-x: 0.5rem; }
+@utility slide-out-to-top { --tw-exit-translate-y: -100%; }
+@utility slide-out-to-bottom { --tw-exit-translate-y: 100%; }
+@utility slide-out-to-left { --tw-exit-translate-x: -100%; }
+@utility slide-out-to-right { --tw-exit-translate-x: 100%; }
 
 @layer base {
   :root {
@@ -157,19 +206,6 @@
   to { transform: translateY(100%); }
 }
 
-@keyframes number-pop {
-  0% {
-    opacity: 0;
-    transform: scale(0.5);
-  }
-  60% {
-    transform: scale(1.1);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
 
 @keyframes correct-pulse {
   0%, 100% {
@@ -214,43 +250,6 @@
   }
 }
 
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes tooltip-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes sheet-slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes backdrop-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
 
 @layer utilities {
   .animate-cooldown-reveal {
@@ -271,10 +270,6 @@
 
   .animate-slide-in-right {
     animation: slide-in-right 0.4s ease-out;
-  }
-
-  .animate-fade-in {
-    animation: fade-in 0.3s ease-out;
   }
 
   .animate-panel-slide-left {
@@ -339,22 +334,6 @@
     animation: mobile-enter-up 0.4s ease-out forwards;
   }
 
-  .animate-number-pop {
-    animation: number-pop 0.4s ease-out forwards;
-  }
-
-  .animate-tooltip-fade-in {
-    animation: tooltip-fade-in 0.2s ease-out forwards;
-  }
-
-  .animate-sheet-slide-up {
-    animation: sheet-slide-up 0.3s ease-out forwards;
-  }
-
-  .animate-backdrop-fade-in {
-    animation: backdrop-fade-in 0.2s ease-out forwards;
-  }
-
   /* GPU acceleration for containers (prevents iOS Safari flash) */
   .gpu-accelerated {
     transform: translate3d(0, 0, 0);
@@ -382,13 +361,8 @@
   .animate-incorrect-shake,
   .animate-slide-in-left,
   .animate-slide-in-right,
-  .animate-fade-in,
   .animate-panel-slide-left,
   .animate-panel-slide-right,
-  .animate-number-pop,
-  .animate-tooltip-fade-in,
-  .animate-sheet-slide-up,
-  .animate-backdrop-fade-in,
   .animate-panel-exit-left,
   .animate-panel-shift-left,
   .animate-panel-enter-right,

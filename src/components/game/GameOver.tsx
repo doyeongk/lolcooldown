@@ -1,20 +1,31 @@
 'use client'
 
-import { Button } from '@/components/ui/Button'
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 
 interface GameOverProps {
+  open: boolean
   score: number
   highScore: number
   isNewHighScore: boolean
   onRestart: () => void
 }
 
-export function GameOver({ score, highScore, isNewHighScore, onRestart }: GameOverProps) {
+export function GameOver({ open, score, highScore, isNewHighScore, onRestart }: GameOverProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="bg-dark-blue border border-gold/50 rounded-2xl p-8 max-w-sm w-full mx-4 text-center">
-        <h2 className="text-3xl font-bold text-foreground mb-2">Game Over</h2>
+    <Dialog open={open}>
+      <DialogContent className="max-w-sm text-center [&>button]:hidden">
+        <VisuallyHidden>
+          <DialogDescription>Game over screen showing your final score</DialogDescription>
+        </VisuallyHidden>
+        <DialogTitle className="text-3xl font-bold text-foreground mb-2">Game Over</DialogTitle>
 
         {isNewHighScore && (
           <p className="text-gold text-lg mb-4 animate-pulse">New High Score!</p>
@@ -35,13 +46,11 @@ export function GameOver({ score, highScore, isNewHighScore, onRestart }: GameOv
           <Button variant="primary" size="lg" onClick={onRestart} className="w-full">
             Try Again
           </Button>
-          <Link href="/" className="w-full">
-            <Button variant="secondary" size="md" className="w-full">
-              Back to Menu
-            </Button>
-          </Link>
+          <Button asChild variant="secondary" size="md" className="w-full">
+            <Link href="/">Back to Menu</Link>
+          </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

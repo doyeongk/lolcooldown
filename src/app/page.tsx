@@ -1,4 +1,5 @@
-import { LinkButton } from "@/components/ui/LinkButton"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export default function Home() {
   return (
@@ -11,29 +12,33 @@ export default function Home() {
       </p>
 
       <div className="mt-12 flex w-full max-w-md flex-col gap-4">
-        <LinkButton
-          href="/play/main"
+        <Button
+          asChild
           size="lg"
           variant="gold"
           className="w-full flex-col gap-1"
         >
-          <span>Choose Your Champion</span>
-          <span className="text-sm font-normal opacity-80">
-            Test your main&apos;s abilities
-          </span>
-        </LinkButton>
+          <Link href="/play/main">
+            <span>Choose Your Champion</span>
+            <span className="text-sm font-normal opacity-80">
+              Test your main&apos;s abilities
+            </span>
+          </Link>
+        </Button>
 
-        <LinkButton
-          href="/play/random"
+        <Button
+          asChild
           size="lg"
           variant="darkBlue"
           className="w-full flex-col gap-1"
         >
-          <span>Random Champions</span>
-          <span className="text-sm font-normal opacity-80">
-            Random abilities, higher stakes
-          </span>
-        </LinkButton>
+          <Link href="/play/random">
+            <span>Random Champions</span>
+            <span className="text-sm font-normal opacity-80">
+              Random abilities, higher stakes
+            </span>
+          </Link>
+        </Button>
       </div>
     </main>
   )
