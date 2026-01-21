@@ -371,6 +371,7 @@ export function CooldownClash() {
                 <SplitPanel
                   gameAbility={state.nextRound.left}
                   showCooldown={false}
+                  hideCooldown={true}
                   side="right"
                   isCorrect={null}
                   skipAnimation={true}

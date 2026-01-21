@@ -141,20 +141,20 @@
   to { transform: translateY(0); }
 }
 
-/* Mobile stable-DOM animations (pure positional - no opacity for TikTok-style continuous scroll) */
+/* Mobile stable-DOM animations (transform-based to avoid position snap on animation end) */
 @keyframes mobile-exit-up {
-  from { top: 0; }
-  to { top: -50%; }
+  from { transform: translateY(0); }
+  to { transform: translateY(-100%); }
 }
 
 @keyframes mobile-shift-up {
-  from { top: 50%; }
-  to { top: 0; }
+  from { transform: translateY(0); }
+  to { transform: translateY(-100%); }
 }
 
 @keyframes mobile-enter-up {
-  from { top: 100%; }
-  to { top: 50%; }
+  from { transform: translateY(0); }
+  to { transform: translateY(-100%); }
 }
 
 @keyframes number-pop {
