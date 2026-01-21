@@ -14,8 +14,8 @@ interface SplitPanelProps {
   isCorrect: boolean | null
   onGuess?: (choice: GuessChoice) => void
   guessDisabled?: boolean
-  exitAnimation?: 'left' | 'cross-fade'
-  enterAnimation?: 'right' | 'shift-left' | 'cross-fade'
+  exitAnimation?: 'left' | 'cross-fade' | 'slide-up'
+  enterAnimation?: 'right' | 'shift-left' | 'cross-fade' | 'slide-up-shift' | 'slide-up'
   skipAnimation?: boolean
 }
 
@@ -48,12 +48,18 @@ export function SplitPanel({
     panelAnimation = 'animate-panel-exit-left'
   } else if (exitAnimation === 'cross-fade') {
     panelAnimation = 'animate-panel-cross-fade-exit'
+  } else if (exitAnimation === 'slide-up') {
+    panelAnimation = 'animate-panel-slide-up-exit'
   } else if (enterAnimation === 'shift-left') {
     panelAnimation = 'animate-panel-shift-left'
   } else if (enterAnimation === 'right') {
     panelAnimation = 'animate-panel-enter-right'
   } else if (enterAnimation === 'cross-fade') {
     panelAnimation = 'animate-panel-cross-fade-enter'
+  } else if (enterAnimation === 'slide-up-shift') {
+    panelAnimation = 'animate-panel-slide-up-shift'
+  } else if (enterAnimation === 'slide-up') {
+    panelAnimation = 'animate-panel-slide-up-enter'
   } else if (side === 'left') {
     panelAnimation = 'animate-panel-slide-left'
   } else {

@@ -20,7 +20,7 @@ import type {
 
 const INITIAL_LIVES = 3
 const REVEAL_DELAY = 1500
-const MOBILE_TRANSITION_DELAY = 350  // 300ms animation + 50ms buffer
+const MOBILE_TRANSITION_DELAY = 450  // 400ms animation + 50ms buffer
 const DESKTOP_TRANSITION_DELAY = 550 // 500ms animation + 50ms buffer
 
 const initialState: GameState = {
@@ -321,50 +321,40 @@ export function CooldownClash() {
         {state.phase === 'transitioning' && state.nextRound ? (
           // Three-element carousel transition (desktop) or cross-fade (mobile)
           isMobile ? (
-            // Mobile: Cross-fade transition
+            // Mobile: TikTok-style vertical slide
             <>
-              {/* Exiting left - fades out */}
-              <div className="absolute inset-0 h-[calc(var(--vh,1vh)*50)] z-10">
+              {/* Exiting top - slides up and fades out */}
+              <div className="absolute inset-x-0 top-0 h-[calc(var(--vh,1vh)*50)] z-10 overflow-hidden">
                 <SplitPanel
                   gameAbility={state.currentRound.left}
                   showCooldown={true}
                   side="left"
                   isCorrect={null}
-                  exitAnimation="cross-fade"
+                  exitAnimation="slide-up"
                 />
               </div>
-              {/* Entering left (old right) - fades in */}
-              <div className="opacity-0">
+              {/* Old bottom (with feedback) slides up to top position */}
+              <div className="h-[calc(var(--vh,1vh)*50)]">
                 <SplitPanel
                   gameAbility={state.currentRound.right}
                   showCooldown={true}
                   side="left"
                   isCorrect={state.lastGuessCorrect}
-                  enterAnimation="cross-fade"
+                  enterAnimation="slide-up-shift"
                 />
               </div>
               {/* VS divider */}
               <div className="relative z-20 flex items-center justify-center h-0 shrink-0">
                 <VsDivider />
               </div>
-              {/* Exiting right - fades out */}
-              <div className="absolute inset-0 top-[calc(var(--vh,1vh)*50)] h-[calc(var(--vh,1vh)*50)] z-10">
-                <SplitPanel
-                  gameAbility={state.currentRound.right}
-                  showCooldown={true}
-                  side="right"
-                  isCorrect={state.lastGuessCorrect}
-                  exitAnimation="cross-fade"
-                />
-              </div>
-              {/* Entering right - fades in */}
-              <div className="opacity-0">
+              {/* New card enters from bottom */}
+              <div className="h-[calc(var(--vh,1vh)*50)]">
                 <SplitPanel
                   gameAbility={state.nextRound.left}
                   showCooldown={false}
                   side="right"
                   isCorrect={null}
-                  enterAnimation="cross-fade"
+                  enterAnimation="slide-up"
                 />
               </div>
             </>

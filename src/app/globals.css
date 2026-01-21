@@ -129,6 +129,22 @@
   }
 }
 
+/* Mobile vertical slide carousel */
+@keyframes panel-slide-up-exit {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-50%); }
+}
+
+@keyframes panel-slide-up-shift {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes panel-slide-up-enter {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes number-pop {
   0% {
     opacity: 0;
@@ -285,6 +301,28 @@
     backface-visibility: hidden;
   }
 
+  /* Mobile vertical slide utilities */
+  .animate-panel-slide-up-exit {
+    animation: panel-slide-up-exit 0.4s ease-out forwards;
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  .animate-panel-slide-up-shift {
+    animation: panel-slide-up-shift 0.4s ease-out forwards;
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  .animate-panel-slide-up-enter {
+    animation: panel-slide-up-enter 0.4s ease-out forwards;
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
   .animate-number-pop {
     animation: number-pop 0.4s ease-out forwards;
   }
@@ -331,7 +369,10 @@
   .animate-panel-shift-left,
   .animate-panel-enter-right,
   .animate-panel-cross-fade-exit,
-  .animate-panel-cross-fade-enter {
+  .animate-panel-cross-fade-enter,
+  .animate-panel-slide-up-exit,
+  .animate-panel-slide-up-shift,
+  .animate-panel-slide-up-enter {
     animation: none;
   }
 }
