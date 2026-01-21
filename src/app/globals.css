@@ -81,13 +81,59 @@
   }
 
   body {
-    background: linear-gradient(to bottom, var(--gradient-top), var(--gradient-bottom));
+    background: linear-gradient(
+      170deg,
+      #172b3b 0%,
+      #1a3040 25%,
+      #1e3a4a 45%,
+      #172b3b 65%,
+      rgba(144, 245, 243, 0.12) 100%
+    );
+    background-size: 100% 400%;
     min-height: 100vh; /* Fallback */
     min-height: 100svh; /* Modern browsers */
     color: var(--foreground);
     font-family: var(--font-sans), Arial, Helvetica, sans-serif;
     overflow: hidden;
     overscroll-behavior: none;
+    animation: gradient-breathe 12s ease-in-out infinite;
+  }
+
+  /* Grid pattern overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(227, 207, 116, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(227, 207, 116, 0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Gold inner glow */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(
+      ellipse at 50% 30%,
+      rgba(227, 207, 116, 0.06) 0%,
+      transparent 55%
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+/* Background gradient animation */
+@keyframes gradient-breathe {
+  0%, 100% {
+    background-position: 50% 0%;
+  }
+  50% {
+    background-position: 50% 100%;
   }
 }
 
@@ -356,6 +402,11 @@
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
+  body {
+    animation: none;
+    background-position: 50% 50%;
+  }
+
   .animate-cooldown-reveal,
   .animate-correct-pulse,
   .animate-incorrect-shake,

@@ -72,11 +72,73 @@ Runs `scripts/deploy.sh` which SSHs to server, pulls, builds Docker, and restart
 - **Styling:** Tailwind CSS; colours in `src/app/globals.css`
 - **Images:** CDragon assets via `next/image` (configured in `next.config.ts`)
 
-## Frontend
+## Frontend Design Philosophy
 
-- Colours: CSS variables in `src/app/globals.css`
-- UI components: `src/components/ui/`
-- Follow `web-design-guidelines` and `vercel-react-best-practices` skills
+**Use the `frontend-design` skill for all UI work.**
+
+This project emphasises **minimalism, simplicity, elegance, and aesthetics**. Every UI element should feel intentional—no visual clutter, no unnecessary complexity.
+
+### Design Principles
+
+1. **Minimalism** — Only what's needed. Remove before adding.
+2. **Simplicity** — If it needs explanation, simplify it.
+3. **Elegance** — Smooth transitions, considered spacing, visual harmony.
+4. **Aesthetics** — Dark blue + gold palette inspired by League of Legends.
+
+### Stack
+
+| Layer | Technology |
+|-------|------------|
+| Components | Shadcn/ui (Radix primitives) |
+| Styling | Tailwind CSS 4 + CSS variables |
+| Animation | Framer Motion + CSS keyframes |
+| Icons | Lucide React |
+
+### Reusable Components (`src/components/ui/`)
+
+**Always reuse these components for new features:**
+
+- **Button** — Variant-driven (`primary`, `gold`, `outline`, `ghost`, etc.), multiple sizes, `asChild` slot composition
+- **Dialog** — Modal overlay with gold borders, dark-blue background, built-in animations
+- **Tooltip** — Hover hints with directional slide animations
+- **Sheet** — Slide-out panels
+
+Use `class-variance-authority` (CVA) for new component variants. Use `cn()` from `src/lib/utils.ts` for conditional classnames.
+
+### Animation System (`src/lib/motion/`)
+
+**CSS keyframes** for transitions (performant, stable):
+- Panel slides, cooldown reveals, feedback pulses
+
+**Framer Motion** for interactive feedback:
+- `fadeIn`, `scaleIn`, `numberPop`, `correctPulse`, `incorrectShake`
+- Import from `@/lib/motion`
+
+**Accessibility:** All animations respect `prefers-reduced-motion`.
+
+### Colour Palette (`src/app/globals.css`)
+
+```css
+--gold: #e3cf74           /* Primary accent */
+--gold-hover: #d4c066     /* Hover state */
+--dark-blue: #172b3b      /* Background */
+--dark-blue-hover: #1e3a4a
+--foreground: #e7e9ea     /* Text */
+```
+
+### Mobile Considerations
+
+- Transform-based animations (avoid layout thrashing on iOS Safari)
+- Safe area insets for notched devices
+- `--vh` CSS variable for viewport height (see `ViewportHeight.tsx`)
+- Touch-friendly sizing (44px minimum tap targets)
+
+### Creating New UI
+
+1. Check if an existing component in `src/components/ui/` can be reused or extended
+2. Follow Shadcn/ui patterns: Radix primitive → styled wrapper → CVA variants
+3. Keep animations subtle and purposeful
+4. Test on mobile Safari (most restrictive environment)
 
 ## Gotchas
 
