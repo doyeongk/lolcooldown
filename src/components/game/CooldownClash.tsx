@@ -20,7 +20,8 @@ import type {
 
 const INITIAL_LIVES = 3
 const REVEAL_DELAY = 1500
-const TRANSITION_DELAY = 300
+const MOBILE_TRANSITION_DELAY = 350  // 300ms animation + 50ms buffer
+const DESKTOP_TRANSITION_DELAY = 550 // 500ms animation + 50ms buffer
 
 const initialState: GameState = {
   phase: 'idle',
@@ -224,6 +225,10 @@ export function CooldownClash() {
     }
   }, [state.phase])
 
+  // Store transition delay in ref to avoid dependency array issues with isMobile
+  const transitionDelayRef = useRef(DESKTOP_TRANSITION_DELAY)
+  transitionDelayRef.current = isMobile ? MOBILE_TRANSITION_DELAY : DESKTOP_TRANSITION_DELAY
+
   // Handle transition timing and pre-fetch
   useEffect(() => {
     if (state.phase === 'transitioning') {
@@ -241,7 +246,7 @@ export function CooldownClash() {
           isFetchingRef.current = false
         }
         dispatch({ type: 'TRANSITION_COMPLETE', nextRound })
-      }, TRANSITION_DELAY)
+      }, transitionDelayRef.current)
       return () => clearTimeout(timer)
     }
   }, [state.phase, state.nextRound, state.score])
@@ -329,13 +334,15 @@ export function CooldownClash() {
                 />
               </div>
               {/* Entering left (old right) - fades in */}
-              <SplitPanel
-                gameAbility={state.currentRound.right}
-                showCooldown={true}
-                side="left"
-                isCorrect={state.lastGuessCorrect}
-                enterAnimation="cross-fade"
-              />
+              <div className="opacity-0">
+                <SplitPanel
+                  gameAbility={state.currentRound.right}
+                  showCooldown={true}
+                  side="left"
+                  isCorrect={state.lastGuessCorrect}
+                  enterAnimation="cross-fade"
+                />
+              </div>
               {/* VS divider */}
               <div className="relative z-20 flex items-center justify-center h-0 shrink-0">
                 <VsDivider />
@@ -351,13 +358,15 @@ export function CooldownClash() {
                 />
               </div>
               {/* Entering right - fades in */}
-              <SplitPanel
-                gameAbility={state.nextRound.left}
-                showCooldown={false}
-                side="right"
-                isCorrect={null}
-                enterAnimation="cross-fade"
-              />
+              <div className="opacity-0">
+                <SplitPanel
+                  gameAbility={state.nextRound.left}
+                  showCooldown={false}
+                  side="right"
+                  isCorrect={null}
+                  enterAnimation="cross-fade"
+                />
+              </div>
             </>
           ) : (
             // Desktop: Carousel slide transition
