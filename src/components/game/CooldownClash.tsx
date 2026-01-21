@@ -371,10 +371,11 @@ export function CooldownClash() {
                 <SplitPanel
                   gameAbility={state.nextRound.left}
                   showCooldown={false}
-                  hideCooldown={true}
                   side="right"
                   isCorrect={null}
                   skipAnimation={true}
+                  onGuess={handleGuess}
+                  guessDisabled={true}
                 />
               ) : (
                 // Placeholder panel when nextRound not yet loaded
@@ -414,6 +415,8 @@ export function CooldownClash() {
               side="right"
               isCorrect={null}
               enterAnimation="right"
+              onGuess={handleGuess}
+              guessDisabled={true}
             />
           </>
         ) : (

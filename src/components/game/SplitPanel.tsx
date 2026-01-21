@@ -17,7 +17,6 @@ interface SplitPanelProps {
   exitAnimation?: 'left' | 'cross-fade' | 'slide-up'
   enterAnimation?: 'right' | 'shift-left' | 'cross-fade' | 'slide-up-shift' | 'slide-up'
   skipAnimation?: boolean
-  hideCooldown?: boolean
 }
 
 export function SplitPanel({
@@ -30,7 +29,6 @@ export function SplitPanel({
   exitAnimation,
   enterAnimation,
   skipAnimation = false,
-  hideCooldown = false,
 }: SplitPanelProps) {
   const { ability, level, cooldown } = gameAbility
   const { champion } = ability
@@ -130,22 +128,22 @@ export function SplitPanel({
           Lv. {level}
         </span>
 
-        {/* Cooldown or buttons */}
-        {!hideCooldown && (
-          <div className="mt-2 md:mt-6 md:min-h-[110px] md:flex md:items-center md:justify-center">
-            {showCooldown ? (
-              <p
-                className={`text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg ${
-                  side === 'right' ? 'animate-number-pop' : ''
-                }`}
-              >
-                {cooldown}s
-              </p>
-            ) : onGuess ? (
-              <GuessButtons onGuess={onGuess} disabled={guessDisabled} />
-            ) : null}
-          </div>
-        )}
+        {/* Action slot - fixed height for layout stability */}
+        <div className="mt-2 md:mt-6 h-[72px] md:h-[110px] flex items-center justify-center">
+          {showCooldown ? (
+            <p
+              className={`text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg ${
+                side === 'right' ? 'animate-number-pop' : ''
+              }`}
+            >
+              {cooldown}s
+            </p>
+          ) : onGuess ? (
+            <GuessButtons onGuess={onGuess} disabled={guessDisabled} />
+          ) : (
+            <div className="w-48" />
+          )}
+        </div>
       </div>
     </div>
   )
