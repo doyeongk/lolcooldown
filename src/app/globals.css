@@ -127,18 +127,18 @@
 
 /* Mobile vertical slide carousel */
 @keyframes panel-slide-up-exit {
-  from { transform: translateY(0); }
-  to { transform: translateY(-100%); }
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, -100%, 0); }
 }
 
 @keyframes panel-slide-up-shift {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from { transform: translate3d(0, 100%, 0); }
+  to { transform: translate3d(0, 0, 0); }
 }
 
 @keyframes panel-slide-up-enter {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from { transform: translate3d(0, 100%, 0); }
+  to { transform: translate3d(0, 0, 0); }
 }
 
 @keyframes number-pop {
@@ -337,12 +337,10 @@
 
   /* GPU acceleration for containers (prevents iOS Safari flash) */
   .gpu-accelerated {
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    contain: layout paint;
-    isolation: isolate;
   }
 }
 

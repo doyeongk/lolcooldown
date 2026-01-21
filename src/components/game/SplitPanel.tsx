@@ -66,7 +66,12 @@ export function SplitPanel({
         overflow-hidden ${panelAnimation}
         ${side === 'left' ? 'pt-16 pb-10 md:pt-0 md:pb-0' : ''}
       `}
-      style={{ isolation: 'isolate', contain: 'layout paint' }}
+      style={{
+        transform: 'translate3d(0, 0, 0)',
+        WebkitTransform: 'translate3d(0, 0, 0)',
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden',
+      }}
     >
       {/* Champion splash background */}
       {champion.splash && (
@@ -94,7 +99,7 @@ export function SplitPanel({
             ? 'bg-green-500/30 opacity-100'
             : isCorrect === false
               ? 'bg-red-500/30 opacity-100'
-              : 'opacity-0'
+              : 'opacity-[0.01]'
         }`}
       />
 

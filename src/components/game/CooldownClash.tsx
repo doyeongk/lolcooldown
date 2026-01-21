@@ -334,13 +334,13 @@ export function CooldownClash() {
                   exitAnimation="slide-up"
                 />
               </div>
-              {/* Old bottom (with feedback) slides up to top position */}
+              {/* Old bottom slides up to top position (no feedback during transition) */}
               <div className="h-[calc(var(--vh,1vh)*50)] gpu-accelerated">
                 <SplitPanel
                   gameAbility={state.currentRound.right}
                   showCooldown={true}
                   side="left"
-                  isCorrect={state.lastGuessCorrect}
+                  isCorrect={null}
                   enterAnimation="slide-up-shift"
                 />
               </div>
