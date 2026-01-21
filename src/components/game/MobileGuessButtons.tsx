@@ -5,11 +5,14 @@ import type { GuessChoice } from '@/types/game'
 interface MobileGuessButtonsProps {
   onGuess: (choice: GuessChoice) => void
   disabled: boolean
+  hidden?: boolean
 }
 
-export function MobileGuessButtons({ onGuess, disabled }: MobileGuessButtonsProps) {
+export function MobileGuessButtons({ onGuess, disabled, hidden = false }: MobileGuessButtonsProps) {
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+    <div className={`md:hidden fixed bottom-0 left-0 right-0 z-40 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] transition-opacity duration-200 ${
+      hidden ? 'opacity-0 pointer-events-none' : 'opacity-100'
+    }`}>
       <div className="flex gap-3 max-w-md mx-auto">
         <button
           type="button"

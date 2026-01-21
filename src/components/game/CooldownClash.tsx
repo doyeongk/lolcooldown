@@ -447,9 +447,11 @@ export function CooldownClash() {
       </div>
 
       {/* Mobile guess buttons - fixed at bottom, hidden on desktop via CSS */}
-      {!isRevealing && (
-        <MobileGuessButtons onGuess={handleGuess} disabled={state.phase !== 'playing'} />
-      )}
+      <MobileGuessButtons
+        onGuess={handleGuess}
+        disabled={state.phase !== 'playing'}
+        hidden={isRevealing}
+      />
 
       {state.phase === 'gameover' && (
         <GameOver
