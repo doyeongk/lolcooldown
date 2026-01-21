@@ -9,7 +9,7 @@ import { ScoreDisplay } from './ScoreDisplay'
 import { GameOver } from './GameOver'
 import { useLocalStorage } from '@/lib/hooks/useLocalStorage'
 import { useImagePreloader } from '@/lib/hooks/useImagePreloader'
-import { useIsMobile } from '@/lib/hooks/useMediaQuery'
+import { useIsMobile, useIsIOSSafari } from '@/lib/hooks/useMediaQuery'
 import type {
   GameState,
   GameAction,
@@ -21,6 +21,7 @@ import type {
 const INITIAL_LIVES = 3
 const REVEAL_DELAY = 1500
 const MOBILE_TRANSITION_DELAY = 450  // 400ms animation + 50ms buffer
+const IOS_TRANSITION_DELAY = 350     // 300ms crossfade + 50ms buffer
 const DESKTOP_TRANSITION_DELAY = 550 // 500ms animation + 50ms buffer
 
 const initialState: GameState = {
@@ -138,6 +139,7 @@ export function CooldownClash() {
   const prevPhaseRef = useRef<string>(state.phase)
   const animatedRoundIdRef = useRef<string | null>(null)
   const isMobile = useIsMobile()
+  const isIOSSafari = useIsIOSSafari()
 
   // Generate stable ID for current round
   const currentRoundId = state.currentRound
@@ -227,7 +229,9 @@ export function CooldownClash() {
 
   // Store transition delay in ref to avoid dependency array issues with isMobile
   const transitionDelayRef = useRef(DESKTOP_TRANSITION_DELAY)
-  transitionDelayRef.current = isMobile ? MOBILE_TRANSITION_DELAY : DESKTOP_TRANSITION_DELAY
+  transitionDelayRef.current = isMobile
+    ? (isIOSSafari ? IOS_TRANSITION_DELAY : MOBILE_TRANSITION_DELAY)
+    : DESKTOP_TRANSITION_DELAY
 
   // Handle transition timing and pre-fetch
   useEffect(() => {
@@ -320,45 +324,85 @@ export function CooldownClash() {
         aria-label="Ability comparison"
       >
         {state.phase === 'transitioning' && state.nextRound ? (
-          // Three-element carousel transition (desktop) or cross-fade (mobile)
+          // Three-element carousel transition (desktop) or cross-fade/slide (mobile)
           isMobile ? (
-            // Mobile: TikTok-style vertical slide
-            <>
-              {/* Exiting top - slides up */}
-              <div className="absolute inset-x-0 top-0 h-[calc(var(--vh,1vh)*50)] z-10 gpu-accelerated">
-                <SplitPanel
-                  gameAbility={state.currentRound.left}
-                  showCooldown={true}
-                  side="left"
-                  isCorrect={null}
-                  exitAnimation="slide-up"
-                />
-              </div>
-              {/* Old bottom slides up to top position (with feedback like desktop) */}
-              <div className="h-[calc(var(--vh,1vh)*50)] gpu-accelerated">
-                <SplitPanel
-                  gameAbility={state.currentRound.right}
-                  showCooldown={true}
-                  side="left"
-                  isCorrect={state.lastGuessCorrect}
-                  enterAnimation="slide-up-shift"
-                />
-              </div>
-              {/* VS divider */}
-              <div className="relative z-20 flex items-center justify-center h-0 shrink-0">
-                <VsDivider />
-              </div>
-              {/* New card enters from bottom */}
-              <div className="h-[calc(var(--vh,1vh)*50)] gpu-accelerated">
-                <SplitPanel
-                  gameAbility={state.nextRound.left}
-                  showCooldown={false}
-                  side="right"
-                  isCorrect={null}
-                  enterAnimation="slide-up"
-                />
-              </div>
-            </>
+            isIOSSafari ? (
+              // iOS Safari: Quick crossfade (avoids WebKit transform bug causing white flash)
+              <>
+                {/* Exiting top - fades out */}
+                <div className="absolute inset-x-0 top-0 h-[calc(var(--vh,1vh)*50)] z-10">
+                  <SplitPanel
+                    gameAbility={state.currentRound.left}
+                    showCooldown={true}
+                    side="left"
+                    isCorrect={null}
+                    exitAnimation="cross-fade"
+                  />
+                </div>
+                {/* Old bottom fades to top position (with feedback) */}
+                <div className="h-[calc(var(--vh,1vh)*50)]">
+                  <SplitPanel
+                    gameAbility={state.currentRound.right}
+                    showCooldown={true}
+                    side="left"
+                    isCorrect={state.lastGuessCorrect}
+                    enterAnimation="cross-fade"
+                  />
+                </div>
+                {/* VS divider */}
+                <div className="relative z-20 flex items-center justify-center h-0 shrink-0">
+                  <VsDivider />
+                </div>
+                {/* New card fades in */}
+                <div className="h-[calc(var(--vh,1vh)*50)]">
+                  <SplitPanel
+                    gameAbility={state.nextRound.left}
+                    showCooldown={false}
+                    side="right"
+                    isCorrect={null}
+                    enterAnimation="cross-fade"
+                  />
+                </div>
+              </>
+            ) : (
+              // Android/other mobile: TikTok-style vertical slide
+              <>
+                {/* Exiting top - slides up */}
+                <div className="absolute inset-x-0 top-0 h-[calc(var(--vh,1vh)*50)] z-10 gpu-accelerated">
+                  <SplitPanel
+                    gameAbility={state.currentRound.left}
+                    showCooldown={true}
+                    side="left"
+                    isCorrect={null}
+                    exitAnimation="slide-up"
+                  />
+                </div>
+                {/* Old bottom slides up to top position (with feedback like desktop) */}
+                <div className="h-[calc(var(--vh,1vh)*50)] gpu-accelerated">
+                  <SplitPanel
+                    gameAbility={state.currentRound.right}
+                    showCooldown={true}
+                    side="left"
+                    isCorrect={state.lastGuessCorrect}
+                    enterAnimation="slide-up-shift"
+                  />
+                </div>
+                {/* VS divider */}
+                <div className="relative z-20 flex items-center justify-center h-0 shrink-0">
+                  <VsDivider />
+                </div>
+                {/* New card enters from bottom */}
+                <div className="h-[calc(var(--vh,1vh)*50)] gpu-accelerated">
+                  <SplitPanel
+                    gameAbility={state.nextRound.left}
+                    showCooldown={false}
+                    side="right"
+                    isCorrect={null}
+                    enterAnimation="slide-up"
+                  />
+                </div>
+              </>
+            )
           ) : (
             // Desktop: Carousel slide transition
             <>
