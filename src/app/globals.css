@@ -334,6 +334,14 @@
   .animate-backdrop-fade-in {
     animation: backdrop-fade-in 0.2s ease-out forwards;
   }
+
+  /* GPU acceleration for containers (prevents iOS Safari flash) */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
 }
 
 /* Ability description styles */

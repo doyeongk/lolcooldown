@@ -324,7 +324,7 @@ export function CooldownClash() {
             // Mobile: TikTok-style vertical slide
             <>
               {/* Exiting top - slides up and fades out */}
-              <div className="absolute inset-x-0 top-0 h-[calc(var(--vh,1vh)*50)] z-10 overflow-hidden">
+              <div className="absolute inset-x-0 top-0 h-[calc(var(--vh,1vh)*50)] z-10 overflow-hidden gpu-accelerated">
                 <SplitPanel
                   gameAbility={state.currentRound.left}
                   showCooldown={true}
@@ -334,7 +334,7 @@ export function CooldownClash() {
                 />
               </div>
               {/* Old bottom (with feedback) slides up to top position */}
-              <div className="h-[calc(var(--vh,1vh)*50)]">
+              <div className="h-[calc(var(--vh,1vh)*50)] gpu-accelerated">
                 <SplitPanel
                   gameAbility={state.currentRound.right}
                   showCooldown={true}
@@ -348,7 +348,7 @@ export function CooldownClash() {
                 <VsDivider />
               </div>
               {/* New card enters from bottom */}
-              <div className="h-[calc(var(--vh,1vh)*50)]">
+              <div className="h-[calc(var(--vh,1vh)*50)] gpu-accelerated">
                 <SplitPanel
                   gameAbility={state.nextRound.left}
                   showCooldown={false}
@@ -362,7 +362,7 @@ export function CooldownClash() {
             // Desktop: Carousel slide transition
             <>
               {/* Exiting left - slides out to left */}
-              <div className="absolute inset-y-0 left-0 w-1/2 z-10">
+              <div className="absolute inset-y-0 left-0 w-1/2 z-10 gpu-accelerated">
                 <SplitPanel
                   gameAbility={state.currentRound.left}
                   showCooldown={true}
