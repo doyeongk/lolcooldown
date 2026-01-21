@@ -324,8 +324,8 @@ export function CooldownClash() {
           isMobile ? (
             // Mobile: TikTok-style vertical slide
             <>
-              {/* Exiting top - slides up and fades out */}
-              <div className="absolute inset-x-0 top-0 h-[calc(var(--vh,1vh)*50)] z-10 overflow-hidden gpu-accelerated">
+              {/* Exiting top - slides up */}
+              <div className="absolute inset-x-0 top-0 h-[calc(var(--vh,1vh)*50)] z-10 gpu-accelerated">
                 <SplitPanel
                   gameAbility={state.currentRound.left}
                   showCooldown={true}
@@ -334,13 +334,13 @@ export function CooldownClash() {
                   exitAnimation="slide-up"
                 />
               </div>
-              {/* Old bottom slides up to top position (no feedback during transition) */}
+              {/* Old bottom slides up to top position (with feedback like desktop) */}
               <div className="h-[calc(var(--vh,1vh)*50)] gpu-accelerated">
                 <SplitPanel
                   gameAbility={state.currentRound.right}
                   showCooldown={true}
                   side="left"
-                  isCorrect={null}
+                  isCorrect={state.lastGuessCorrect}
                   enterAnimation="slide-up-shift"
                 />
               </div>

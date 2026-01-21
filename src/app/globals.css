@@ -125,20 +125,20 @@
   }
 }
 
-/* Mobile vertical slide carousel */
+/* Mobile vertical slide carousel (match desktop pattern - use 2D transforms) */
 @keyframes panel-slide-up-exit {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(0, -100%, 0); }
+  from { transform: translateY(0); }
+  to { transform: translateY(-100%); }
 }
 
 @keyframes panel-slide-up-shift {
-  from { transform: translate3d(0, 100%, 0); }
-  to { transform: translate3d(0, 0, 0); }
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
 @keyframes panel-slide-up-enter {
-  from { transform: translate3d(0, 100%, 0); }
-  to { transform: translate3d(0, 0, 0); }
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
 }
 
 @keyframes number-pop {
@@ -297,26 +297,17 @@
     backface-visibility: hidden;
   }
 
-  /* Mobile vertical slide utilities */
+  /* Mobile vertical slide utilities (match desktop pattern - no GPU hints) */
   .animate-panel-slide-up-exit {
     animation: panel-slide-up-exit 0.4s ease-out forwards;
-    will-change: transform;
-    transform: translateZ(0);
-    backface-visibility: hidden;
   }
 
   .animate-panel-slide-up-shift {
     animation: panel-slide-up-shift 0.4s ease-out forwards;
-    will-change: transform;
-    transform: translateZ(0);
-    backface-visibility: hidden;
   }
 
   .animate-panel-slide-up-enter {
     animation: panel-slide-up-enter 0.4s ease-out forwards;
-    will-change: transform;
-    transform: translateZ(0);
-    backface-visibility: hidden;
   }
 
   .animate-number-pop {
