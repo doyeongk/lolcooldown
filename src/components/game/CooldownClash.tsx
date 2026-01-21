@@ -315,6 +315,7 @@ export function CooldownClash() {
       {/* Split container */}
       <div
         className="flex flex-col md:flex-row h-full w-full"
+        style={{ perspective: '1000px' }}
         role="region"
         aria-label="Ability comparison"
       >

@@ -33,13 +33,6 @@ export function SplitPanel({
   const { ability, level, cooldown } = gameAbility
   const { champion } = ability
 
-  const feedbackOverlayClass =
-    isCorrect === true
-      ? 'bg-green-500/30'
-      : isCorrect === false
-        ? 'bg-red-500/30'
-        : ''
-
   // Determine animation class based on transition state
   let panelAnimation = ''
   if (skipAnimation) {
@@ -73,6 +66,7 @@ export function SplitPanel({
         overflow-hidden ${panelAnimation}
         ${side === 'left' ? 'pt-16 pb-10 md:pt-0 md:pb-0' : ''}
       `}
+      style={{ isolation: 'isolate', contain: 'layout paint' }}
     >
       {/* Champion splash background */}
       {champion.splash && (
@@ -93,12 +87,16 @@ export function SplitPanel({
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/50" />
 
-      {/* Correct/incorrect feedback overlay */}
-      {isCorrect !== null && (
-        <div
-          className={`absolute inset-0 ${feedbackOverlayClass} transition-opacity duration-300`}
-        />
-      )}
+      {/* Correct/incorrect feedback overlay - always rendered, controlled via opacity */}
+      <div
+        className={`absolute inset-0 transition-opacity duration-400 pointer-events-none ${
+          isCorrect === true
+            ? 'bg-green-500/30 opacity-100'
+            : isCorrect === false
+              ? 'bg-red-500/30 opacity-100'
+              : 'opacity-0'
+        }`}
+      />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center text-center px-4 gap-2 md:gap-4 py-4 md:py-6">
