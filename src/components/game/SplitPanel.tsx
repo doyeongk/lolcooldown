@@ -64,7 +64,7 @@ export function SplitPanel({
       className={`
         relative h-full md:flex-1 flex flex-col items-center justify-center
         overflow-hidden ${panelAnimation}
-        ${side === 'left' ? 'pt-16 pb-10 md:pt-0 md:pb-0' : ''}
+        pt-16 pb-6 md:pt-0 md:pb-0
       `}
       style={{
         transform: 'translate3d(0, 0, 0)',
@@ -129,7 +129,7 @@ export function SplitPanel({
         </span>
 
         {/* Action slot - fixed height for layout stability */}
-        <div className="mt-2 md:mt-6 h-[72px] md:h-[110px] flex items-center justify-center">
+        <div className="mt-2 md:mt-6 h-[56px] md:h-[110px] flex items-center justify-center">
           {showCooldown ? (
             <p
               className={`text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg ${
