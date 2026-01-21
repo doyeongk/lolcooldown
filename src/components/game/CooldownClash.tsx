@@ -1,6 +1,6 @@
 'use client'
 
-import { useReducer, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useReducer, useEffect, useCallback, useRef, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { SplitPanel } from './SplitPanel'
 import { VsDivider } from './VsDivider'
@@ -135,8 +135,8 @@ export function CooldownClash() {
   const [state, dispatch] = useReducer(gameReducer, initialState)
   const [storedHighScore, setStoredHighScore] = useLocalStorage('cooldown-clash-highscore', 0)
   const isFetchingRef = useRef(false)
-  const prevPhaseRef = useRef<string>(state.phase)
-  const animatedRoundIdRef = useRef<string | null>(null)
+  const [prevPhase, setPrevPhase] = useState<string>(state.phase)
+  const [animatedRoundId, setAnimatedRoundId] = useState<string | null>(null)
   const isMobile = useIsMobile()
 
   // Generate stable ID for current round
@@ -145,23 +145,22 @@ export function CooldownClash() {
     : null
 
   // Check if this is a NEW round (different from what we last animated)
-  const isNewRound = currentRoundId !== animatedRoundIdRef.current
+  const isNewRound = currentRoundId !== animatedRoundId
 
   // Skip animation if:
   // 1. Same round we already processed, OR
   // 2. New round but coming from transitioning phase (carousel already animated)
   const skipPanelAnimation = !isNewRound ||
-    (isNewRound && prevPhaseRef.current === 'transitioning')
+    (isNewRound && prevPhase === 'transitioning')
 
-  // SYNCHRONOUSLY mark this round as processed BEFORE effects run
-  if (isNewRound && state.phase === 'playing') {
-    animatedRoundIdRef.current = currentRoundId
+  // Update tracking state synchronously during render (React 19 pattern for derived state)
+  // This replaces getDerivedStateFromProps - safe because we check for changes first
+  if (isNewRound && state.phase === 'playing' && animatedRoundId !== currentRoundId) {
+    setAnimatedRoundId(currentRoundId)
   }
-
-  // Update prevPhaseRef after each render
-  useEffect(() => {
-    prevPhaseRef.current = state.phase
-  })
+  if (prevPhase !== state.phase) {
+    setPrevPhase(state.phase)
+  }
 
   // Preload next round images into browser cache
   const nextRoundImages = useMemo(() => {
@@ -225,13 +224,10 @@ export function CooldownClash() {
     }
   }, [state.phase])
 
-  // Store transition delay in ref to avoid dependency array issues with isMobile
-  const transitionDelayRef = useRef(DESKTOP_TRANSITION_DELAY)
-  transitionDelayRef.current = isMobile ? MOBILE_TRANSITION_DELAY : DESKTOP_TRANSITION_DELAY
-
   // Handle transition timing and pre-fetch
   useEffect(() => {
     if (state.phase === 'transitioning') {
+      const transitionDelay = isMobile ? MOBILE_TRANSITION_DELAY : DESKTOP_TRANSITION_DELAY
       const timer = setTimeout(async () => {
         // Pre-fetch next round if we don't have one
         let nextRound = state.nextRound
@@ -246,10 +242,10 @@ export function CooldownClash() {
           isFetchingRef.current = false
         }
         dispatch({ type: 'TRANSITION_COMPLETE', nextRound })
-      }, transitionDelayRef.current)
+      }, transitionDelay)
       return () => clearTimeout(timer)
     }
-  }, [state.phase, state.nextRound, state.score])
+  }, [state.phase, state.nextRound, state.score, isMobile])
 
   // Pre-fetch next round when playing
   useEffect(() => {
