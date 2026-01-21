@@ -141,10 +141,10 @@
   to { transform: translateY(0); }
 }
 
-/* Mobile stable-DOM animations (uses top property to avoid iOS Safari layer recreation) */
+/* Mobile stable-DOM animations (pure positional - no opacity for TikTok-style continuous scroll) */
 @keyframes mobile-exit-up {
-  from { top: 0; opacity: 1; }
-  to { top: -50%; opacity: 0; }
+  from { top: 0; }
+  to { top: -50%; }
 }
 
 @keyframes mobile-shift-up {
@@ -153,8 +153,8 @@
 }
 
 @keyframes mobile-enter-up {
-  from { top: 100%; opacity: 0; }
-  to { top: 50%; opacity: 1; }
+  from { top: 100%; }
+  to { top: 50%; }
 }
 
 @keyframes number-pop {

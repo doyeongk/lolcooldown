@@ -364,7 +364,7 @@ export function CooldownClash() {
               className={`absolute inset-x-0 h-1/2 ${
                 state.phase === 'transitioning' && state.nextRound
                   ? 'animate-mobile-enter-up'
-                  : 'top-full opacity-0 pointer-events-none'
+                  : 'top-full pointer-events-none'
               }`}
             >
               {state.nextRound ? (
