@@ -9,7 +9,7 @@ import { ScoreDisplay } from './ScoreDisplay'
 import { GameOver } from './GameOver'
 import { useLocalStorage } from '@/lib/hooks/useLocalStorage'
 import { useImagePreloader } from '@/lib/hooks/useImagePreloader'
-import { useIsMobile, useIsIOSSafari } from '@/lib/hooks/useMediaQuery'
+import { useIsMobile } from '@/lib/hooks/useMediaQuery'
 import type {
   GameState,
   GameAction,
@@ -21,7 +21,6 @@ import type {
 const INITIAL_LIVES = 3
 const REVEAL_DELAY = 1500
 const MOBILE_TRANSITION_DELAY = 450  // 400ms animation + 50ms buffer
-const IOS_TRANSITION_DELAY = 350     // 300ms crossfade + 50ms buffer
 const DESKTOP_TRANSITION_DELAY = 550 // 500ms animation + 50ms buffer
 
 const initialState: GameState = {
@@ -139,7 +138,6 @@ export function CooldownClash() {
   const prevPhaseRef = useRef<string>(state.phase)
   const animatedRoundIdRef = useRef<string | null>(null)
   const isMobile = useIsMobile()
-  const isIOSSafari = useIsIOSSafari()
 
   // Generate stable ID for current round
   const currentRoundId = state.currentRound
@@ -229,9 +227,7 @@ export function CooldownClash() {
 
   // Store transition delay in ref to avoid dependency array issues with isMobile
   const transitionDelayRef = useRef(DESKTOP_TRANSITION_DELAY)
-  transitionDelayRef.current = isMobile
-    ? (isIOSSafari ? IOS_TRANSITION_DELAY : MOBILE_TRANSITION_DELAY)
-    : DESKTOP_TRANSITION_DELAY
+  transitionDelayRef.current = isMobile ? MOBILE_TRANSITION_DELAY : DESKTOP_TRANSITION_DELAY
 
   // Handle transition timing and pre-fetch
   useEffect(() => {
@@ -323,123 +319,108 @@ export function CooldownClash() {
         role="region"
         aria-label="Ability comparison"
       >
-        {state.phase === 'transitioning' && state.nextRound ? (
-          // Three-element carousel transition (desktop) or cross-fade/slide (mobile)
-          isMobile ? (
-            isIOSSafari ? (
-              // iOS Safari: Quick crossfade (avoids WebKit transform bug causing white flash)
-              <>
-                {/* Exiting top - fades out */}
-                <div className="absolute inset-x-0 top-0 h-[calc(var(--vh,1vh)*50)] z-10">
-                  <SplitPanel
-                    gameAbility={state.currentRound.left}
-                    showCooldown={true}
-                    side="left"
-                    isCorrect={null}
-                    exitAnimation="cross-fade"
-                  />
-                </div>
-                {/* Old bottom fades to top position (with feedback) */}
-                <div className="h-[calc(var(--vh,1vh)*50)]">
-                  <SplitPanel
-                    gameAbility={state.currentRound.right}
-                    showCooldown={true}
-                    side="left"
-                    isCorrect={state.lastGuessCorrect}
-                    enterAnimation="cross-fade"
-                  />
-                </div>
-                {/* VS divider */}
-                <div className="relative z-20 flex items-center justify-center h-0 shrink-0">
-                  <VsDivider />
-                </div>
-                {/* New card fades in */}
-                <div className="h-[calc(var(--vh,1vh)*50)]">
-                  <SplitPanel
-                    gameAbility={state.nextRound.left}
-                    showCooldown={false}
-                    side="right"
-                    isCorrect={null}
-                    enterAnimation="cross-fade"
-                  />
-                </div>
-              </>
-            ) : (
-              // Android/other mobile: TikTok-style vertical slide
-              <>
-                {/* Exiting top - slides up */}
-                <div className="absolute inset-x-0 top-0 h-[calc(var(--vh,1vh)*50)] z-10 gpu-accelerated">
-                  <SplitPanel
-                    gameAbility={state.currentRound.left}
-                    showCooldown={true}
-                    side="left"
-                    isCorrect={null}
-                    exitAnimation="slide-up"
-                  />
-                </div>
-                {/* Old bottom slides up to top position (with feedback like desktop) */}
-                <div className="h-[calc(var(--vh,1vh)*50)] gpu-accelerated">
-                  <SplitPanel
-                    gameAbility={state.currentRound.right}
-                    showCooldown={true}
-                    side="left"
-                    isCorrect={state.lastGuessCorrect}
-                    enterAnimation="slide-up-shift"
-                  />
-                </div>
-                {/* VS divider */}
-                <div className="relative z-20 flex items-center justify-center h-0 shrink-0">
-                  <VsDivider />
-                </div>
-                {/* New card enters from bottom */}
-                <div className="h-[calc(var(--vh,1vh)*50)] gpu-accelerated">
-                  <SplitPanel
-                    gameAbility={state.nextRound.left}
-                    showCooldown={false}
-                    side="right"
-                    isCorrect={null}
-                    enterAnimation="slide-up"
-                  />
-                </div>
-              </>
-            )
-          ) : (
-            // Desktop: Carousel slide transition
-            <>
-              {/* Exiting left - slides out to left */}
-              <div className="absolute inset-y-0 left-0 w-1/2 z-10 gpu-accelerated">
-                <SplitPanel
-                  gameAbility={state.currentRound.left}
-                  showCooldown={true}
-                  side="left"
-                  isCorrect={null}
-                  exitAnimation="left"
-                />
-              </div>
-              {/* Old right moving to left position */}
+        {isMobile ? (
+          // Mobile: Stable 3-panel DOM structure (no DOM changes during transitions)
+          <div className="relative h-full w-full overflow-hidden">
+            {/* Panel 1: Top (exits during transition) */}
+            <div
+              className={`absolute inset-x-0 h-1/2 ${
+                state.phase === 'transitioning' && state.nextRound
+                  ? 'animate-mobile-exit-up z-10'
+                  : 'top-0'
+              }`}
+            >
               <SplitPanel
-                gameAbility={state.currentRound.right}
+                gameAbility={state.currentRound.left}
                 showCooldown={true}
                 side="left"
-                isCorrect={state.lastGuessCorrect}
-                enterAnimation="shift-left"
-              />
-              {/* VS divider */}
-              <div className="relative z-20 flex items-center justify-center md:h-auto md:w-0 shrink-0">
-                <VsDivider />
-              </div>
-              {/* New right entering from off-screen right */}
-              <SplitPanel
-                gameAbility={state.nextRound.left}
-                showCooldown={false}
-                side="right"
                 isCorrect={null}
-                enterAnimation="right"
+                skipAnimation={skipPanelAnimation}
               />
-            </>
-          )
+            </div>
+
+            {/* Panel 2: Middle (shifts up during transition) */}
+            <div
+              className={`absolute inset-x-0 h-1/2 ${
+                state.phase === 'transitioning' && state.nextRound
+                  ? 'animate-mobile-shift-up'
+                  : 'top-1/2'
+              }`}
+            >
+              <SplitPanel
+                gameAbility={state.currentRound.right}
+                showCooldown={isRevealing}
+                side="right"
+                isCorrect={isRevealing ? state.lastGuessCorrect : null}
+                onGuess={handleGuess}
+                guessDisabled={state.phase !== 'playing'}
+                skipAnimation={skipPanelAnimation}
+              />
+            </div>
+
+            {/* VS divider */}
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center h-0 shrink-0">
+              <VsDivider />
+            </div>
+
+            {/* Panel 3: Bottom (enters during transition, hidden otherwise) */}
+            <div
+              className={`absolute inset-x-0 h-1/2 ${
+                state.phase === 'transitioning' && state.nextRound
+                  ? 'animate-mobile-enter-up'
+                  : 'top-full opacity-0 pointer-events-none'
+              }`}
+            >
+              {state.nextRound ? (
+                <SplitPanel
+                  gameAbility={state.nextRound.left}
+                  showCooldown={false}
+                  side="right"
+                  isCorrect={null}
+                  skipAnimation={true}
+                />
+              ) : (
+                // Placeholder panel when nextRound not yet loaded
+                <div className="h-full bg-dark-blue" />
+              )}
+            </div>
+          </div>
+        ) : state.phase === 'transitioning' && state.nextRound ? (
+          // Desktop: Carousel slide transition
+          <>
+            {/* Exiting left - slides out to left */}
+            <div className="absolute inset-y-0 left-0 w-1/2 z-10 gpu-accelerated">
+              <SplitPanel
+                gameAbility={state.currentRound.left}
+                showCooldown={true}
+                side="left"
+                isCorrect={null}
+                exitAnimation="left"
+              />
+            </div>
+            {/* Old right moving to left position */}
+            <SplitPanel
+              gameAbility={state.currentRound.right}
+              showCooldown={true}
+              side="left"
+              isCorrect={state.lastGuessCorrect}
+              enterAnimation="shift-left"
+            />
+            {/* VS divider */}
+            <div className="relative z-20 flex items-center justify-center md:h-auto md:w-0 shrink-0">
+              <VsDivider />
+            </div>
+            {/* New right entering from off-screen right */}
+            <SplitPanel
+              gameAbility={state.nextRound.left}
+              showCooldown={false}
+              side="right"
+              isCorrect={null}
+              enterAnimation="right"
+            />
+          </>
         ) : (
-          // Normal two-panel rendering
+          // Desktop: Normal two-panel rendering
           <>
             {/* Left panel: Known ability (always shows cooldown) */}
             <SplitPanel

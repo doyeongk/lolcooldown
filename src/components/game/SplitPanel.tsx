@@ -62,7 +62,7 @@ export function SplitPanel({
   return (
     <div
       className={`
-        relative h-[calc(var(--vh,1vh)*50)] md:h-full md:flex-1 flex flex-col items-center justify-center
+        relative h-full md:flex-1 flex flex-col items-center justify-center
         overflow-hidden ${panelAnimation}
         ${side === 'left' ? 'pt-16 pb-10 md:pt-0 md:pb-0' : ''}
       `}

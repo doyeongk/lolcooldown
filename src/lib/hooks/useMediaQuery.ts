@@ -30,20 +30,3 @@ export function useMediaQuery(query: string): boolean {
 export function useIsMobile(): boolean {
   return useMediaQuery('(max-width: 767px)')
 }
-
-/**
- * Detect iOS Safari specifically (for working around WebKit bugs).
- * Returns false during SSR, then updates on client.
- */
-export function useIsIOSSafari(): boolean {
-  const [isIOSSafari, setIsIOSSafari] = useState(false)
-
-  useEffect(() => {
-    const ua = navigator.userAgent
-    const isIOS = /iPad|iPhone|iPod/.test(ua)
-    const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS/.test(ua)
-    setIsIOSSafari(isIOS && isSafari)
-  }, [])
-
-  return isIOSSafari
-}
