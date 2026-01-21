@@ -20,7 +20,7 @@ import type {
 
 const INITIAL_LIVES = 3
 const REVEAL_DELAY = 1500
-const TRANSITION_DELAY = 500
+const TRANSITION_DELAY = 300
 
 const initialState: GameState = {
   phase: 'idle',

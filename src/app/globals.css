@@ -272,11 +272,13 @@
 
   /* Mobile cross-fade utilities */
   .animate-panel-cross-fade-exit {
-    animation: panel-cross-fade-exit 0.4s ease-out forwards;
+    animation: panel-cross-fade-exit 0.3s ease-out forwards;
+    will-change: opacity;
   }
 
   .animate-panel-cross-fade-enter {
-    animation: panel-cross-fade-enter 0.4s ease-out forwards;
+    animation: panel-cross-fade-enter 0.3s ease-out both;
+    will-change: opacity;
   }
 
   .animate-number-pop {
