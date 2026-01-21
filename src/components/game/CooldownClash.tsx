@@ -9,6 +9,7 @@ import { ScoreDisplay } from './ScoreDisplay'
 import { GameOver } from './GameOver'
 import { useLocalStorage } from '@/lib/hooks/useLocalStorage'
 import { useImagePreloader } from '@/lib/hooks/useImagePreloader'
+import { useIsMobile } from '@/lib/hooks/useMediaQuery'
 import type {
   GameState,
   GameAction,
@@ -19,7 +20,7 @@ import type {
 
 const INITIAL_LIVES = 3
 const REVEAL_DELAY = 1500
-const TRANSITION_DELAY = 800
+const TRANSITION_DELAY = 500
 
 const initialState: GameState = {
   phase: 'idle',
@@ -133,6 +134,33 @@ export function CooldownClash() {
   const [state, dispatch] = useReducer(gameReducer, initialState)
   const [storedHighScore, setStoredHighScore] = useLocalStorage('cooldown-clash-highscore', 0)
   const isFetchingRef = useRef(false)
+  const prevPhaseRef = useRef<string>(state.phase)
+  const animatedRoundIdRef = useRef<string | null>(null)
+  const isMobile = useIsMobile()
+
+  // Generate stable ID for current round
+  const currentRoundId = state.currentRound
+    ? `${state.currentRound.left.ability.id}-${state.currentRound.right.ability.id}`
+    : null
+
+  // Check if this is a NEW round (different from what we last animated)
+  const isNewRound = currentRoundId !== animatedRoundIdRef.current
+
+  // Skip animation if:
+  // 1. Same round we already processed, OR
+  // 2. New round but coming from transitioning phase (carousel already animated)
+  const skipPanelAnimation = !isNewRound ||
+    (isNewRound && prevPhaseRef.current === 'transitioning')
+
+  // SYNCHRONOUSLY mark this round as processed BEFORE effects run
+  if (isNewRound && state.phase === 'playing') {
+    animatedRoundIdRef.current = currentRoundId
+  }
+
+  // Update prevPhaseRef after each render
+  useEffect(() => {
+    prevPhaseRef.current = state.phase
+  })
 
   // Preload next round images into browser cache
   const nextRoundImages = useMemo(() => {
@@ -285,28 +313,116 @@ export function CooldownClash() {
         role="region"
         aria-label="Ability comparison"
       >
-        {/* Left panel: Known ability (always shows cooldown) */}
-        <SplitPanel
-          gameAbility={state.currentRound.left}
-          showCooldown={true}
-          side="left"
-          isCorrect={null}
-        />
+        {state.phase === 'transitioning' && state.nextRound ? (
+          // Three-element carousel transition (desktop) or cross-fade (mobile)
+          isMobile ? (
+            // Mobile: Cross-fade transition
+            <>
+              {/* Exiting left - fades out */}
+              <div className="absolute inset-0 h-[calc(var(--vh,1vh)*50)] z-10">
+                <SplitPanel
+                  gameAbility={state.currentRound.left}
+                  showCooldown={true}
+                  side="left"
+                  isCorrect={null}
+                  exitAnimation="cross-fade"
+                />
+              </div>
+              {/* Entering left (old right) - fades in */}
+              <SplitPanel
+                gameAbility={state.currentRound.right}
+                showCooldown={true}
+                side="left"
+                isCorrect={state.lastGuessCorrect}
+                enterAnimation="cross-fade"
+              />
+              {/* VS divider */}
+              <div className="relative z-20 flex items-center justify-center h-0 shrink-0">
+                <VsDivider />
+              </div>
+              {/* Exiting right - fades out */}
+              <div className="absolute inset-0 top-[calc(var(--vh,1vh)*50)] h-[calc(var(--vh,1vh)*50)] z-10">
+                <SplitPanel
+                  gameAbility={state.currentRound.right}
+                  showCooldown={true}
+                  side="right"
+                  isCorrect={state.lastGuessCorrect}
+                  exitAnimation="cross-fade"
+                />
+              </div>
+              {/* Entering right - fades in */}
+              <SplitPanel
+                gameAbility={state.nextRound.left}
+                showCooldown={false}
+                side="right"
+                isCorrect={null}
+                enterAnimation="cross-fade"
+              />
+            </>
+          ) : (
+            // Desktop: Carousel slide transition
+            <>
+              {/* Exiting left - slides out to left */}
+              <div className="absolute inset-y-0 left-0 w-1/2 z-10">
+                <SplitPanel
+                  gameAbility={state.currentRound.left}
+                  showCooldown={true}
+                  side="left"
+                  isCorrect={null}
+                  exitAnimation="left"
+                />
+              </div>
+              {/* Old right moving to left position */}
+              <SplitPanel
+                gameAbility={state.currentRound.right}
+                showCooldown={true}
+                side="left"
+                isCorrect={state.lastGuessCorrect}
+                enterAnimation="shift-left"
+              />
+              {/* VS divider */}
+              <div className="relative z-20 flex items-center justify-center md:h-auto md:w-0 shrink-0">
+                <VsDivider />
+              </div>
+              {/* New right entering from off-screen right */}
+              <SplitPanel
+                gameAbility={state.nextRound.left}
+                showCooldown={false}
+                side="right"
+                isCorrect={null}
+                enterAnimation="right"
+              />
+            </>
+          )
+        ) : (
+          // Normal two-panel rendering
+          <>
+            {/* Left panel: Known ability (always shows cooldown) */}
+            <SplitPanel
+              gameAbility={state.currentRound.left}
+              showCooldown={true}
+              side="left"
+              isCorrect={null}
+              skipAnimation={skipPanelAnimation}
+            />
 
-        {/* VS divider - zero-height/width flex item */}
-        <div className="relative z-20 flex items-center justify-center h-0 md:h-auto md:w-0 shrink-0">
-          <VsDivider />
-        </div>
+            {/* VS divider - zero-height/width flex item */}
+            <div className="relative z-20 flex items-center justify-center h-0 md:h-auto md:w-0 shrink-0">
+              <VsDivider />
+            </div>
 
-        {/* Right panel: Challenger ability + buttons */}
-        <SplitPanel
-          gameAbility={state.currentRound.right}
-          showCooldown={isRevealing}
-          side="right"
-          isCorrect={isRevealing ? state.lastGuessCorrect : null}
-          onGuess={handleGuess}
-          guessDisabled={state.phase !== 'playing'}
-        />
+            {/* Right panel: Challenger ability + buttons */}
+            <SplitPanel
+              gameAbility={state.currentRound.right}
+              showCooldown={isRevealing}
+              side="right"
+              isCorrect={isRevealing ? state.lastGuessCorrect : null}
+              onGuess={handleGuess}
+              guessDisabled={state.phase !== 'playing'}
+              skipAnimation={skipPanelAnimation}
+            />
+          </>
+        )}
       </div>
 
       {/* Mobile guess buttons - fixed at bottom, hidden on desktop via CSS */}

@@ -14,6 +14,9 @@ interface SplitPanelProps {
   isCorrect: boolean | null
   onGuess?: (choice: GuessChoice) => void
   guessDisabled?: boolean
+  exitAnimation?: 'left' | 'cross-fade'
+  enterAnimation?: 'right' | 'shift-left' | 'cross-fade'
+  skipAnimation?: boolean
 }
 
 export function SplitPanel({
@@ -23,6 +26,9 @@ export function SplitPanel({
   isCorrect,
   onGuess,
   guessDisabled = false,
+  exitAnimation,
+  enterAnimation,
+  skipAnimation = false,
 }: SplitPanelProps) {
   const { ability, level, cooldown } = gameAbility
   const { champion } = ability
@@ -34,8 +40,25 @@ export function SplitPanel({
         ? 'bg-red-500/30'
         : ''
 
-  const panelAnimation =
-    side === 'left' ? 'animate-panel-slide-left' : 'animate-panel-slide-right'
+  // Determine animation class based on transition state
+  let panelAnimation = ''
+  if (skipAnimation) {
+    panelAnimation = ''  // No animation - panels already in position
+  } else if (exitAnimation === 'left') {
+    panelAnimation = 'animate-panel-exit-left'
+  } else if (exitAnimation === 'cross-fade') {
+    panelAnimation = 'animate-panel-cross-fade-exit'
+  } else if (enterAnimation === 'shift-left') {
+    panelAnimation = 'animate-panel-shift-left'
+  } else if (enterAnimation === 'right') {
+    panelAnimation = 'animate-panel-enter-right'
+  } else if (enterAnimation === 'cross-fade') {
+    panelAnimation = 'animate-panel-cross-fade-enter'
+  } else if (side === 'left') {
+    panelAnimation = 'animate-panel-slide-left'
+  } else {
+    panelAnimation = 'animate-panel-slide-right'
+  }
 
   return (
     <div
