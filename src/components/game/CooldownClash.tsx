@@ -4,7 +4,6 @@ import { useReducer, useEffect, useCallback, useRef, useMemo, useState } from 'r
 import Link from 'next/link'
 import { SplitPanel } from './SplitPanel'
 import { VsDivider } from './VsDivider'
-import { MobileGuessButtons } from './MobileGuessButtons'
 import { ScoreDisplay } from './ScoreDisplay'
 import { GameOver } from './GameOver'
 import { useLocalStorage } from '@/lib/hooks/useLocalStorage'
@@ -449,13 +448,6 @@ export function CooldownClash() {
           </>
         )}
       </div>
-
-      {/* Mobile guess buttons - fixed at bottom, hidden on desktop via CSS */}
-      <MobileGuessButtons
-        onGuess={handleGuess}
-        disabled={state.phase !== 'playing'}
-        hidden={isRevealing}
-      />
 
       {state.phase === 'gameover' && (
         <GameOver

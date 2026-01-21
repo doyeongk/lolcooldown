@@ -104,7 +104,7 @@ export function SplitPanel({
       />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-4 gap-2 md:gap-4 py-4 md:py-6">
+      <div className="relative z-10 flex flex-col items-center text-center px-4 gap-2 md:gap-4 py-4 md:py-6 h-full md:h-auto">
         {/* Champion name + slot */}
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg">
           <span className="text-foreground">{champion.name}</span>{' '}
@@ -128,8 +128,11 @@ export function SplitPanel({
           Lv. {level}
         </span>
 
+        {/* Spacer - pushes action slot to vertical center of remaining space on mobile */}
+        <div className="flex-1 md:hidden" />
+
         {/* Action slot - fixed height for layout stability */}
-        <div className="mt-2 md:mt-6 h-[56px] md:h-[110px] flex items-center justify-center">
+        <div className="md:mt-6 h-[56px] md:h-[110px] flex items-center justify-center">
           {showCooldown ? (
             <p
               className={`text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg ${
@@ -144,6 +147,9 @@ export function SplitPanel({
             <div className="w-48" />
           )}
         </div>
+
+        {/* Bottom spacer - balances the top spacer to center action slot */}
+        <div className="flex-1 md:hidden" />
       </div>
     </div>
   )
