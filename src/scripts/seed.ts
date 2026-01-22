@@ -2,6 +2,8 @@ import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import * as fs from "fs";
+import * as path from "path";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -9,6 +11,10 @@ const prisma = new PrismaClient({ adapter });
 
 const CDRAGON_BASE =
   "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1";
+const CDRAGON_ASSET_BASE =
+  "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/";
+const PUBLIC_DIR = path.join(process.cwd(), "public");
+const IMAGES_DIR = path.join(PUBLIC_DIR, "images");
 
 // CDragon interfaces
 interface CDragonChampionSummary {
@@ -65,6 +71,43 @@ async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function ensureDir(dir: string): void {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
+async function downloadImage(
+  url: string,
+  localPath: string
+): Promise<boolean> {
+  // Skip if already exists
+  if (fs.existsSync(localPath)) {
+    return true;
+  }
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn(`  Failed to download ${url}: ${response.status}`);
+      return false;
+    }
+    const buffer = await response.arrayBuffer();
+    ensureDir(path.dirname(localPath));
+    fs.writeFileSync(localPath, Buffer.from(buffer));
+    return true;
+  } catch (error) {
+    console.warn(`  Error downloading ${url}:`, error);
+    return false;
+  }
+}
+
+function getCdragonUrl(assetPath: string): string {
+  // CDragon paths look like: /lol-game-data/assets/ASSETS/Characters/Ahri/...
+  const relativePath = assetPath.replace("/lol-game-data/assets/", "");
+  return CDRAGON_ASSET_BASE + relativePath.toLowerCase();
+}
+
 async function fetchChampionList(): Promise<CDragonChampionSummary[]> {
   console.log("Fetching champion list from CDragon...");
   const response = await fetch(`${CDRAGON_BASE}/champion-summary.json`);
@@ -86,12 +129,62 @@ async function fetchChampion(id: number): Promise<CDragonChampion> {
   return response.json();
 }
 
-function normaliseIconPath(path: string): string {
-  // CDragon paths look like: /lol-game-data/assets/ASSETS/Characters/Ahri/...
-  // The CDN requires lowercase paths
-  const base = "https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/";
-  const relativePath = path.replace("/lol-game-data/assets/", "");
-  return base + relativePath.toLowerCase();
+async function downloadChampionIcon(
+  championKey: string,
+  assetPath: string
+): Promise<string> {
+  const url = getCdragonUrl(assetPath);
+  const ext = path.extname(assetPath) || ".png";
+  const localPath = path.join(IMAGES_DIR, "champions", `${championKey}${ext}`);
+  const webPath = `/images/champions/${championKey}${ext}`;
+
+  await downloadImage(url, localPath);
+  return webPath;
+}
+
+async function downloadAbilityIcon(
+  championKey: string,
+  slot: string,
+  assetPath: string
+): Promise<string> {
+  const url = getCdragonUrl(assetPath);
+  const ext = path.extname(assetPath) || ".png";
+  const localPath = path.join(
+    IMAGES_DIR,
+    "abilities",
+    championKey,
+    `${slot}${ext}`
+  );
+  const webPath = `/images/abilities/${championKey}/${slot}${ext}`;
+
+  await downloadImage(url, localPath);
+  return webPath;
+}
+
+async function downloadSkinSplash(
+  skinId: number,
+  assetPath: string
+): Promise<string> {
+  const url = getCdragonUrl(assetPath);
+  const ext = path.extname(assetPath) || ".jpg";
+  const localPath = path.join(IMAGES_DIR, "splashes", `${skinId}${ext}`);
+  const webPath = `/images/splashes/${skinId}${ext}`;
+
+  await downloadImage(url, localPath);
+  return webPath;
+}
+
+async function downloadSkinTile(
+  skinId: number,
+  assetPath: string
+): Promise<string> {
+  const url = getCdragonUrl(assetPath);
+  const ext = path.extname(assetPath) || ".jpg";
+  const localPath = path.join(IMAGES_DIR, "tiles", `${skinId}${ext}`);
+  const webPath = `/images/tiles/${skinId}${ext}`;
+
+  await downloadImage(url, localPath);
+  return webPath;
 }
 
 async function seedChampion(
@@ -99,6 +192,51 @@ async function seedChampion(
   champion: CDragonChampion
 ): Promise<void> {
   const slotMap: Record<string, string> = { q: "Q", w: "W", e: "E", r: "R" };
+  const championKey = champion.alias.toLowerCase();
+
+  // Download champion icon
+  const championIconPath = await downloadChampionIcon(
+    championKey,
+    summary.squarePortraitPath
+  );
+
+  // Download ability icons
+  const passiveIconPath = await downloadAbilityIcon(
+    championKey,
+    "P",
+    champion.passive.abilityIconPath
+  );
+
+  const spellIcons: Record<string, string> = {};
+  for (const spell of champion.spells) {
+    const slot = slotMap[spell.spellKey];
+    if (!slot) continue;
+    spellIcons[slot] = await downloadAbilityIcon(
+      championKey,
+      slot,
+      spell.abilityIconPath
+    );
+  }
+
+  // Download skin images (only base skin splash to keep size manageable)
+  const skinPaths: Record<
+    number,
+    { splashPath: string; tilePath: string }
+  > = {};
+  for (const skin of champion.skins) {
+    // Only download base skin to save space/time, others use CDragon
+    if (skin.isBase) {
+      skinPaths[skin.id] = {
+        splashPath: await downloadSkinSplash(skin.id, skin.splashPath),
+        tilePath: await downloadSkinTile(skin.id, skin.tilePath),
+      };
+    } else {
+      skinPaths[skin.id] = {
+        splashPath: getCdragonUrl(skin.splashPath),
+        tilePath: getCdragonUrl(skin.tilePath),
+      };
+    }
+  }
 
   await prisma.$transaction(async (tx) => {
     // Upsert champion
@@ -109,14 +247,14 @@ async function seedChampion(
         key: champion.alias,
         name: champion.name,
         title: champion.title,
-        icon: normaliseIconPath(summary.squarePortraitPath),
+        icon: championIconPath,
         roles: champion.roles,
       },
       update: {
         key: champion.alias,
         name: champion.name,
         title: champion.title,
-        icon: normaliseIconPath(summary.squarePortraitPath),
+        icon: championIconPath,
         roles: champion.roles,
       },
     });
@@ -132,7 +270,7 @@ async function seedChampion(
         championId: dbChampion.id,
         slot: "P",
         name: champion.passive.name,
-        icon: normaliseIconPath(champion.passive.abilityIconPath),
+        icon: passiveIconPath,
         cooldowns: [],
         affectedByCdr: !STATIC_COOLDOWN_ABILITIES.has(passiveKey),
         costs: [],
@@ -151,7 +289,7 @@ async function seedChampion(
           slot,
           name: spell.name,
           description: spell.description || null,
-          icon: normaliseIconPath(spell.abilityIconPath),
+          icon: spellIcons[slot],
           cooldowns: spell.cooldownCoefficients.slice(0, 5),
           affectedByCdr: !STATIC_COOLDOWN_ABILITIES.has(abilityKey),
           costs: spell.costCoefficients.slice(0, 5),
@@ -161,6 +299,7 @@ async function seedChampion(
 
     // Insert skins
     for (const skin of champion.skins) {
+      const paths = skinPaths[skin.id];
       await tx.skin.create({
         data: {
           championId: dbChampion.id,
@@ -169,8 +308,8 @@ async function seedChampion(
           isBase: skin.isBase,
           rarity: skin.rarity.replace(/^k/, "") || null, // "kMythic" → "Mythic"
           isLegacy: skin.isLegacy,
-          splashPath: normaliseIconPath(skin.splashPath),
-          tilePath: normaliseIconPath(skin.tilePath),
+          splashPath: paths.splashPath,
+          tilePath: paths.tilePath,
         },
       });
     }
@@ -179,6 +318,13 @@ async function seedChampion(
 
 async function main(): Promise<void> {
   console.log("Starting database seed (CDragon)...\n");
+
+  // Create image directories
+  console.log("Creating image directories...");
+  ensureDir(path.join(IMAGES_DIR, "champions"));
+  ensureDir(path.join(IMAGES_DIR, "abilities"));
+  ensureDir(path.join(IMAGES_DIR, "splashes"));
+  ensureDir(path.join(IMAGES_DIR, "tiles"));
 
   const championList = await fetchChampionList();
   console.log(`Found ${championList.length} champions to seed\n`);
