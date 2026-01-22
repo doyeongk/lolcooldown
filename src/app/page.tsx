@@ -125,7 +125,7 @@ export default function Home() {
               title="Random Champions"
               description="Any champion, any ability"
               href="/play/random"
-              variant="secondary"
+              variant="primary"
             />
           </motion.div>
         </motion.div>
