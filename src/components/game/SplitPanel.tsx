@@ -1,11 +1,56 @@
 'use client'
 
 import Image from 'next/image'
-import { motion } from 'framer-motion'
+import { motion, type Variants, type Transition } from 'framer-motion'
 import { AbilityIcon } from './AbilityIcon'
 import { GuessButtons } from './GuessButtons'
-import { numberPop } from '@/lib/motion'
+import { numberPop, useReducedMotion } from '@/lib/motion'
 import type { GameAbility, GuessChoice } from '@/types/game'
+
+// Panel transition timing (matches existing CSS: 0.5s ease-out for carousel, 0.4s for slides, 0.3s for cross-fade)
+const panelTransition: Transition = {
+  type: 'tween',
+  ease: [0.25, 0.1, 0.25, 1], // cubic-bezier approximating ease-out
+  duration: 0.5,
+}
+
+const slideTransition: Transition = {
+  type: 'tween',
+  ease: [0.25, 0.1, 0.25, 1],
+  duration: 0.4,
+}
+
+const crossFadeTransition: Transition = {
+  type: 'tween',
+  ease: [0.25, 0.1, 0.25, 1],
+  duration: 0.3,
+}
+
+// Panel variants for different animation states
+const panelVariants: Variants = {
+  // Default entrance from left side
+  enterFromLeft: { x: '-100%', opacity: 0 },
+  // Default entrance from right side
+  enterFromRight: { x: '100%', opacity: 0 },
+  // Carousel: enter from right (no opacity change)
+  carouselEnterRight: { x: '100%', opacity: 1 },
+  // Carousel: shift from right position to center
+  carouselShiftFromRight: { x: '100%', opacity: 1 },
+  // Center/visible position
+  center: { x: 0, y: 0, opacity: 1 },
+  // Carousel: exit to left
+  exitLeft: { x: '-100%', opacity: 1 },
+  // Cross-fade: enter with fade
+  crossFadeEnter: { opacity: 0 },
+  // Cross-fade: exit with fade
+  crossFadeExit: { opacity: 0 },
+  // Mobile vertical: enter from bottom
+  slideUpEnter: { y: '100%', opacity: 1 },
+  // Mobile vertical: exit to top
+  slideUpExit: { y: '-100%', opacity: 1 },
+  // Mobile vertical: shift from bottom
+  slideUpShift: { y: '100%', opacity: 1 },
+}
 
 const SPLASH_BLUR = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAACAAoDASIAAhEBAxEB/8QAHAAAAQUBAQEAAAAAAAAAAAAAAAIDBEEDBAUF/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAA8A/9k="
 
@@ -34,43 +79,64 @@ export function SplitPanel({
 }: SplitPanelProps) {
   const { ability, level, cooldown } = gameAbility
   const { champion } = ability
+  const prefersReducedMotion = useReducedMotion()
 
-  // Determine animation class based on transition state
-  let panelAnimation = ''
-  if (skipAnimation) {
-    panelAnimation = ''  // No animation - panels already in position
-  } else if (exitAnimation === 'left') {
-    panelAnimation = 'animate-panel-exit-left'
-  } else if (exitAnimation === 'cross-fade') {
-    panelAnimation = 'animate-panel-cross-fade-exit'
-  } else if (exitAnimation === 'slide-up') {
-    panelAnimation = 'animate-panel-slide-up-exit'
-  } else if (enterAnimation === 'shift-left') {
-    panelAnimation = 'animate-panel-shift-left'
-  } else if (enterAnimation === 'right') {
-    panelAnimation = 'animate-panel-enter-right'
-  } else if (enterAnimation === 'cross-fade') {
-    panelAnimation = 'animate-panel-cross-fade-enter'
-  } else if (enterAnimation === 'slide-up-shift') {
-    panelAnimation = 'animate-panel-slide-up-shift'
-  } else if (enterAnimation === 'slide-up') {
-    panelAnimation = 'animate-panel-slide-up-enter'
-  } else if (side === 'left') {
-    panelAnimation = 'animate-panel-slide-left'
-  } else {
-    panelAnimation = 'animate-panel-slide-right'
+  // Determine animation states based on props
+  const getAnimationState = (): {
+    initial: string | false
+    animate: string
+    transition: Transition
+  } => {
+    // Skip animation entirely (reduced motion or explicit skip)
+    if (skipAnimation || prefersReducedMotion) {
+      return { initial: false, animate: 'center', transition: panelTransition }
+    }
+
+    // Exit animations
+    if (exitAnimation === 'left') {
+      return { initial: 'center', animate: 'exitLeft', transition: panelTransition }
+    }
+    if (exitAnimation === 'cross-fade') {
+      return { initial: 'center', animate: 'crossFadeExit', transition: crossFadeTransition }
+    }
+    if (exitAnimation === 'slide-up') {
+      return { initial: 'center', animate: 'slideUpExit', transition: slideTransition }
+    }
+
+    // Enter animations
+    if (enterAnimation === 'shift-left') {
+      return { initial: 'carouselShiftFromRight', animate: 'center', transition: panelTransition }
+    }
+    if (enterAnimation === 'right') {
+      return { initial: 'carouselEnterRight', animate: 'center', transition: panelTransition }
+    }
+    if (enterAnimation === 'cross-fade') {
+      return { initial: 'crossFadeEnter', animate: 'center', transition: crossFadeTransition }
+    }
+    if (enterAnimation === 'slide-up-shift') {
+      return { initial: 'slideUpShift', animate: 'center', transition: slideTransition }
+    }
+    if (enterAnimation === 'slide-up') {
+      return { initial: 'slideUpEnter', animate: 'center', transition: slideTransition }
+    }
+
+    // Default slide-in based on side
+    if (side === 'left') {
+      return { initial: 'enterFromLeft', animate: 'center', transition: slideTransition }
+    }
+    return { initial: 'enterFromRight', animate: 'center', transition: slideTransition }
   }
 
+  const animationState = getAnimationState()
+
   return (
-    <div
-      className={`
-        relative h-full md:flex-1 flex flex-col items-center justify-center
-        overflow-hidden ${panelAnimation}
-        pt-16 pb-6 md:pt-0 md:pb-0
-      `}
+    <motion.div
+      className="relative h-full md:flex-1 flex flex-col items-center justify-center overflow-hidden pt-16 pb-6 md:pt-0 md:pb-0"
+      variants={panelVariants}
+      initial={animationState.initial}
+      animate={animationState.animate}
+      transition={animationState.transition}
       style={{
-        transform: 'translate3d(0, 0, 0)',
-        WebkitTransform: 'translate3d(0, 0, 0)',
         backfaceVisibility: 'hidden',
         WebkitBackfaceVisibility: 'hidden',
       }}
@@ -155,6 +221,6 @@ export function SplitPanel({
         {/* Bottom spacer - balances the top spacer to center action slot */}
         <div className="flex-1 md:hidden" />
       </div>
-    </div>
+    </motion.div>
   )
 }

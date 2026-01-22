@@ -1,6 +1,8 @@
 'use client'
 
 import { Heart } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useReducedMotion } from '@/lib/motion'
 
 interface ScoreDisplayProps {
   score: number
@@ -10,6 +12,16 @@ interface ScoreDisplayProps {
 }
 
 export function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDisplayProps) {
+  const prefersReducedMotion = useReducedMotion()
+
+  const scoreTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, stiffness: 400, damping: 20 }
+
+  const heartTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, stiffness: 300, damping: 20 }
+
   return (
     <div
       className="
@@ -28,11 +40,19 @@ export function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDis
 
       <div className="flex gap-1" aria-label={`${lives} lives remaining`}>
         {Array.from({ length: maxLives }).map((_, i) => (
-          <Heart
+          <motion.span
             key={i}
-            className={`w-5 h-5 md:w-6 md:h-6 transition-opacity ${i < lives ? 'opacity-100 fill-red-500 text-red-500' : 'opacity-30 text-red-500/50'}`}
-            aria-hidden="true"
-          />
+            animate={{
+              scale: prefersReducedMotion ? 1 : (i < lives ? 1 : 0.8),
+              opacity: i < lives ? 1 : 0.3,
+            }}
+            transition={heartTransition}
+          >
+            <Heart
+              className={`w-5 h-5 md:w-6 md:h-6 ${i < lives ? 'fill-red-500 text-red-500' : 'text-red-500/50'}`}
+              aria-hidden="true"
+            />
+          </motion.span>
         ))}
       </div>
 
@@ -40,7 +60,18 @@ export function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDis
 
       <div className="flex items-center gap-2">
         <span className="text-xs text-foreground/60 uppercase tracking-wide">Score</span>
-        <span className="text-lg md:text-xl font-bold text-gold">{score}</span>
+        <AnimatePresence mode="popLayout">
+          <motion.span
+            key={score}
+            initial={prefersReducedMotion ? false : { scale: 1.3, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={prefersReducedMotion ? undefined : { scale: 0.8, opacity: 0 }}
+            transition={scoreTransition}
+            className="text-lg md:text-xl font-bold text-gold"
+          >
+            {score}
+          </motion.span>
+        </AnimatePresence>
       </div>
     </div>
   )

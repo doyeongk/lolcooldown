@@ -3,6 +3,7 @@
 import { useReducer, useEffect, useCallback, useRef, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { SplitPanel } from './SplitPanel'
 import { VsDivider } from './VsDivider'
 import { GuessButtons } from './GuessButtons'
@@ -11,6 +12,7 @@ import { GameOver } from './GameOver'
 import { useLocalStorage } from '@/lib/hooks/useLocalStorage'
 import { useImagePreloader } from '@/lib/hooks/useImagePreloader'
 import { useIsMobile } from '@/lib/hooks/useMediaQuery'
+import { useReducedMotion } from '@/lib/motion'
 import type {
   GameState,
   GameAction,
@@ -18,11 +20,38 @@ import type {
   GuessChoice,
   Difficulty,
 } from '@/types/game'
+import type { Variants, Transition } from 'framer-motion'
 
 const INITIAL_LIVES = 3
 const REVEAL_DELAY = 1500
 const MOBILE_TRANSITION_DELAY = 450  // 400ms animation + 50ms buffer
 const DESKTOP_TRANSITION_DELAY = 550 // 500ms animation + 50ms buffer
+
+// Mobile carousel panel variants for Framer Motion
+// Panel positions use transform-based positioning relative to h-1/2 containers:
+// - Panel 1 (top): y=0 normally, y=-100% when exiting up
+// - Panel 2 (middle): y=100% normally (top-1/2), y=0 when shifting up
+// - Panel 3 (bottom): y=200% normally (top-full, hidden), y=100% when entering
+const mobileCarouselTransition: Transition = {
+  type: 'tween',
+  ease: 'easeOut',
+  duration: 0.4,
+}
+
+const mobilePanel1Variants: Variants = {
+  static: { y: 0 },
+  exit: { y: '-100%' },
+}
+
+const mobilePanel2Variants: Variants = {
+  static: { y: '100%' },
+  shift: { y: 0 },
+}
+
+const mobilePanel3Variants: Variants = {
+  hidden: { y: '200%' },
+  enter: { y: '100%' },
+}
 
 const initialState: GameState = {
   phase: 'idle',
@@ -139,6 +168,7 @@ export function CooldownClash() {
   const [prevPhase, setPrevPhase] = useState<string>(state.phase)
   const [animatedRoundId, setAnimatedRoundId] = useState<string | null>(null)
   const isMobile = useIsMobile()
+  const prefersReducedMotion = useReducedMotion()
 
   // Generate stable ID for current round
   const currentRoundId = state.currentRound
@@ -305,15 +335,20 @@ export function CooldownClash() {
         aria-label="Ability comparison"
       >
         {isMobile ? (
-          // Mobile: Stable 3-panel DOM structure (no DOM changes during transitions)
+          // Mobile: Stable 3-panel DOM structure with Framer Motion animations
           <div className="relative h-full w-full overflow-hidden">
             {/* Panel 1: Top (exits during transition) */}
-            <div
-              className={`absolute inset-x-0 h-1/2 ${
+            <motion.div
+              className="absolute inset-x-0 h-1/2"
+              style={{ top: 0 }}
+              variants={mobilePanel1Variants}
+              initial={false}
+              animate={
                 state.phase === 'transitioning' && state.nextRound
-                  ? 'animate-mobile-exit-up z-10'
-                  : 'top-0'
-              }`}
+                  ? 'exit'
+                  : 'static'
+              }
+              transition={prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition}
             >
               <SplitPanel
                 gameAbility={state.currentRound.left}
@@ -322,15 +357,20 @@ export function CooldownClash() {
                 isCorrect={null}
                 skipAnimation={skipPanelAnimation}
               />
-            </div>
+            </motion.div>
 
             {/* Panel 2: Middle (shifts up during transition) */}
-            <div
-              className={`absolute inset-x-0 h-1/2 ${
+            <motion.div
+              className="absolute inset-x-0 h-1/2"
+              style={{ top: 0 }}
+              variants={mobilePanel2Variants}
+              initial={false}
+              animate={
                 state.phase === 'transitioning' && state.nextRound
-                  ? 'animate-mobile-shift-up'
-                  : 'top-1/2'
-              }`}
+                  ? 'shift'
+                  : 'static'
+              }
+              transition={prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition}
             >
               <SplitPanel
                 gameAbility={state.currentRound.right}
@@ -341,7 +381,7 @@ export function CooldownClash() {
                 guessDisabled={state.phase !== 'playing'}
                 skipAnimation={skipPanelAnimation}
               />
-            </div>
+            </motion.div>
 
             {/* VS divider */}
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center h-0 shrink-0">
@@ -349,12 +389,21 @@ export function CooldownClash() {
             </div>
 
             {/* Panel 3: Bottom (enters during transition, hidden otherwise) */}
-            <div
+            <motion.div
               className={`absolute inset-x-0 h-1/2 ${
-                state.phase === 'transitioning' && state.nextRound
-                  ? 'animate-mobile-enter-up'
-                  : 'top-full pointer-events-none'
+                !(state.phase === 'transitioning' && state.nextRound)
+                  ? 'pointer-events-none'
+                  : ''
               }`}
+              style={{ top: 0 }}
+              variants={mobilePanel3Variants}
+              initial={false}
+              animate={
+                state.phase === 'transitioning' && state.nextRound
+                  ? 'enter'
+                  : 'hidden'
+              }
+              transition={prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition}
             >
               {state.nextRound ? (
                 <SplitPanel
@@ -370,7 +419,7 @@ export function CooldownClash() {
                 // Placeholder panel when nextRound not yet loaded
                 <div className="h-full bg-dark-blue" />
               )}
-            </div>
+            </motion.div>
           </div>
         ) : state.phase === 'transitioning' && state.nextRound ? (
           // Desktop: Carousel slide transition
