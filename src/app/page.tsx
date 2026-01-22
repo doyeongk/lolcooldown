@@ -110,6 +110,7 @@ export default function Home() {
           animate="visible"
           className="mt-16 w-full max-w-sm space-y-3"
         >
+{/* TODO: Re-enable when "Main Champions" gamemode is implemented
           <motion.div variants={cardVariants}>
             <GameModeCard
               title="Choose Your Champion"
@@ -118,10 +119,11 @@ export default function Home() {
               variant="primary"
             />
           </motion.div>
+*/}
           <motion.div variants={cardVariants}>
             <GameModeCard
               title="Random Champions"
-              description="Random abilities, higher stakes"
+              description="Any champion, any ability"
               href="/play/random"
               variant="secondary"
             />
