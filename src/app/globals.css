@@ -296,6 +296,25 @@
   }
 }
 
+/* Icon wall marquee animations */
+@keyframes icon-scroll-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes icon-scroll-right {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
 
 @layer utilities {
   .animate-cooldown-reveal {
@@ -387,6 +406,17 @@
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
   }
+
+  /* Icon wall marquee utilities */
+  .animate-icon-scroll-left {
+    animation: icon-scroll-left linear infinite;
+    will-change: transform;
+  }
+
+  .animate-icon-scroll-right {
+    animation: icon-scroll-right linear infinite;
+    will-change: transform;
+  }
 }
 
 /* Ability description styles */
@@ -424,7 +454,9 @@
   .animate-panel-slide-up-enter,
   .animate-mobile-exit-up,
   .animate-mobile-shift-up,
-  .animate-mobile-enter-up {
+  .animate-mobile-enter-up,
+  .animate-icon-scroll-left,
+  .animate-icon-scroll-right {
     animation: none;
   }
 }

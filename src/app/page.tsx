@@ -4,6 +4,7 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import { Crown, Shuffle } from "lucide-react"
 import { GameModeCard } from "@/components/home/GameModeCard"
+import { IconWall } from "@/components/home/IconWall"
 import { useLocalStorage } from "@/lib/hooks/useLocalStorage"
 
 export default function Home() {
@@ -11,6 +12,7 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-4">
+      <IconWall />
       {/* Hero Title */}
       <motion.h1
         initial={{ opacity: 0, y: 20 }}
