@@ -35,6 +35,7 @@ export function AbilityIcon({ icon, name, description }: AbilityIconProps) {
           fill
           sizes="(max-width: 640px) 48px, 64px"
           className="object-cover"
+          priority
         />
       ) : null}
     </button>
