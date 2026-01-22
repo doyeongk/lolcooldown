@@ -15,7 +15,8 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "npx tsx src/scripts/seed.ts",
     "db:studio": "prisma studio",
-    "deploy": "bash scripts/deploy.sh"
+    "deploy": "bash scripts/deploy.sh",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.2.0",
