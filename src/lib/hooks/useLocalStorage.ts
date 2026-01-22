@@ -1,51 +1,46 @@
 'use client'
 
-import { useState, useCallback, useSyncExternalStore } from 'react'
-
-function getStorageValue<T>(key: string, initialValue: T): T {
-  if (typeof window === 'undefined') return initialValue
-  try {
-    const item = window.localStorage.getItem(key)
-    return item ? JSON.parse(item) : initialValue
-  } catch {
-    return initialValue
-  }
-}
+import { useSyncExternalStore, useCallback, useRef } from 'react'
 
 export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
-  // Use useSyncExternalStore for localStorage to avoid hydration mismatches
+  // Use ref to store initialValue for stable getServerSnapshot
+  const initialValueRef = useRef(initialValue)
+
   const subscribe = useCallback(
     (callback: () => void) => {
       const handler = (e: StorageEvent) => {
-        if (e.key === key) callback()
+        if (e.key === key || e.key === null) callback()
       }
       window.addEventListener('storage', handler)
-      return () => window.removeEventListener('storage', handler)
+      // Also listen for custom events from same-tab updates
+      window.addEventListener(`localStorage:${key}`, callback)
+      return () => {
+        window.removeEventListener('storage', handler)
+        window.removeEventListener(`localStorage:${key}`, callback)
+      }
     },
     [key]
   )
 
   const getSnapshot = useCallback(() => {
-    return JSON.stringify(getStorageValue(key, initialValue))
-  }, [key, initialValue])
+    try {
+      const item = window.localStorage.getItem(key)
+      return item ? (JSON.parse(item) as T) : initialValueRef.current
+    } catch {
+      return initialValueRef.current
+    }
+  }, [key])
 
-  const getServerSnapshot = useCallback(() => {
-    return JSON.stringify(initialValue)
-  }, [initialValue])
+  const getServerSnapshot = () => initialValueRef.current
 
-  const serializedValue = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
-  const value = JSON.parse(serializedValue) as T
-
-  // Local state for immediate updates (external store only notifies on storage events)
-  const [localValue, setLocalValue] = useState<T | null>(null)
+  const value = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
   const setValue = useCallback(
     (newValue: T) => {
       try {
-        setLocalValue(newValue)
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem(key, JSON.stringify(newValue))
-        }
+        window.localStorage.setItem(key, JSON.stringify(newValue))
+        // Dispatch custom event for same-tab updates
+        window.dispatchEvent(new Event(`localStorage:${key}`))
       } catch (error) {
         console.warn(`Error setting localStorage key "${key}":`, error)
       }
@@ -53,5 +48,5 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T)
     [key]
   )
 
-  return [localValue ?? value, setValue]
+  return [value, setValue]
 }

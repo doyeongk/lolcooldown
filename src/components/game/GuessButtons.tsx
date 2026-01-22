@@ -75,7 +75,7 @@ export function GuessButtons({ onGuess, disabled, hidden = false, variant = 'inl
           flex items-center justify-center gap-2
           px-6 py-3 rounded-full
           bg-white/10 text-foreground font-bold text-lg
-          border-2 border-white/30
+          border border-white/30
           transition-all duration-200
           hover:bg-white/20 hover:scale-105
           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue

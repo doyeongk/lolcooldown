@@ -19,7 +19,6 @@ interface SplitPanelProps {
   exitAnimation?: 'left' | 'cross-fade' | 'slide-up'
   enterAnimation?: 'right' | 'shift-left' | 'cross-fade' | 'slide-up-shift' | 'slide-up'
   skipAnimation?: boolean
-  hideCooldown?: boolean
 }
 
 export function SplitPanel({
@@ -32,7 +31,6 @@ export function SplitPanel({
   exitAnimation,
   enterAnimation,
   skipAnimation = false,
-  hideCooldown = false,
 }: SplitPanelProps) {
   const { ability, level, cooldown } = gameAbility
   const { champion } = ability
@@ -68,7 +66,7 @@ export function SplitPanel({
       className={`
         relative h-full md:flex-1 flex flex-col items-center justify-center
         overflow-hidden ${panelAnimation}
-        ${side === 'left' ? 'pt-16 pb-10 md:pt-0 md:pb-0' : ''}
+        pt-16 pb-6 md:pt-0 md:pb-0
       `}
       style={{
         transform: 'translate3d(0, 0, 0)',
@@ -108,7 +106,7 @@ export function SplitPanel({
       />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-4 gap-2 md:gap-4 py-4 md:py-6">
+      <div className="relative z-10 flex flex-col items-center text-center px-4 gap-2 md:gap-4 py-4 md:py-6 h-full md:h-auto">
         {/* Champion name + slot */}
         <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg">
           <span className="text-foreground">{champion.name}</span>{' '}
@@ -132,24 +130,30 @@ export function SplitPanel({
           Lv. {level}
         </span>
 
-        {/* Cooldown or buttons */}
-        {!hideCooldown && (
-          <div className="mt-2 md:mt-6 md:min-h-[110px] md:flex md:items-center md:justify-center">
-            {showCooldown ? (
-              <motion.p
-                key={`cooldown-${cooldown}`}
-                variants={side === 'right' ? numberPop : undefined}
-                initial={side === 'right' ? 'hidden' : false}
-                animate={side === 'right' ? 'visible' : undefined}
-                className="text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg"
-              >
-                {cooldown}s
-              </motion.p>
-            ) : onGuess ? (
-              <GuessButtons onGuess={onGuess} disabled={guessDisabled} />
-            ) : null}
-          </div>
-        )}
+        {/* Spacer - pushes action slot to vertical center of remaining space on mobile */}
+        <div className="flex-1 md:hidden" />
+
+        {/* Action slot - fixed height for layout stability */}
+        <div className="md:mt-6 h-[56px] md:h-[110px] flex items-center justify-center">
+          {showCooldown ? (
+            <motion.p
+              key={`cooldown-${cooldown}`}
+              variants={side === 'right' ? numberPop : undefined}
+              initial={side === 'right' ? 'hidden' : false}
+              animate={side === 'right' ? 'visible' : undefined}
+              className="text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg"
+            >
+              {cooldown}s
+            </motion.p>
+          ) : onGuess ? (
+            <GuessButtons onGuess={onGuess} disabled={guessDisabled} />
+          ) : (
+            <div className="w-48" />
+          )}
+        </div>
+
+        {/* Bottom spacer - balances the top spacer to center action slot */}
+        <div className="flex-1 md:hidden" />
       </div>
     </div>
   )
