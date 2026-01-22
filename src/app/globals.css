@@ -67,60 +67,45 @@
     --gold-hover: #d4c066;
     --dark-blue: #172b3b;
     --dark-blue-hover: #1e3a4a;
-    --gradient-top: #172b3b;
-    --gradient-bottom: #90f5f3;
+    --background: #0f0d0a;
     --foreground: #e7e9ea;
     --ring: #e3cf74;
-    --ring-offset: #172b3b;
+    --ring-offset: #0f0d0a;
   }
 
   html {
-    background-color: var(--gradient-top);
+    background-color: var(--background);
     overscroll-behavior: none;
     overflow: hidden;
   }
 
   body {
+    /* Dark bronze/sepia base - warm undertones complement gold accents */
     background: linear-gradient(
       170deg,
-      #172b3b 0%,
-      #1a3040 25%,
-      #1e3a4a 45%,
-      #172b3b 65%,
-      rgba(144, 245, 243, 0.12) 100%
+      #0f0d0a 0%,
+      #1a1611 30%,
+      #0d0b08 60%,
+      #0f0d0a 100%
     );
-    background-size: 100% 400%;
     min-height: 100vh; /* Fallback */
     min-height: 100svh; /* Modern browsers */
     color: var(--foreground);
     font-family: var(--font-sans), Arial, Helvetica, sans-serif;
     overflow: hidden;
     overscroll-behavior: none;
-    animation: gradient-breathe 12s ease-in-out infinite;
   }
 
-  /* Grid pattern overlay */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(227, 207, 116, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(227, 207, 116, 0.03) 1px, transparent 1px);
-    background-size: 48px 48px;
-    pointer-events: none;
-    z-index: 0;
-  }
 
-  /* Gold inner glow */
+  /* Subtle gold ambient glow */
   body::after {
     content: "";
     position: fixed;
     inset: 0;
     background: radial-gradient(
-      ellipse at 50% 30%,
-      rgba(227, 207, 116, 0.06) 0%,
-      transparent 55%
+      ellipse at 50% 40%,
+      rgba(227, 207, 116, 0.08) 0%,
+      transparent 50%
     );
     pointer-events: none;
     z-index: 0;
@@ -315,6 +300,36 @@
   }
 }
 
+/* Netflix-style wall drift animation */
+@keyframes wall-drift {
+  from {
+    transform: rotateX(20deg) translateY(-15%);
+  }
+  to {
+    transform: rotateX(20deg) translateY(-25%);
+  }
+}
+
+/* Horizontal row scroll animation (left to right) */
+@keyframes icon-row-scroll {
+  from {
+    transform: translateX(calc(-1 * var(--row-width)));
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Gold particle float animation */
+@keyframes particle-float {
+  0% {
+    transform: translateY(100vh) translateX(0);
+  }
+  100% {
+    transform: translateY(-10vh) translateX(20px);
+  }
+}
+
 
 @layer utilities {
   .animate-cooldown-reveal {
@@ -417,6 +432,23 @@
     animation: icon-scroll-right linear infinite;
     will-change: transform;
   }
+
+  /* Netflix-style wall drift */
+  .animate-wall-drift {
+    animation: wall-drift 60s linear infinite;
+    will-change: transform;
+  }
+
+  /* Horizontal row scroll (uses CSS custom properties for dynamic speed) */
+  .animate-icon-row-scroll {
+    animation: icon-row-scroll var(--row-speed, 60s) linear infinite;
+    will-change: transform;
+  }
+
+  /* Gold particle float */
+  .animate-particle-float {
+    animation: particle-float linear infinite;
+  }
 }
 
 /* Ability description styles */
@@ -456,7 +488,10 @@
   .animate-mobile-shift-up,
   .animate-mobile-enter-up,
   .animate-icon-scroll-left,
-  .animate-icon-scroll-right {
+  .animate-icon-scroll-right,
+  .animate-wall-drift,
+  .animate-icon-row-scroll,
+  .animate-particle-float {
     animation: none;
   }
 }

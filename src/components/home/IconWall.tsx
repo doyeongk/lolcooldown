@@ -1,160 +1,110 @@
 "use client"
 
-import { useMemo, useState, useCallback } from "react"
+import { useMemo, useEffect, useState } from "react"
 import Image from "next/image"
-import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { useReducedMotion } from "@/lib/motion"
 import { useIsMobile } from "@/lib/hooks/useMediaQuery"
-import { CHAMPION_ICONS, shuffleArray, chunkArray } from "@/lib/data/champion-icons"
+import { CHAMPION_SPLASHES } from "@/lib/data/champion-splashes"
+import { shuffleArray } from "@/lib/data/champion-icons"
 
-// Layer configuration type
-interface LayerConfig {
-  size: number
-  opacity: number
-  duration: number
-  rows: number
-  gap: number
+// Splash art dimensions (1.7:1 aspect ratio) - large for cinematic feel
+const SPLASH_SIZE = {
+  mobile: { width: 200, height: 118 },
+  desktop: { width: 360, height: 212 },
 }
 
-// Layer configuration for parallax depth effect
-const LAYER_CONFIG: Record<"back" | "middle" | "front", LayerConfig> = {
-  back: { size: 32, opacity: 0.06, duration: 100, rows: 3, gap: 16 },
-  middle: { size: 48, opacity: 0.1, duration: 80, rows: 3, gap: 20 },
-  front: { size: 56, opacity: 0.14, duration: 65, rows: 2, gap: 24 },
-}
+const GAP = 6 // Tight gaps for gallery feel
 
-// Mobile uses single simplified layer
-const MOBILE_CONFIG: LayerConfig = { size: 40, opacity: 0.06, duration: 120, rows: 4, gap: 16 }
+// Row speeds in seconds - slow and uniform for calm background
+const ROW_SPEEDS = [140, 155, 145, 160, 150, 165, 148, 158]
 
-interface IconWallIconProps {
+// Depth tiers: edge rows are "further away" (dimmer), center rows are "closer" (brighter)
+const ROW_BRIGHTNESS = [0.28, 0.33, 0.40, 0.45, 0.45, 0.40, 0.33, 0.28]
+
+// All same direction - alternating was too distracting
+const ROW_REVERSE = [false, false, false, false, false, false, false, false]
+
+interface SplashTileProps {
   src: string
-  size: number
-  index: number
-  hoveredIndex: number | null
-  onHoverStart: () => void
-  onHoverEnd: () => void
-  disableHover?: boolean
+  size: { width: number; height: number }
 }
 
-function IconWallIcon({
-  src,
-  size,
-  index,
-  hoveredIndex,
-  onHoverStart,
-  onHoverEnd,
-  disableHover,
-}: IconWallIconProps) {
-  const isHovered = hoveredIndex === index
-  const isNeighbor =
-    hoveredIndex !== null && Math.abs(hoveredIndex - index) === 1
-
-  if (disableHover) {
-    return (
-      <div
-        className="flex-shrink-0 rounded-md overflow-hidden"
-        style={{ width: size, height: size }}
-      >
-        <Image
-          src={src}
-          alt=""
-          width={size}
-          height={size}
-          className="grayscale"
-          aria-hidden="true"
-          draggable={false}
-        />
-      </div>
-    )
-  }
-
+function SplashTile({ src, size }: SplashTileProps) {
   return (
-    <motion.div
-      className="flex-shrink-0 rounded-md overflow-hidden cursor-default"
-      style={{ width: size, height: size }}
-      onHoverStart={onHoverStart}
-      onHoverEnd={onHoverEnd}
-      animate={{
-        scale: isHovered ? 1.2 : isNeighbor ? 1.08 : 1,
-        rotate: isHovered ? [0, -3, 3, -2, 2, 0] : 0,
-        filter: isHovered
-          ? "grayscale(0%) brightness(1.1)"
-          : "grayscale(100%) brightness(1)",
-      }}
-      transition={{
-        scale: { type: "spring", stiffness: 300, damping: 20 },
-        rotate: { duration: 0.5, ease: "easeInOut" },
-        filter: { duration: 0.2 },
+    <div
+      className="flex-shrink-0 border-2 border-black/80 ring-1 ring-gold/20"
+      style={{
+        width: size.width,
+        height: size.height,
       }}
     >
       <Image
         src={src}
         alt=""
-        width={size}
-        height={size}
-        className="grayscale"
+        width={size.width}
+        height={size.height}
+        className="object-cover w-full h-full"
         aria-hidden="true"
         draggable={false}
       />
-    </motion.div>
+    </div>
   )
 }
 
-interface IconWallRowProps {
-  icons: string[]
-  direction: "left" | "right"
-  duration: number
-  size: number
-  gap: number
-  disableHover?: boolean
+interface SplashRowProps {
+  splashes: string[]
+  speed: number
+  offset: boolean
+  size: { width: number; height: number }
+  disableAnimation: boolean
+  rowIndex: number
+  reverse: boolean
+  brightness: number
 }
 
-function IconWallRow({
-  icons,
-  direction,
-  duration,
-  size,
-  gap,
-  disableHover,
-}: IconWallRowProps) {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+function SplashRow({ splashes, speed, offset, size, disableAnimation, rowIndex, reverse, brightness }: SplashRowProps) {
+  // Triple the splashes for seamless infinite scroll
+  const tripleSplashes = useMemo(() => [...splashes, ...splashes, ...splashes], [splashes])
 
-  // Duplicate icons for seamless loop
-  const allIcons = useMemo(() => [...icons, ...icons], [icons])
+  // Calculate total row width for animation (use base size for consistency)
+  const rowWidth = splashes.length * (size.width + GAP)
 
-  const handleHoverStart = useCallback((index: number) => {
-    setHoveredIndex(index)
-  }, [])
-
-  const handleHoverEnd = useCallback(() => {
-    setHoveredIndex(null)
-  }, [])
+  // Non-uniform stagger delays for organic feel
+  const staggerDelays = [-15, -42, -8, -67, -25, -89, -31, -53]
 
   return (
-    <div className="overflow-hidden">
+    <div
+      className="flex items-center"
+      style={{
+        gap: `${GAP}px`,
+        // Brick pattern offset: shift every other row by half a tile
+        marginLeft: offset ? `${(size.width + GAP) / 2}px` : 0,
+        // Per-row brightness for depth
+        filter: `brightness(${brightness})`,
+      }}
+    >
       <div
         className={cn(
-          "flex",
-          direction === "left"
-            ? "animate-icon-scroll-left"
-            : "animate-icon-scroll-right"
+          "flex items-center",
+          !disableAnimation && "animate-icon-row-scroll"
         )}
         style={{
-          animationDuration: `${duration}s`,
-          gap: `${gap}px`,
-        }}
+          gap: `${GAP}px`,
+          // CSS custom properties for animation
+          "--row-width": `${rowWidth}px`,
+          "--row-speed": `${speed}s`,
+          // Stagger start positions with non-uniform delays
+          animationDelay: `${staggerDelays[rowIndex % staggerDelays.length]}s`,
+          // Alternate direction for organic feel
+          animationDirection: reverse ? "reverse" : "normal",
+        } as React.CSSProperties}
       >
-        {allIcons.map((src, i) => (
-          <IconWallIcon
+        {tripleSplashes.map((src, i) => (
+          <SplashTile
             key={`${src}-${i}`}
             src={src}
             size={size}
-            index={i}
-            hoveredIndex={hoveredIndex}
-            onHoverStart={() => handleHoverStart(i)}
-            onHoverEnd={handleHoverEnd}
-            disableHover={disableHover}
           />
         ))}
       </div>
@@ -162,112 +112,104 @@ function IconWallRow({
   )
 }
 
-interface IconWallLayerProps {
-  icons: string[]
-  config: LayerConfig
-  className?: string
-  disableHover?: boolean
-}
-
-function IconWallLayer({
-  icons,
-  config,
-  className,
-  disableHover,
-}: IconWallLayerProps) {
-  const { size, duration, rows, gap } = config
-
-  // Shuffle and chunk icons into rows
-  const rowData = useMemo(() => {
-    const shuffled = shuffleArray(icons)
-    const iconsPerRow = Math.ceil(shuffled.length / rows)
-    return chunkArray(shuffled, iconsPerRow)
-  }, [icons, rows])
-
-  return (
-    <div className={cn("flex flex-col justify-around h-full", className)} style={{ gap: `${gap}px` }}>
-      {rowData.map((rowIcons, i) => (
-        <IconWallRow
-          key={i}
-          icons={rowIcons}
-          direction={i % 2 === 0 ? "left" : "right"}
-          duration={duration + i * 8}
-          size={size}
-          gap={gap}
-          disableHover={disableHover}
-        />
-      ))}
-    </div>
-  )
-}
-
 export function IconWall() {
   const reducedMotion = useReducedMotion()
   const isMobile = useIsMobile()
+  const [mounted, setMounted] = useState(false)
 
-  // Don't render if user prefers reduced motion
-  if (reducedMotion) return null
-
-  // Split icons across layers (desktop) or use all for mobile
-  const [backIcons, middleIcons, frontIcons] = useMemo(() => {
-    const shuffled = shuffleArray(CHAMPION_ICONS)
-    const third = Math.ceil(shuffled.length / 3)
-    return [
-      shuffled.slice(0, third),
-      shuffled.slice(third, third * 2),
-      shuffled.slice(third * 2),
-    ]
+  useEffect(() => {
+    setMounted(true)
   }, [])
 
-  // Mobile: simplified single layer
-  if (isMobile) {
-    return (
-      <div
-        className="fixed inset-0 -z-10 overflow-hidden pointer-events-none"
-        role="presentation"
-        aria-hidden="true"
-      >
-        <div style={{ opacity: MOBILE_CONFIG.opacity }} className="h-full">
-          <IconWallLayer
-            icons={CHAMPION_ICONS.slice(0, 30)}
-            config={MOBILE_CONFIG}
-            disableHover
-          />
-        </div>
-      </div>
-    )
+  // Determine splash size based on viewport
+  const splashSize = isMobile ? SPLASH_SIZE.mobile : SPLASH_SIZE.desktop
+
+  // Calculate how many rows we need to fill the viewport
+  const rowCount = 8
+
+  // Shuffle and distribute splashes across rows
+  const rowData = useMemo(() => {
+    const shuffled = shuffleArray(CHAMPION_SPLASHES)
+    // Roughly 12-15 splashes per row to ensure we fill width + extra for loop
+    const splashesPerRow = 15
+    const rows: string[][] = []
+
+    for (let i = 0; i < rowCount; i++) {
+      const rowSplashes: string[] = []
+      for (let j = 0; j < splashesPerRow; j++) {
+        // Cycle through shuffled splashes
+        rowSplashes.push(shuffled[(i * splashesPerRow + j) % shuffled.length])
+      }
+      rows.push(rowSplashes)
+    }
+
+    return rows
+  }, [rowCount])
+
+  if (!mounted) {
+    return null
   }
 
-  // Desktop: three parallax layers
   return (
     <div
-      className="fixed inset-0 -z-10 overflow-hidden pointer-events-auto"
+      className="fixed inset-0 -z-10 overflow-hidden pointer-events-none"
       role="presentation"
       aria-hidden="true"
     >
-      {/* Back layer - smallest, slowest, dimmest */}
+      {/* Icon grid container */}
       <div
-        className="absolute inset-0"
-        style={{ opacity: LAYER_CONFIG.back.opacity }}
+        className="absolute inset-0 flex flex-col justify-center"
+        style={{
+          gap: `${GAP}px`,
+          // Extend beyond viewport edges for seamless effect
+          marginLeft: "-5%",
+          marginRight: "-5%",
+          width: "110%",
+          // Base saturation reduction (brightness now per-row)
+          filter: "saturate(0.7)",
+        }}
       >
-        <IconWallLayer icons={backIcons} config={LAYER_CONFIG.back} />
+        {rowData.map((splashes, i) => (
+          <SplashRow
+            key={i}
+            splashes={splashes}
+            speed={ROW_SPEEDS[i % ROW_SPEEDS.length]}
+            offset={i % 2 === 1} // Brick pattern
+            size={splashSize}
+            disableAnimation={reducedMotion ?? false}
+            rowIndex={i}
+            reverse={ROW_REVERSE[i % ROW_REVERSE.length]}
+            brightness={ROW_BRIGHTNESS[i % ROW_BRIGHTNESS.length]}
+          />
+        ))}
       </div>
 
-      {/* Middle layer */}
+      {/* Blur vignette - creates depth-of-field effect (sharp center, blurred edges) */}
       <div
-        className="absolute inset-0 top-6"
-        style={{ opacity: LAYER_CONFIG.middle.opacity }}
-      >
-        <IconWallLayer icons={middleIcons} config={LAYER_CONFIG.middle} />
-      </div>
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(4px)",
+          maskImage: "radial-gradient(ellipse 70% 60% at center, transparent 0%, black 70%)",
+          WebkitMaskImage: "radial-gradient(ellipse 70% 60% at center, transparent 0%, black 70%)",
+        }}
+      />
 
-      {/* Front layer - largest, fastest, brightest */}
+      {/* Atmospheric haze - adds distance/fog between bg and content */}
       <div
-        className="absolute inset-0 top-12"
-        style={{ opacity: LAYER_CONFIG.front.opacity }}
-      >
-        <IconWallLayer icons={frontIcons} config={LAYER_CONFIG.front} />
-      </div>
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "radial-gradient(ellipse 80% 70% at center, rgba(15, 13, 10, 0.15) 0%, rgba(15, 13, 10, 0.5) 100%)",
+        }}
+      />
+
+      {/* Radial vignette - cinematic darkening toward edges */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "radial-gradient(ellipse 85% 75% at center, transparent 20%, rgba(0, 0, 0, 0.4) 55%, rgba(0, 0, 0, 0.85) 100%)",
+        }}
+      />
     </div>
   )
 }
