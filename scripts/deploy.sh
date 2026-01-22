@@ -10,4 +10,4 @@ if [ -z "$DEPLOY_HOST" ]; then
   exit 1
 fi
 
-ssh "$DEPLOY_HOST" 'cd Code/lolcooldown && git pull && docker compose -f docker-compose.prod.yml build && docker compose --env-file .env.prod -f docker-compose.prod.yml up -d'
+ssh "$DEPLOY_HOST" 'cd /home/do/Code/lolcooldown && git pull && docker compose -f docker-compose.prod.yml build && docker compose --env-file .env.prod -f docker-compose.prod.yml up -d'
