@@ -83,10 +83,10 @@
     /* Dark bronze/sepia base - warm undertones complement gold accents */
     background: linear-gradient(
       170deg,
-      #0f0d0a 0%,
-      #1a1611 30%,
-      #0d0b08 60%,
-      #0f0d0a 100%
+      #191714 0%,
+      #24201b 30%,
+      #171512 60%,
+      #191714 100%
     );
     min-height: 100vh; /* Fallback */
     min-height: 100svh; /* Modern browsers */
