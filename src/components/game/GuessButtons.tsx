@@ -36,7 +36,7 @@ export function GuessButtons({ onGuess, disabled, hidden = false, variant = 'inl
             whileTap={!prefersReducedMotion && !disabled ? { scale: 0.98 } : undefined}
             whileHover={!prefersReducedMotion && !disabled ? { boxShadow: '0 0 20px rgba(var(--gold-rgb), 0.3)' } : undefined}
             transition={springTransition}
-            className="relative flex-1 flex items-center justify-center gap-2 px-4 py-4 rounded-lg bg-gradient-to-b from-black/50 to-black/60 backdrop-blur-sm text-foreground font-bold text-base uppercase tracking-wide border-2 border-gold/30 shadow-lg shadow-black/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue disabled:opacity-50 touch-manipulation hover:border-gold/60"
+            className="relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-b from-black/50 to-black/60 backdrop-blur-sm text-foreground font-bold text-base uppercase tracking-wide border-2 border-gold/30 shadow-lg shadow-black/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue disabled:opacity-50 touch-manipulation hover:border-gold/60"
             aria-label="Guess lower cooldown"
           >
             <ChevronDown className="w-5 h-5" strokeWidth={3} aria-hidden="true" />
@@ -48,7 +48,7 @@ export function GuessButtons({ onGuess, disabled, hidden = false, variant = 'inl
             disabled={disabled}
             whileTap={!prefersReducedMotion && !disabled ? { scale: 0.98 } : undefined}
             transition={springTransition}
-            className="relative flex-1 flex items-center justify-center gap-2 px-4 py-4 rounded-lg bg-gold text-dark-blue font-bold text-base uppercase tracking-wide shadow-[0_0_16px_rgba(227,207,116,0.3)] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue disabled:opacity-50 touch-manipulation hover:shadow-[0_0_24px_rgba(227,207,116,0.5)]"
+            className="relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gold text-dark-blue font-bold text-base uppercase tracking-wide shadow-[0_0_16px_rgba(227,207,116,0.3)] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue disabled:opacity-50 touch-manipulation hover:shadow-[0_0_24px_rgba(227,207,116,0.5)]"
             aria-label="Guess higher cooldown"
           >
             <ChevronUp className="w-5 h-5" strokeWidth={3} aria-hidden="true" />
