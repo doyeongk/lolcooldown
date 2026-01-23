@@ -57,16 +57,36 @@ const panelVariants: Variants = {
 
 const SPLASH_BLUR = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAACAAoDASIAAhEBAxEB/8QAHAAAAQUBAQEAAAAAAAAAAAAAAAIDBEEDBAUF/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAA8A/9k="
 
-// Click zone hover glow variants
-const clickZoneVariants: Variants = {
+// Click zone hover overlay variants
+const clickZoneOverlayVariants: Variants = {
   idle: {
-    boxShadow: 'inset 0 0 0 rgba(var(--gold-rgb), 0)',
+    opacity: 0,
   },
-  hoverTop: {
-    boxShadow: 'inset 0 4px 20px rgba(var(--gold-rgb), 0.4)',
+  active: {
+    opacity: 1,
   },
-  hoverBottom: {
-    boxShadow: 'inset 0 -4px 20px rgba(var(--gold-rgb), 0.4)',
+}
+
+// Chevron bounce animation variants
+const chevronVariants: Variants = {
+  idle: {
+    y: 0,
+  },
+  activeUp: {
+    y: [0, -4, 0],
+    transition: {
+      duration: 0.8,
+      ease: 'easeInOut',
+      repeat: Infinity,
+    },
+  },
+  activeDown: {
+    y: [0, 4, 0],
+    transition: {
+      duration: 0.8,
+      ease: 'easeInOut',
+      repeat: Infinity,
+    },
   },
 }
 
@@ -85,18 +105,43 @@ function ClickZones({ onGuess, disabled }: ClickZonesProps) {
     }
   }
 
+  const isTopActive = hoveredZone === 'top' && !disabled
+  const isBottomActive = hoveredZone === 'bottom' && !disabled
+
   return (
     <>
-      {/* Overlay showing hover state glow */}
+      {/* Center divider line */}
+      <div
+        className="absolute left-0 right-0 top-1/2 h-px z-20 pointer-events-none"
+        style={{
+          background: 'linear-gradient(90deg, transparent 10%, rgba(var(--gold-rgb), 0.3) 50%, transparent 90%)',
+        }}
+      />
+
+      {/* Top zone gradient overlay */}
       <motion.div
-        className="absolute inset-0 pointer-events-none z-20"
-        variants={clickZoneVariants}
+        className="absolute inset-x-0 top-0 h-1/2 pointer-events-none z-20"
+        variants={clickZoneOverlayVariants}
         initial="idle"
-        animate={
-          hoveredZone === 'top' ? 'hoverTop' :
-          hoveredZone === 'bottom' ? 'hoverBottom' : 'idle'
-        }
-        transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
+        animate={isTopActive ? 'active' : 'idle'}
+        transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.25 }}
+        style={{
+          background: 'linear-gradient(to bottom, rgba(var(--gold-rgb), 0.2) 0%, rgba(var(--gold-rgb), 0.08) 40%, transparent 100%)',
+          boxShadow: 'inset 0 2px 20px rgba(var(--gold-rgb), 0.4)',
+        }}
+      />
+
+      {/* Bottom zone gradient overlay */}
+      <motion.div
+        className="absolute inset-x-0 bottom-0 h-1/2 pointer-events-none z-20"
+        variants={clickZoneOverlayVariants}
+        initial="idle"
+        animate={isBottomActive ? 'active' : 'idle'}
+        transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.25 }}
+        style={{
+          background: 'linear-gradient(to top, rgba(var(--gold-rgb), 0.2) 0%, rgba(var(--gold-rgb), 0.08) 40%, transparent 100%)',
+          boxShadow: 'inset 0 -2px 20px rgba(var(--gold-rgb), 0.4)',
+        }}
       />
 
       {/* Top click zone - HIGHER */}
@@ -106,17 +151,33 @@ function ClickZones({ onGuess, disabled }: ClickZonesProps) {
         onMouseEnter={() => !disabled && setHoveredZone('top')}
         onMouseLeave={() => setHoveredZone(null)}
         disabled={disabled}
-        className="absolute inset-x-0 top-0 h-1/2 z-30 cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-inset"
+        className="absolute inset-x-0 top-0 h-1/2 z-30 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-inset"
         aria-label="Guess higher cooldown"
       >
-        {/* Subtle label with icon */}
+        {/* Label with animated icon */}
         <motion.div
-          className="absolute top-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-40"
-          animate={{ opacity: hoveredZone === 'top' && !disabled ? 0.9 : 0.4 }}
+          className="absolute top-5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5"
+          animate={{
+            opacity: isTopActive ? 1 : 0.7,
+            scale: isTopActive ? 1.1 : 1,
+          }}
           transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
         >
-          <ChevronUp className="w-5 h-5 text-gold" strokeWidth={2.5} />
-          <span className="text-xs font-semibold uppercase tracking-widest text-gold">Higher</span>
+          <motion.div
+            variants={chevronVariants}
+            initial="idle"
+            animate={isTopActive && !prefersReducedMotion ? 'activeUp' : 'idle'}
+          >
+            <ChevronUp className="w-8 h-8 text-gold drop-shadow-[0_0_8px_rgba(var(--gold-rgb),0.5)]" strokeWidth={2.5} />
+          </motion.div>
+          <span
+            className="text-sm font-bold uppercase tracking-widest text-gold drop-shadow-[0_0_8px_rgba(var(--gold-rgb),0.4)]"
+            style={{
+              textShadow: isTopActive ? '0 0 16px rgba(var(--gold-rgb), 1)' : undefined,
+            }}
+          >
+            Higher
+          </span>
         </motion.div>
       </button>
 
@@ -127,20 +188,35 @@ function ClickZones({ onGuess, disabled }: ClickZonesProps) {
         onMouseEnter={() => !disabled && setHoveredZone('bottom')}
         onMouseLeave={() => setHoveredZone(null)}
         disabled={disabled}
-        className="absolute inset-x-0 bottom-0 h-1/2 z-30 cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-inset"
+        className="absolute inset-x-0 bottom-0 h-1/2 z-30 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-inset"
         aria-label="Guess lower cooldown"
       >
-        {/* Subtle label with icon */}
+        {/* Label with animated icon */}
         <motion.div
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-40"
-          animate={{ opacity: hoveredZone === 'bottom' && !disabled ? 0.9 : 0.4 }}
+          className="absolute bottom-5 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5"
+          animate={{
+            opacity: isBottomActive ? 1 : 0.7,
+            scale: isBottomActive ? 1.1 : 1,
+          }}
           transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
         >
-          <span className="text-xs font-semibold uppercase tracking-widest text-gold">Lower</span>
-          <ChevronDown className="w-5 h-5 text-gold" strokeWidth={2.5} />
+          <span
+            className="text-sm font-bold uppercase tracking-widest text-gold drop-shadow-[0_0_8px_rgba(var(--gold-rgb),0.4)]"
+            style={{
+              textShadow: isBottomActive ? '0 0 16px rgba(var(--gold-rgb), 1)' : undefined,
+            }}
+          >
+            Lower
+          </span>
+          <motion.div
+            variants={chevronVariants}
+            initial="idle"
+            animate={isBottomActive && !prefersReducedMotion ? 'activeDown' : 'idle'}
+          >
+            <ChevronDown className="w-8 h-8 text-gold drop-shadow-[0_0_8px_rgba(var(--gold-rgb),0.5)]" strokeWidth={2.5} />
+          </motion.div>
         </motion.div>
       </button>
-
     </>
   )
 }
