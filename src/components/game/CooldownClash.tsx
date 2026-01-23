@@ -3,12 +3,13 @@
 import { useReducer, useEffect, useCallback, useRef, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { SplitPanel } from './SplitPanel'
 import { VsDivider } from './VsDivider'
 import { GuessButtons } from './GuessButtons'
 import { ScoreDisplay } from './ScoreDisplay'
 import { GameOver } from './GameOver'
+import { TransitionOverlay } from './TransitionOverlay'
 import { useLocalStorage } from '@/lib/hooks/useLocalStorage'
 import { useImagePreloader, useImagePreloaderWithState } from '@/lib/hooks/useImagePreloader'
 import { useIsMobile } from '@/lib/hooks/useMediaQuery'
@@ -336,31 +337,18 @@ export function CooldownClash() {
     dispatch({ type: 'RESTART' })
   }, [])
 
-  // Show loading only during initial fetch, not during image preload
-  if (state.phase === 'idle' || !state.currentRound) {
-    return (
-      <div className="flex items-center justify-center h-screen w-screen">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-            className="w-12 h-12 border-3 border-gold/30 border-t-gold rounded-full"
-          />
-          <p className="text-foreground/60 text-sm uppercase tracking-wider">Loading...</p>
-        </motion.div>
-      </div>
-    )
-  }
-
   const isRevealing = state.phase === 'revealing' || state.phase === 'transitioning'
   const isNewHighScore = state.score === state.highScore && state.score > storedHighScore
 
+  // Show overlay-only when no content ready yet
+  if (state.phase === 'idle' || !state.currentRound) {
+    return <TransitionOverlay prefersReducedMotion={prefersReducedMotion ?? false} />
+  }
+
   return (
-    <motion.div
+    <>
+      {/* Game content - starts invisible, fades in when ready */}
+      <motion.div
       className="relative h-full w-full overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: showContent ? 1 : 0 }}
@@ -566,5 +554,13 @@ export function CooldownClash() {
         onRestart={handleRestart}
       />
     </motion.div>
+
+      {/* Transition overlay - exits when content ready */}
+      <AnimatePresence>
+        {!showContent && (
+          <TransitionOverlay prefersReducedMotion={prefersReducedMotion ?? false} />
+        )}
+      </AnimatePresence>
+    </>
   )
 }

@@ -148,3 +148,17 @@ export const goldGlowPulse: Variants = {
     },
   },
 }
+
+// Expanding glow reveal for page transitions
+export const glowReveal: Variants = {
+  breathing: {
+    scale: [1, 1.3, 1],
+    opacity: [0.3, 0.5, 0.3],
+    transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+  },
+  exit: {
+    scale: 3,
+    opacity: 0,
+    transition: { duration: 0.5, ease: 'easeOut' },
+  },
+}
