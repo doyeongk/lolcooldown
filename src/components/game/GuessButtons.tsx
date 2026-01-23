@@ -34,9 +34,9 @@ export function GuessButtons({ onGuess, disabled, hidden = false, variant = 'inl
             onClick={() => onGuess('lower')}
             disabled={disabled}
             whileTap={!prefersReducedMotion && !disabled ? { scale: 0.98 } : undefined}
-            whileHover={!prefersReducedMotion && !disabled ? { boxShadow: '0 0 16px rgba(227, 207, 116, 0.3)' } : undefined}
+            whileHover={!prefersReducedMotion && !disabled ? { boxShadow: '0 0 16px rgba(var(--gold-rgb), 0.3)' } : undefined}
             transition={springTransition}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-white/20 text-foreground font-bold text-base border-2 border-gold/30 shadow-lg shadow-black/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue disabled:opacity-50 touch-manipulation"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-gradient-to-b from-black/50 to-black/60 backdrop-blur-sm text-foreground font-bold text-base border-2 border-gold/30 shadow-lg shadow-black/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue disabled:opacity-50 touch-manipulation"
             aria-label="Guess lower cooldown"
           >
             <ChevronDown className="w-5 h-5" strokeWidth={3} aria-hidden="true" />
@@ -89,16 +89,16 @@ export function GuessButtons({ onGuess, disabled, hidden = false, variant = 'inl
         type="button"
         onClick={() => onGuess('lower')}
         disabled={disabled}
-        whileHover={!prefersReducedMotion && !disabled ? { scale: 1.05, boxShadow: '0 0 16px rgba(227, 207, 116, 0.3)' } : undefined}
+        whileHover={!prefersReducedMotion && !disabled ? { scale: 1.05, boxShadow: '0 0 16px rgba(var(--gold-rgb), 0.3)' } : undefined}
         whileTap={!prefersReducedMotion && !disabled ? { scale: 0.98 } : undefined}
         transition={springTransition}
         className="
           flex items-center justify-center gap-2
           px-6 py-3 rounded-full
-          bg-white/10 text-foreground font-bold text-lg
+          bg-gradient-to-b from-black/50 to-black/60 backdrop-blur-sm text-foreground font-bold text-lg
           border border-gold/30
           transition-all duration-200
-          hover:bg-white/20
+          hover:from-black/60 hover:to-black/70
           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue
           disabled:opacity-50 disabled:cursor-not-allowed
           touch-manipulation

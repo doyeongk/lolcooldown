@@ -36,7 +36,7 @@ const fadeInUp = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { type: 'spring', stiffness: 300, damping: 25 },
+    transition: { type: 'spring' as const, stiffness: 300, damping: 25 },
   },
 }
 
@@ -64,7 +64,7 @@ export function GameOver({ open, score, highScore, isNewHighScore, onRestart }: 
           <motion.div variants={fadeInUp}>
             <DialogTitle
               className="text-3xl font-bold text-foreground mb-2"
-              style={{ textShadow: '0 0 30px rgba(227, 207, 116, 0.3)' }}
+              style={{ textShadow: '0 0 30px rgba(var(--gold-rgb), 0.3)' }}
             >
               Game Over
             </DialogTitle>
@@ -91,7 +91,7 @@ export function GameOver({ open, score, highScore, isNewHighScore, onRestart }: 
                 initial={prefersReducedMotion ? false : 'hidden'}
                 animate="visible"
                 className="text-4xl font-bold text-gold"
-                style={{ textShadow: '0 0 20px rgba(227, 207, 116, 0.4)' }}
+                style={{ textShadow: '0 0 20px rgba(var(--gold-rgb), 0.4)' }}
               >
                 {score}
               </motion.p>

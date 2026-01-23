@@ -133,13 +133,13 @@ export const gameContainerVariants: Variants = {
 // Gold glow pulse animation (2s loop)
 export const goldGlowPulse: Variants = {
   initial: {
-    textShadow: '0 0 10px rgba(227, 207, 116, 0.3)',
+    textShadow: '0 0 10px rgba(var(--gold-rgb), 0.3)',
   },
   animate: {
     textShadow: [
-      '0 0 10px rgba(227, 207, 116, 0.3)',
-      '0 0 20px rgba(227, 207, 116, 0.6)',
-      '0 0 10px rgba(227, 207, 116, 0.3)',
+      '0 0 10px rgba(var(--gold-rgb), 0.3)',
+      '0 0 20px rgba(var(--gold-rgb), 0.6)',
+      '0 0 10px rgba(var(--gold-rgb), 0.3)',
     ],
     transition: {
       duration: 2,

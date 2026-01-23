@@ -145,6 +145,7 @@ export function SplitPanel({
       {champion.splash && (
         <div className="absolute inset-0">
           <Image
+            key={`splash-${champion.id}`}
             src={champion.splash}
             alt=""
             fill
@@ -179,7 +180,7 @@ export function SplitPanel({
         {/* Champion name + slot */}
         <h2
           className="text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg"
-          style={{ textShadow: '0 0 40px rgba(227, 207, 116, 0.25)' }}
+          style={{ textShadow: '0 0 40px rgba(var(--gold-rgb), 0.25)' }}
         >
           <span className="text-foreground">{champion.name}</span>{' '}
           <span className="text-gold">{ability.slot}</span>
@@ -198,7 +199,7 @@ export function SplitPanel({
         </div>
 
         {/* Level badge */}
-        <span className="text-base md:text-lg text-foreground/70 bg-dark-blue/60 px-5 py-1.5 rounded-full border border-gold/40">
+        <span className="text-base md:text-lg text-foreground/70 bg-gradient-to-b from-black/50 to-black/60 backdrop-blur-sm px-5 py-1.5 rounded-full border border-gold/40">
           Lv. {level}
         </span>
 
@@ -214,7 +215,7 @@ export function SplitPanel({
               initial={side === 'right' ? 'hidden' : false}
               animate={side === 'right' ? 'visible' : undefined}
               className="text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg"
-              style={{ textShadow: '0 0 40px rgba(227, 207, 116, 0.5)' }}
+              style={{ textShadow: '0 0 40px rgba(var(--gold-rgb), 0.5)' }}
             >
               {cooldown}s
             </motion.p>

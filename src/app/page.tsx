@@ -88,7 +88,7 @@ export default function Home() {
           variants={itemVariants}
           className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black italic tracking-tight"
           style={{
-            textShadow: "0 0 60px rgba(227, 207, 116, 0.4), 0 0 120px rgba(227, 207, 116, 0.2)",
+            textShadow: "0 0 60px rgba(var(--gold-rgb), 0.4), 0 0 120px rgba(var(--gold-rgb), 0.2)",
           }}
         >
           <span className="text-gold">LOL</span>

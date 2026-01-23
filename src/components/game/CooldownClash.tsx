@@ -10,7 +10,7 @@ import { GuessButtons } from './GuessButtons'
 import { ScoreDisplay } from './ScoreDisplay'
 import { GameOver } from './GameOver'
 import { useLocalStorage } from '@/lib/hooks/useLocalStorage'
-import { useImagePreloader } from '@/lib/hooks/useImagePreloader'
+import { useImagePreloader, useImagePreloaderWithState } from '@/lib/hooks/useImagePreloader'
 import { useIsMobile } from '@/lib/hooks/useMediaQuery'
 import { useReducedMotion } from '@/lib/motion'
 import type {
@@ -167,6 +167,8 @@ export function CooldownClash() {
   const isFetchingRef = useRef(false)
   const [prevPhase, setPrevPhase] = useState<string>(state.phase)
   const [animatedRoundId, setAnimatedRoundId] = useState<string | null>(null)
+  const [imagesLoaded, setImagesLoaded] = useState(false)
+  const [showContent, setShowContent] = useState(false)
   const isMobile = useIsMobile()
   const prefersReducedMotion = useReducedMotion()
 
@@ -193,6 +195,20 @@ export function CooldownClash() {
     setPrevPhase(state.phase)
   }
 
+  // Preload current round images into browser cache
+  const currentRoundImages = useMemo(() => {
+    if (!state.currentRound) return []
+    const { left, right } = state.currentRound
+    return [
+      left.ability.champion.splash,
+      left.ability.champion.icon,
+      left.ability.icon,
+      right.ability.champion.splash,
+      right.ability.champion.icon,
+      right.ability.icon,
+    ]
+  }, [state.currentRound])
+
   // Preload next round images into browser cache
   const nextRoundImages = useMemo(() => {
     if (!state.nextRound) return []
@@ -207,7 +223,30 @@ export function CooldownClash() {
     ]
   }, [state.nextRound])
 
+  const currentImagesLoaded = useImagePreloaderWithState(currentRoundImages)
   useImagePreloader(nextRoundImages)
+
+  // Reset loaded state when round changes
+  useEffect(() => {
+    if (!currentImagesLoaded) {
+      setImagesLoaded(false)
+    } else if (currentImagesLoaded && state.currentRound) {
+      setImagesLoaded(true)
+    }
+  }, [currentImagesLoaded, state.currentRound])
+
+  // Delay showing content to ensure opacity 0 is painted first
+  // This guarantees the fade-in animation plays even when images are cached
+  useEffect(() => {
+    if (imagesLoaded) {
+      const rafId = requestAnimationFrame(() => {
+        setShowContent(true)
+      })
+      return () => cancelAnimationFrame(rafId)
+    } else {
+      setShowContent(false)
+    }
+  }, [imagesLoaded])
 
   // Sync high score from localStorage on mount
   useEffect(() => {
@@ -297,10 +336,22 @@ export function CooldownClash() {
     dispatch({ type: 'RESTART' })
   }, [])
 
+  // Show loading only during initial fetch, not during image preload
   if (state.phase === 'idle' || !state.currentRound) {
     return (
-      <div className="flex items-center justify-center h-screen w-screen bg-dark-blue">
-        <p className="text-foreground text-xl">Loading...</p>
+      <div className="flex items-center justify-center h-screen w-screen">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+            className="w-12 h-12 border-3 border-gold/30 border-t-gold rounded-full"
+          />
+          <p className="text-foreground/60 text-sm uppercase tracking-wider">Loading...</p>
+        </motion.div>
       </div>
     )
   }
@@ -309,7 +360,12 @@ export function CooldownClash() {
   const isNewHighScore = state.score === state.highScore && state.score > storedHighScore
 
   return (
-    <div className="relative h-full w-full overflow-hidden">
+    <motion.div
+      className="relative h-full w-full overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: showContent ? 1 : 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
       {/* Header - back button and score */}
       <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between gap-2 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-2">
         <motion.div
@@ -319,7 +375,7 @@ export function CooldownClash() {
         >
           <Link
             href="/"
-            className="block p-2 rounded-lg bg-dark-blue/80 hover:bg-dark-blue text-foreground transition-all border border-gold/30 hover:shadow-[0_0_12px_rgba(227,207,116,0.2)]"
+            className="block p-2 rounded-lg bg-gradient-to-b from-black/50 to-black/60 hover:from-black/60 hover:to-black/70 backdrop-blur-sm text-foreground transition-all border border-gold/30 hover:shadow-[0_0_12px_rgba(227,207,116,0.2)]"
             aria-label="Go back to menu"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -509,6 +565,6 @@ export function CooldownClash() {
         isNewHighScore={isNewHighScore}
         onRestart={handleRestart}
       />
-    </div>
+    </motion.div>
   )
 }

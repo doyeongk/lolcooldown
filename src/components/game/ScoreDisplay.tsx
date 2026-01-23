@@ -30,9 +30,9 @@ export function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDis
       className="
         relative inline-flex items-center gap-4 md:gap-6
         px-4 md:px-6 py-2 md:py-3
-        bg-dark-blue/80 backdrop-blur-sm
+        bg-gradient-to-b from-black/50 to-black/60 backdrop-blur-sm
         rounded-lg border border-gold/30
-        shadow-[0_0_12px_rgba(227,207,116,0.15)]
+        shadow-[0_0_12px_rgba(var(--gold-rgb),0.15)]
       "
     >
       {/* Corner bracket - top left */}
