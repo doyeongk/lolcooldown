@@ -14,6 +14,8 @@ export function useImagePreloader(urls: (string | null | undefined)[]) {
     urlKey.split(',').forEach((url) => {
       const img = new window.Image()
       img.src = url
+      // Decode image to GPU-ready state before it's needed
+      img.decode().catch(() => {})
     })
   }, [urlKey])
 }
@@ -48,9 +50,9 @@ export function useImagePreloaderWithState(urls: (string | null | undefined)[]):
 
     validUrls.forEach((url) => {
       const img = new window.Image()
-      img.onload = checkAllLoaded
-      img.onerror = checkAllLoaded
       img.src = url
+      // decode() ensures image is GPU-ready, not just downloaded
+      img.decode().then(checkAllLoaded).catch(checkAllLoaded)
     })
 
     return () => {

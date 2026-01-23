@@ -54,13 +54,15 @@ const mobilePanel3Variants: Variants = {
   enter: { y: '100%' },
 }
 
+const QUEUE_SIZE = 2  // Keep 2 rounds buffered ahead for image preloading
+
 const initialState: GameState = {
   phase: 'idle',
   score: 0,
   highScore: 0,
   lives: INITIAL_LIVES,
   currentRound: null,
-  nextRound: null,
+  roundQueue: [],
   lastGuessCorrect: null,
   difficulty: 'beginner',
 }
@@ -80,7 +82,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         phase: 'playing',
         highScore: state.highScore,
         currentRound: action.round,
-        nextRound: action.nextRound,
+        roundQueue: action.queue,
       }
 
     case 'GUESS': {
@@ -117,17 +119,18 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return { ...state, phase: 'transitioning' }
 
     case 'TRANSITION_COMPLETE': {
-      // Move current right to become new left, use fetched ability as new right
+      // Pop next round from queue
+      const [nextRound, ...remainingQueue] = state.roundQueue
       const newLeft = state.currentRound?.right
-      const newRight = action.nextRound?.left
+      const newRight = nextRound?.left
 
       if (!newLeft || !newRight) {
-        // Fallback to old behavior if something goes wrong
+        // Fallback if queue is empty (shouldn't happen normally)
         return {
           ...state,
           phase: 'playing',
-          currentRound: action.nextRound,
-          nextRound: null,
+          currentRound: nextRound ?? state.currentRound,
+          roundQueue: remainingQueue,
           lastGuessCorrect: null,
         }
       }
@@ -136,13 +139,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         phase: 'playing',
         currentRound: { left: newLeft, right: newRight },
-        nextRound: null,
+        roundQueue: remainingQueue,
         lastGuessCorrect: null,
       }
     }
 
-    case 'SET_NEXT_ROUND':
-      return { ...state, nextRound: action.round }
+    case 'QUEUE_ROUNDS':
+      return { ...state, roundQueue: [...state.roundQueue, ...action.rounds] }
 
     case 'RESTART':
       return { ...initialState, highScore: state.highScore, phase: 'idle' }
@@ -211,23 +214,22 @@ export function CooldownClash() {
     ]
   }, [state.currentRound])
 
-  // Preload next round images into browser cache
-  const nextRoundImages = useMemo(() => {
-    if (!state.nextRound) return []
-    const { left, right } = state.nextRound
-    return [
+  // Preload all queued round images into browser cache (2 rounds ahead)
+  const queuedRoundImages = useMemo(() => {
+    if (state.roundQueue.length === 0) return []
+    return state.roundQueue.flatMap(({ left, right }) => [
       left.ability.champion.splash,
       left.ability.champion.icon,
       left.ability.icon,
       right.ability.champion.splash,
       right.ability.champion.icon,
       right.ability.icon,
-    ]
-  }, [state.nextRound])
+    ])
+  }, [state.roundQueue])
 
   // Only use loading state for initial load - after that, images are preloaded
   const currentImagesLoaded = useImagePreloaderWithState(currentRoundImages)
-  useImagePreloader(nextRoundImages)
+  useImagePreloader(queuedRoundImages)
 
   // Handle initial load: wait for first round images, then show content permanently
   useEffect(() => {
@@ -264,8 +266,8 @@ export function CooldownClash() {
   // Start game
   const startGame = useCallback(async () => {
     try {
-      const rounds = await fetchRounds(0, 2)
-      dispatch({ type: 'START_GAME', round: rounds[0], nextRound: rounds[1] })
+      const rounds = await fetchRounds(0, 1 + QUEUE_SIZE)  // 1 current + queue
+      dispatch({ type: 'START_GAME', round: rounds[0], queue: rounds.slice(1) })
     } catch (error) {
       console.error('Failed to start game:', error)
     }
@@ -293,43 +295,32 @@ export function CooldownClash() {
     }
   }, [state.phase])
 
-  // Handle transition timing and pre-fetch
+  // Handle transition timing
   useEffect(() => {
     if (state.phase === 'transitioning') {
       const transitionDelay = isMobile ? MOBILE_TRANSITION_DELAY : DESKTOP_TRANSITION_DELAY
-      const timer = setTimeout(async () => {
-        // Pre-fetch next round if we don't have one
-        let nextRound = state.nextRound
-        if (!nextRound && !isFetchingRef.current) {
-          isFetchingRef.current = true
-          try {
-            const rounds = await fetchRounds(state.score, 1)
-            nextRound = rounds[0]
-          } catch (error) {
-            console.error('Failed to fetch next round:', error)
-          }
-          isFetchingRef.current = false
-        }
-        dispatch({ type: 'TRANSITION_COMPLETE', nextRound })
+      const timer = setTimeout(() => {
+        dispatch({ type: 'TRANSITION_COMPLETE' })
       }, transitionDelay)
       return () => clearTimeout(timer)
     }
-  }, [state.phase, state.nextRound, state.score, isMobile])
+  }, [state.phase, isMobile])
 
-  // Pre-fetch next round when playing
+  // Keep queue filled with QUEUE_SIZE rounds ahead
   useEffect(() => {
-    if (state.phase === 'playing' && !state.nextRound && !isFetchingRef.current) {
+    const queueDeficit = QUEUE_SIZE - state.roundQueue.length
+    if (state.phase === 'playing' && queueDeficit > 0 && !isFetchingRef.current) {
       isFetchingRef.current = true
-      fetchRounds(state.score, 1)
+      fetchRounds(state.score, queueDeficit)
         .then((rounds) => {
-          dispatch({ type: 'SET_NEXT_ROUND', round: rounds[0] })
+          dispatch({ type: 'QUEUE_ROUNDS', rounds })
         })
         .catch(console.error)
         .finally(() => {
           isFetchingRef.current = false
         })
     }
-  }, [state.phase, state.nextRound, state.score])
+  }, [state.phase, state.roundQueue.length, state.score])
 
   const handleRestart = useCallback(() => {
     // Capture current high score as the baseline for next session
@@ -404,7 +395,7 @@ export function CooldownClash() {
               variants={mobilePanel1Variants}
               initial={false}
               animate={
-                state.phase === 'transitioning' && state.nextRound
+                state.phase === 'transitioning' && state.roundQueue[0]
                   ? 'exit'
                   : 'static'
               }
@@ -426,7 +417,7 @@ export function CooldownClash() {
               variants={mobilePanel2Variants}
               initial={false}
               animate={
-                state.phase === 'transitioning' && state.nextRound
+                state.phase === 'transitioning' && state.roundQueue[0]
                   ? 'shift'
                   : 'static'
               }
@@ -451,7 +442,7 @@ export function CooldownClash() {
             {/* Panel 3: Bottom (enters during transition, hidden otherwise) */}
             <motion.div
               className={`absolute inset-x-0 h-1/2 ${
-                !(state.phase === 'transitioning' && state.nextRound)
+                !(state.phase === 'transitioning' && state.roundQueue[0])
                   ? 'pointer-events-none'
                   : ''
               }`}
@@ -459,15 +450,15 @@ export function CooldownClash() {
               variants={mobilePanel3Variants}
               initial={false}
               animate={
-                state.phase === 'transitioning' && state.nextRound
+                state.phase === 'transitioning' && state.roundQueue[0]
                   ? 'enter'
                   : 'hidden'
               }
               transition={prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition}
             >
-              {state.nextRound ? (
+              {state.roundQueue[0] ? (
                 <SplitPanel
-                  gameAbility={state.nextRound.left}
+                  gameAbility={state.roundQueue[0].left}
                   showCooldown={false}
                   side="right"
                   isCorrect={null}
@@ -476,7 +467,7 @@ export function CooldownClash() {
                   guessDisabled={true}
                 />
               ) : (
-                // Placeholder panel when nextRound not yet loaded
+                // Placeholder panel when queue is empty (rare edge case)
                 <div className="h-full bg-dark-blue" />
               )}
             </motion.div>
@@ -486,7 +477,7 @@ export function CooldownClash() {
           // Using stable keys prevents remounting when phase changes
           <>
             {/* Exiting left panel - only visible during transition */}
-            {state.phase === 'transitioning' && state.nextRound && (
+            {state.phase === 'transitioning' && state.roundQueue[0] && (
               <div className="absolute inset-y-0 left-0 w-1/2 z-10 gpu-accelerated">
                 <SplitPanel
                   gameAbility={state.currentRound.left}
@@ -500,12 +491,12 @@ export function CooldownClash() {
 
             {/* Left panel - stable across phase changes */}
             <SplitPanel
-              key={`left-${state.phase === 'transitioning' && state.nextRound ? state.currentRound.right.ability.id : state.currentRound.left.ability.id}`}
-              gameAbility={state.phase === 'transitioning' && state.nextRound ? state.currentRound.right : state.currentRound.left}
+              key={`left-${state.phase === 'transitioning' && state.roundQueue[0] ? state.currentRound.right.ability.id : state.currentRound.left.ability.id}`}
+              gameAbility={state.phase === 'transitioning' && state.roundQueue[0] ? state.currentRound.right : state.currentRound.left}
               showCooldown={true}
               side="left"
               isCorrect={state.phase === 'transitioning' ? state.lastGuessCorrect : null}
-              enterAnimation={state.phase === 'transitioning' && state.nextRound ? 'shift-left' : undefined}
+              enterAnimation={state.phase === 'transitioning' && state.roundQueue[0] ? 'shift-left' : undefined}
               skipAnimation={state.phase !== 'transitioning' ? skipPanelAnimation : undefined}
             />
 
@@ -516,14 +507,14 @@ export function CooldownClash() {
 
             {/* Right panel - stable across phase changes */}
             <SplitPanel
-              key={`right-${state.phase === 'transitioning' && state.nextRound ? state.nextRound.left.ability.id : state.currentRound.right.ability.id}`}
-              gameAbility={state.phase === 'transitioning' && state.nextRound ? state.nextRound.left : state.currentRound.right}
+              key={`right-${state.phase === 'transitioning' && state.roundQueue[0] ? state.roundQueue[0].left.ability.id : state.currentRound.right.ability.id}`}
+              gameAbility={state.phase === 'transitioning' && state.roundQueue[0] ? state.roundQueue[0].left : state.currentRound.right}
               showCooldown={state.phase === 'transitioning' ? false : isRevealing}
               side="right"
               isCorrect={state.phase === 'transitioning' ? null : (isRevealing ? state.lastGuessCorrect : null)}
               onGuess={handleGuess}
               guessDisabled={state.phase !== 'playing'}
-              enterAnimation={state.phase === 'transitioning' && state.nextRound ? 'right' : undefined}
+              enterAnimation={state.phase === 'transitioning' && state.roundQueue[0] ? 'right' : undefined}
               skipAnimation={state.phase !== 'transitioning' ? skipPanelAnimation : undefined}
             />
           </>
