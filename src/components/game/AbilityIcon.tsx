@@ -25,7 +25,7 @@ export function AbilityIcon({ icon, name, description }: AbilityIconProps) {
     <button
       type="button"
       onClick={() => isMobile && description && setSheetOpen(true)}
-      className="relative w-20 h-20 md:w-24 md:h-24 rounded-lg border-[3px] border-gold bg-dark-blue/60 shadow-[0_0_16px_rgba(var(--gold-rgb),0.4),inset_0_0_0_1px_rgba(0,0,0,0.3)] overflow-hidden flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-gold/50"
+      className="relative w-14 h-14 md:w-24 md:h-24 rounded-lg border-[3px] border-gold bg-dark-blue/60 shadow-[0_0_16px_rgba(var(--gold-rgb),0.4),inset_0_0_0_1px_rgba(0,0,0,0.3)] overflow-hidden flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-gold/50"
       aria-label={`${name} ability info`}
     >
       {/* Inner border ring for depth */}

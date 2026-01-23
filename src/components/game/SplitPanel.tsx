@@ -298,7 +298,7 @@ export function SplitPanel({
 
   return (
     <motion.div
-      className="relative h-full md:flex-1 flex flex-col items-center justify-center overflow-hidden pt-16 pb-6 md:pt-0 md:pb-0"
+      className="relative h-full md:flex-1 flex flex-col items-center overflow-hidden pt-[calc(5.5rem+env(safe-area-inset-top))] pb-16 md:justify-center md:pt-0 md:pb-0"
       variants={panelVariants}
       initial={animationState.initial}
       animate={animationState.animate}
@@ -373,12 +373,11 @@ export function SplitPanel({
       )}
 
       {/* Content - no z-index so AbilityIcon can escape to panel stacking context */}
-      <div className="relative flex flex-col items-center justify-center text-center px-4 py-4 md:py-6 h-full">
-        {/* Main content area - centered vertically */}
-        <div className="flex flex-col items-center gap-3 md:gap-5">
+      <div className="relative flex flex-col items-center md:justify-center text-center px-4 h-full">
+        <div className="flex flex-col items-center gap-1 md:gap-5">
           {/* Champion name + ability slot */}
           <h2
-            className="text-xl md:text-2xl lg:text-3xl font-bold drop-shadow-lg tracking-wider uppercase"
+            className="text-lg md:text-2xl lg:text-3xl font-bold drop-shadow-lg tracking-wider uppercase"
             style={{ textShadow: '0 0 40px rgba(var(--gold-rgb), 0.25)' }}
           >
             <span className="text-foreground">{champion.name}</span>
@@ -398,7 +397,7 @@ export function SplitPanel({
               {/* Ability slot badge - overlaps bottom-left corner */}
               {/* Outer border layer */}
               <div
-                className="absolute -bottom-2 -left-2 md:-bottom-2.5 md:-left-2.5 w-10 h-10 md:w-12 md:h-12 z-10"
+                className="absolute -bottom-1 -left-1 md:-bottom-2.5 md:-left-2.5 w-7 h-7 md:w-12 md:h-12 z-10"
                 style={{
                   clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 15%)',
                   background: 'linear-gradient(135deg, #1e3a4a 0%, #172b3b 50%, #0f1f2a 100%)',
@@ -407,7 +406,7 @@ export function SplitPanel({
               >
                 {/* Inner gold badge */}
                 <div
-                  className="absolute inset-[2px] flex items-center justify-center font-bold text-base md:text-lg text-dark-blue"
+                  className="absolute inset-[2px] flex items-center justify-center font-bold text-sm md:text-lg text-dark-blue"
                   style={{
                     clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 15%)',
                     background: 'linear-gradient(135deg, #f5e8a3 0%, #d4a84b 35%, #c4983b 65%, #a87b2a 100%)',
@@ -428,7 +427,7 @@ export function SplitPanel({
 
             {/* Ability name */}
             <p
-              className="text-base md:text-lg text-foreground/80 font-medium tracking-wide uppercase"
+              className="text-sm md:text-lg text-foreground/80 font-medium tracking-wide uppercase"
               style={{ textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)' }}
             >
               {ability.name}
@@ -436,26 +435,28 @@ export function SplitPanel({
           </div>
 
           {/* Level pips */}
-          <div className="mt-2 md:mt-3">
+          <div className="mt-1 md:mt-3">
             <LevelPips level={level} slot={ability.slot as 'Q' | 'W' | 'E' | 'R' | 'P'} />
           </div>
 
-          {/* Cooldown display (shown when revealing on both panels) */}
-          {showCooldown && (
-            <motion.p
-              key={`cooldown-${cooldown}`}
-              variants={side === 'right' ? numberPop : undefined}
-              initial={side === 'right' ? 'hidden' : false}
-              animate={side === 'right' ? 'visible' : undefined}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-gold drop-shadow-lg tracking-wide mt-2"
-              style={{
-                textShadow: '0 0 40px rgba(var(--gold-rgb), 0.5)',
-                filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5))',
-              }}
-            >
-              {cooldown}s
-            </motion.p>
-          )}
+          {/* Cooldown display - wrapper reserves space to prevent layout shift */}
+          <div className="min-h-[2.5rem] md:min-h-[4rem] lg:min-h-[5rem] mt-1 flex items-center justify-center">
+            {showCooldown && (
+              <motion.p
+                key={`cooldown-${cooldown}`}
+                variants={side === 'right' ? numberPop : undefined}
+                initial={side === 'right' ? 'hidden' : false}
+                animate={side === 'right' ? 'visible' : undefined}
+                className="text-3xl md:text-5xl lg:text-6xl font-bold text-gold drop-shadow-lg tracking-wide"
+                style={{
+                  textShadow: '0 0 40px rgba(var(--gold-rgb), 0.5)',
+                  filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5))',
+                }}
+              >
+                {cooldown}s
+              </motion.p>
+            )}
+          </div>
 
           {/* Mystery cooldown placeholder for right panel before guess */}
           {showClickZones && (
@@ -478,7 +479,6 @@ export function SplitPanel({
             </motion.p>
           )}
         </div>
-
       </div>
     </motion.div>
   )
