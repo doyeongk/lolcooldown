@@ -170,7 +170,7 @@ export function CooldownClash() {
   const [storedHighScore, setStoredHighScore] = useLocalStorage('cooldown-clash-highscore', 0)
   const [sessionStartHighScore, setSessionStartHighScore] = useState<number>(storedHighScore)
   const isFetchingRef = useRef(false)
-  const [prevPhase, setPrevPhase] = useState<string>(state.phase)
+  const prevPhaseRef = useRef<string>(state.phase)
   const [animatedRoundId, setAnimatedRoundId] = useState<string | null>(null)
   const [initialLoadComplete, setInitialLoadComplete] = useState(false)
   const [showContent, setShowContent] = useState(false)
@@ -189,15 +189,16 @@ export function CooldownClash() {
   // 1. Same round we already processed, OR
   // 2. New round but coming from transitioning phase (carousel already animated)
   const skipPanelAnimation = !isNewRound ||
-    (isNewRound && prevPhase === 'transitioning')
+    (isNewRound && prevPhaseRef.current === 'transitioning')
+
+  // Detect snap-back: just transitioned from 'transitioning' to 'playing'
+  // Must be calculated BEFORE updating prevPhaseRef to capture the transition
+  const isSnapBack = prevPhaseRef.current === 'transitioning' && state.phase === 'playing'
 
   // Update tracking state synchronously during render (React 19 pattern for derived state)
   // This replaces getDerivedStateFromProps - safe because we check for changes first
   if (isNewRound && state.phase === 'playing' && animatedRoundId !== currentRoundId) {
     setAnimatedRoundId(currentRoundId)
-  }
-  if (prevPhase !== state.phase) {
-    setPrevPhase(state.phase)
   }
 
   // Preload current round images into browser cache
@@ -262,6 +263,13 @@ export function CooldownClash() {
       setStoredHighScore(state.highScore)
     }
   }, [state.highScore, storedHighScore, setStoredHighScore])
+
+  // Update prevPhaseRef AFTER render commits
+  // This prevents race conditions where setAnimatedRoundId triggers a re-render
+  // and the ref is already updated before the second render's isSnapBack check
+  useEffect(() => {
+    prevPhaseRef.current = state.phase
+  }, [state.phase])
 
   // Start game
   const startGame = useCallback(async () => {
@@ -395,11 +403,11 @@ export function CooldownClash() {
               variants={mobilePanel1Variants}
               initial={false}
               animate={
-                state.phase === 'transitioning' && state.roundQueue[0]
+                !isSnapBack && state.phase === 'transitioning' && state.roundQueue[0]
                   ? 'exit'
                   : 'static'
               }
-              transition={prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition}
+              transition={isSnapBack ? { duration: 0 } : (prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition)}
             >
               <SplitPanel
                 gameAbility={state.currentRound.left}
@@ -417,11 +425,11 @@ export function CooldownClash() {
               variants={mobilePanel2Variants}
               initial={false}
               animate={
-                state.phase === 'transitioning' && state.roundQueue[0]
+                !isSnapBack && state.phase === 'transitioning' && state.roundQueue[0]
                   ? 'shift'
                   : 'static'
               }
-              transition={prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition}
+              transition={isSnapBack ? { duration: 0 } : (prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition)}
             >
               <SplitPanel
                 gameAbility={state.currentRound.right}
@@ -450,11 +458,11 @@ export function CooldownClash() {
               variants={mobilePanel3Variants}
               initial={false}
               animate={
-                state.phase === 'transitioning' && state.roundQueue[0]
+                !isSnapBack && state.phase === 'transitioning' && state.roundQueue[0]
                   ? 'enter'
                   : 'hidden'
               }
-              transition={prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition}
+              transition={isSnapBack ? { duration: 0 } : (prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition)}
             >
               {state.roundQueue[0] ? (
                 <SplitPanel
