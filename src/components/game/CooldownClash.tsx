@@ -54,7 +54,7 @@ const mobilePanel3Variants: Variants = {
   enter: { y: '100%' },
 }
 
-const QUEUE_SIZE = 2  // Keep 2 rounds buffered ahead for image preloading
+const QUEUE_SIZE = 3  // Keep 3 rounds buffered ahead for image preloading
 
 const initialState: GameState = {
   phase: 'idle',
@@ -158,8 +158,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
   }
 }
 
-async function fetchRounds(score: number, count = 2): Promise<GameRound[]> {
-  const res = await fetch(`/api/game/random?score=${score}&count=${count}`)
+async function fetchRounds(score: number, count = 2, excludeId?: number): Promise<GameRound[]> {
+  const params = new URLSearchParams({ score: String(score), count: String(count) })
+  if (excludeId) params.set('excludeId', String(excludeId))
+  const res = await fetch(`/api/game/random?${params}`)
   if (!res.ok) throw new Error('Failed to fetch rounds')
   const data = await res.json()
   return data.rounds
@@ -306,12 +308,18 @@ export function CooldownClash() {
     }
   }, [state.phase, isMobile])
 
+  // ID of the last ability on the right side (used to prevent duplicates in queue refill)
+  const lastRightAbilityId = state.roundQueue.length > 0
+    ? state.roundQueue[state.roundQueue.length - 1].right.ability.id
+    : state.currentRound?.right.ability.id
+
   // Keep queue filled with QUEUE_SIZE rounds ahead
   useEffect(() => {
     const queueDeficit = QUEUE_SIZE - state.roundQueue.length
     if (state.phase === 'playing' && queueDeficit > 0 && !isFetchingRef.current) {
       isFetchingRef.current = true
-      fetchRounds(state.score, queueDeficit)
+      // Exclude the last right ability to prevent duplicates when new rounds are appended
+      fetchRounds(state.score, queueDeficit, lastRightAbilityId)
         .then((rounds) => {
           dispatch({ type: 'QUEUE_ROUNDS', rounds })
         })
@@ -320,7 +328,7 @@ export function CooldownClash() {
           isFetchingRef.current = false
         })
     }
-  }, [state.phase, state.roundQueue.length, state.score])
+  }, [state.phase, state.roundQueue.length, state.score, lastRightAbilityId])
 
   const handleRestart = useCallback(() => {
     // Capture current high score as the baseline for next session
