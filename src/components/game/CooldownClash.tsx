@@ -330,6 +330,24 @@ export function CooldownClash() {
     }
   }, [state.phase, state.roundQueue.length, state.score, lastRightAbilityId])
 
+  // Keyboard controls: Up arrow = higher, Down arrow = lower
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (state.phase !== 'playing') return
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        handleGuess('higher')
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        handleGuess('lower')
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [state.phase, handleGuess])
+
   const handleRestart = useCallback(() => {
     // Capture current high score as the baseline for next session
     setSessionStartHighScore(storedHighScore)
