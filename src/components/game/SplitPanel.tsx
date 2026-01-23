@@ -441,7 +441,7 @@ export function SplitPanel({
 
           {/* Cooldown display - wrapper reserves space to prevent layout shift */}
           <div className="min-h-[2.5rem] md:min-h-[4rem] lg:min-h-[5rem] mt-1 flex items-center justify-center">
-            {showCooldown && (
+            {showCooldown ? (
               <motion.p
                 key={`cooldown-${cooldown}`}
                 variants={side === 'right' ? numberPop : undefined}
@@ -455,29 +455,26 @@ export function SplitPanel({
               >
                 {cooldown}s
               </motion.p>
-            )}
+            ) : side === 'right' ? (
+              <motion.p
+                className="text-3xl md:text-5xl lg:text-6xl font-bold text-gold drop-shadow-lg tracking-wide"
+                style={{
+                  textShadow: '0 0 40px rgba(var(--gold-rgb), 0.5)',
+                  filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5))',
+                }}
+                animate={prefersReducedMotion ? {} : {
+                  opacity: [0.6, 1, 0.6],
+                }}
+                transition={{
+                  duration: 2,
+                  ease: 'easeInOut',
+                  repeat: Infinity,
+                }}
+              >
+                ???
+              </motion.p>
+            ) : null}
           </div>
-
-          {/* Mystery cooldown placeholder for right panel before guess */}
-          {showClickZones && (
-            <motion.p
-              className="text-4xl md:text-5xl lg:text-6xl font-bold text-gold drop-shadow-lg tracking-wide mt-2"
-              style={{
-                textShadow: '0 0 40px rgba(var(--gold-rgb), 0.5)',
-                filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5))',
-              }}
-              animate={prefersReducedMotion ? {} : {
-                opacity: [0.6, 1, 0.6],
-              }}
-              transition={{
-                duration: 2,
-                ease: 'easeInOut',
-                repeat: Infinity,
-              }}
-            >
-              ???
-            </motion.p>
-          )}
         </div>
       </div>
     </motion.div>
