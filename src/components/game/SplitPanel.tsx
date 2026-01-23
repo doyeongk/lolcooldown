@@ -303,45 +303,59 @@ export function SplitPanel({
       <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 py-4 md:py-6 h-full">
         {/* Main content area - centered vertically */}
         <div className="flex flex-col items-center gap-3 md:gap-5">
-          {/* Champion name */}
+          {/* Champion name + ability slot */}
           <h2
             className="text-xl md:text-2xl lg:text-3xl font-bold drop-shadow-lg tracking-wider uppercase"
             style={{ textShadow: '0 0 40px rgba(var(--gold-rgb), 0.25)' }}
           >
             <span className="text-foreground">{champion.name}</span>
+            {' '}
+            <span className="text-gold">{ability.slot}</span>
           </h2>
 
-          {/* Ability icon with integrated badge - cohesive unit */}
-          <div className="relative">
-            {/* Main ability icon */}
-            <AbilityIcon
-              icon={ability.icon}
-              name={ability.name}
-              description={ability.description}
-            />
-            {/* Ability slot badge - overlaps bottom-right corner */}
-            <div
-              className="absolute -bottom-2 -right-2 md:-bottom-2.5 md:-right-2.5 w-9 h-9 md:w-11 md:h-11 flex items-center justify-center font-bold text-base md:text-lg text-dark-blue z-10"
-              style={{
-                clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 15%)',
-                background: 'linear-gradient(135deg, #f5e8a3 0%, #d4a84b 35%, #c4983b 65%, #a87b2a 100%)',
-                boxShadow: '0 0 12px rgba(var(--gold-rgb), 0.5), 0 2px 6px rgba(0, 0, 0, 0.5)',
-              }}
-            >
-              {/* Inner highlight */}
+          {/* Ability icon + name row */}
+          <div className="flex items-center gap-3 md:gap-4">
+            {/* Ability icon with integrated badge */}
+            <div className="relative">
+              <AbilityIcon
+                icon={ability.icon}
+                name={ability.name}
+                description={ability.description}
+              />
+              {/* Ability slot badge - overlaps bottom-right corner */}
               <div
-                className="absolute inset-[1px] pointer-events-none"
+                className="absolute -bottom-2 -right-2 md:-bottom-2.5 md:-right-2.5 w-9 h-9 md:w-11 md:h-11 flex items-center justify-center font-bold text-base md:text-lg text-dark-blue z-10"
                 style={{
                   clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 15%)',
-                  background: 'linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 50%)',
+                  background: 'linear-gradient(135deg, #f5e8a3 0%, #d4a84b 35%, #c4983b 65%, #a87b2a 100%)',
+                  boxShadow: '0 0 12px rgba(var(--gold-rgb), 0.5), 0 2px 6px rgba(0, 0, 0, 0.5)',
                 }}
-              />
-              <span className="relative">{ability.slot}</span>
+              >
+                {/* Inner highlight */}
+                <div
+                  className="absolute inset-[1px] pointer-events-none"
+                  style={{
+                    clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 15%)',
+                    background: 'linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 50%)',
+                  }}
+                />
+                <span className="relative">{ability.slot}</span>
+              </div>
             </div>
+
+            {/* Ability name */}
+            <p
+              className="text-base md:text-lg text-foreground/80 font-medium tracking-wide uppercase"
+              style={{ textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)' }}
+            >
+              {ability.name}
+            </p>
           </div>
 
           {/* Level pips */}
-          <LevelPips level={level} slot={ability.slot as 'Q' | 'W' | 'E' | 'R' | 'P'} />
+          <div className="mt-2 md:mt-3">
+            <LevelPips level={level} slot={ability.slot as 'Q' | 'W' | 'E' | 'R' | 'P'} />
+          </div>
 
           {/* Cooldown display (shown when revealing on both panels) */}
           {showCooldown && (
