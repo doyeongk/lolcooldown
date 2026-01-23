@@ -86,9 +86,10 @@ export function AbilityIcon({ icon, name, description }: AbilityIconProps) {
           side="top"
           className="w-80 max-w-[calc(100vw-2rem)] p-4 bg-dark-blue/95 backdrop-blur-sm border border-gold/30"
         >
+          <h3 className="font-bold text-gold uppercase tracking-wide mb-1">{name}</h3>
           {/* Content is sanitized via sanitizeHtml before rendering */}
           <div
-            className="ability-description text-base leading-relaxed text-foreground/90"
+            className="ability-description text-base leading-relaxed text-foreground/80"
             dangerouslySetInnerHTML={{ __html: sanitisedDescription }}
           />
         </TooltipContent>

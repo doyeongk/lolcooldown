@@ -3,6 +3,7 @@
 import { Heart } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useReducedMotion, gameContainerVariants } from '@/lib/motion'
+import { cn } from '@/lib/utils'
 
 interface ScoreDisplayProps {
   score: number
@@ -11,31 +12,18 @@ interface ScoreDisplayProps {
   maxLives?: number
 }
 
-// Angular stat block with beveled corners
+// Stat block with simple rounded corners
 function StatBlock({ label, value, variant = 'default' }: { label: string; value: React.ReactNode; variant?: 'default' | 'gold' }) {
   const isGold = variant === 'gold'
-
   return (
     <div className="relative flex flex-col items-center px-4 md:px-5 py-1.5 md:py-2">
-      {/* Angular background shape */}
-      <div
-        className="absolute inset-0"
-        style={{
-          clipPath: 'polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px)',
-          background: isGold
-            ? 'linear-gradient(180deg, rgba(201,162,39,0.15) 0%, rgba(201,162,39,0.05) 100%)'
-            : 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.1) 100%)',
-        }}
-      />
-      {/* Inner border with angular clip */}
-      <div
-        className="absolute inset-[1px] pointer-events-none"
-        style={{
-          clipPath: 'polygon(7px 0, calc(100% - 7px) 0, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 7px)',
-          border: isGold ? '1px solid rgba(201,162,39,0.3)' : '1px solid rgba(255,255,255,0.05)',
-        }}
-      />
-      <span className="relative text-[9px] md:text-[10px] text-gold/60 uppercase tracking-[0.2em] font-medium">{label}</span>
+      <div className={cn(
+        "absolute inset-0 rounded-sm",
+        isGold
+          ? "bg-gold/10 border border-gold/30"
+          : "bg-black/20 border border-gold/20"
+      )} />
+      <span className="relative text-[9px] md:text-[10px] text-gold/60 uppercase tracking-[0.2em]">{label}</span>
       <span className={`relative text-lg md:text-xl font-bold ${isGold ? 'text-gold' : 'text-foreground'}`}>{value}</span>
     </div>
   )
@@ -98,22 +86,8 @@ export function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDis
 
       {/* Score Block */}
       <div className="relative flex flex-col items-center px-4 md:px-5 py-1.5 md:py-2">
-        {/* Angular background shape - gold variant */}
-        <div
-          className="absolute inset-0"
-          style={{
-            clipPath: 'polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px)',
-            background: 'linear-gradient(180deg, rgba(201,162,39,0.15) 0%, rgba(201,162,39,0.05) 100%)',
-          }}
-        />
-        <div
-          className="absolute inset-[1px] pointer-events-none"
-          style={{
-            clipPath: 'polygon(7px 0, calc(100% - 7px) 0, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 7px)',
-            border: '1px solid rgba(201,162,39,0.3)',
-          }}
-        />
-        <span className="relative text-[9px] md:text-[10px] text-gold/60 uppercase tracking-[0.2em] font-medium">Score</span>
+        <div className="absolute inset-0 rounded-sm bg-gold/10 border border-gold/30" />
+        <span className="relative text-[9px] md:text-[10px] text-gold/60 uppercase tracking-[0.2em]">Score</span>
         <AnimatePresence mode="popLayout">
           <motion.span
             key={score}

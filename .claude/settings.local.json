@@ -79,7 +79,14 @@
       "Bash(git branch:*)",
       "Bash(git pull:*)",
       "Bash(wc:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "Bash(claude mcp:*)",
+      "Skill(frontend-design)",
+      "Bash(npm run lint:*)",
+      "Skill(commit-smart)",
+      "Bash(git restore:*)",
+      "WebFetch(domain:www.artstation.com)",
+      "WebFetch(domain:interfaceingame.com)"
     ]
   }
 }

@@ -201,15 +201,12 @@ export function SplitPanel({
       />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-4 py-4 md:py-6 h-full justify-between">
-        {/* Top spacer for header clearance on mobile */}
-        <div className="h-4 md:h-8 shrink-0" />
-
+      <div className="relative z-10 flex flex-col items-center text-center px-4 py-4 md:py-6 h-full justify-end">
         {/* Main content area - centered vertically */}
         <div className="flex flex-col items-center gap-3 md:gap-5">
           {/* Champion name */}
           <h2
-            className="text-2xl md:text-3xl lg:text-4xl font-bold drop-shadow-lg tracking-wide"
+            className="text-xl md:text-2xl lg:text-3xl font-bold drop-shadow-lg tracking-wider uppercase"
             style={{ textShadow: '0 0 40px rgba(var(--gold-rgb), 0.25)' }}
           >
             <span className="text-foreground">{champion.name}</span>
@@ -244,11 +241,6 @@ export function SplitPanel({
             </div>
           </div>
 
-          {/* Ability name */}
-          <p className="text-base md:text-lg lg:text-xl text-foreground/90 uppercase tracking-wider font-medium drop-shadow-lg">
-            {ability.name}
-          </p>
-
           {/* Level pips */}
           <LevelPips level={level} slot={ability.slot as 'Q' | 'W' | 'E' | 'R' | 'P'} />
 
@@ -270,8 +262,8 @@ export function SplitPanel({
           )}
         </div>
 
-        {/* Bottom action area - buttons anchor here */}
-        <div className="shrink-0 w-full flex justify-center pb-2 md:pb-4">
+        {/* Bottom action area */}
+        <div className="shrink-0 w-full h-[140px] md:h-[170px] flex flex-col justify-start items-center pt-4 md:pt-6">
           {!showCooldown && onGuess ? (
             <GuessButtons onGuess={onGuess} disabled={guessDisabled} />
           ) : (
