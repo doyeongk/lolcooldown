@@ -2,7 +2,7 @@
 
 import { Heart } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useReducedMotion } from '@/lib/motion'
+import { useReducedMotion, gameContainerVariants, fadeIn } from '@/lib/motion'
 
 interface ScoreDisplayProps {
   score: number
@@ -23,14 +23,22 @@ export function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDis
     : { type: 'spring' as const, stiffness: 300, damping: 20 }
 
   return (
-    <div
+    <motion.div
+      variants={gameContainerVariants}
+      initial={prefersReducedMotion ? false : 'hidden'}
+      animate="visible"
       className="
-        inline-flex items-center gap-4 md:gap-6
+        relative inline-flex items-center gap-4 md:gap-6
         px-4 md:px-6 py-2 md:py-3
         bg-dark-blue/80 backdrop-blur-sm
-        rounded-full border border-white/10
+        rounded-lg border border-gold/30
+        shadow-[0_0_12px_rgba(227,207,116,0.15)]
       "
     >
+      {/* Corner bracket - top left */}
+      <div className="absolute -top-px -left-px w-2.5 h-2.5 border-t border-l border-gold/50" />
+      {/* Corner bracket - bottom right */}
+      <div className="absolute -bottom-px -right-px w-2.5 h-2.5 border-b border-r border-gold/50" />
       <div className="flex items-center gap-2">
         <span className="text-xs text-foreground/60 uppercase tracking-wide">Best</span>
         <span className="text-lg md:text-xl font-bold text-foreground">{highScore}</span>
@@ -73,6 +81,6 @@ export function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDis
           </motion.span>
         </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   )
 }

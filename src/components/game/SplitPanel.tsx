@@ -160,6 +160,9 @@ export function SplitPanel({
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/50" />
 
+      {/* Vignette overlay */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.4)_100%)] pointer-events-none" />
+
       {/* Correct/incorrect feedback overlay - always rendered, controlled via opacity */}
       <div
         className={`absolute inset-0 transition-opacity duration-400 pointer-events-none ${
@@ -174,7 +177,10 @@ export function SplitPanel({
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center text-center px-4 gap-2 md:gap-4 py-4 md:py-6 h-full md:h-auto">
         {/* Champion name + slot */}
-        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg">
+        <h2
+          className="text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg"
+          style={{ textShadow: '0 0 40px rgba(227, 207, 116, 0.25)' }}
+        >
           <span className="text-foreground">{champion.name}</span>{' '}
           <span className="text-gold">{ability.slot}</span>
         </h2>
@@ -192,7 +198,7 @@ export function SplitPanel({
         </div>
 
         {/* Level badge */}
-        <span className="text-base md:text-lg text-foreground/70 bg-dark-blue/60 px-5 py-1.5 rounded-full">
+        <span className="text-base md:text-lg text-foreground/70 bg-dark-blue/60 px-5 py-1.5 rounded-full border border-gold/40">
           Lv. {level}
         </span>
 
@@ -208,6 +214,7 @@ export function SplitPanel({
               initial={side === 'right' ? 'hidden' : false}
               animate={side === 'right' ? 'visible' : undefined}
               className="text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg"
+              style={{ textShadow: '0 0 40px rgba(227, 207, 116, 0.5)' }}
             >
               {cooldown}s
             </motion.p>

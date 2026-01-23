@@ -23,9 +23,9 @@ import type {
 import type { Variants, Transition } from 'framer-motion'
 
 const INITIAL_LIVES = 3
-const REVEAL_DELAY = 1500
-const MOBILE_TRANSITION_DELAY = 450  // 400ms animation + 50ms buffer
-const DESKTOP_TRANSITION_DELAY = 550 // 500ms animation + 50ms buffer
+const REVEAL_DELAY = 1200
+const MOBILE_TRANSITION_DELAY = 350  // 300ms animation + 50ms buffer
+const DESKTOP_TRANSITION_DELAY = 400 // 350ms animation + 50ms buffer
 
 // Mobile carousel panel variants for Framer Motion
 // Panel positions use transform-based positioning relative to h-1/2 containers:
@@ -35,7 +35,7 @@ const DESKTOP_TRANSITION_DELAY = 550 // 500ms animation + 50ms buffer
 const mobileCarouselTransition: Transition = {
   type: 'tween',
   ease: 'easeOut',
-  duration: 0.4,
+  duration: 0.3,
 }
 
 const mobilePanel1Variants: Variants = {
@@ -312,13 +312,19 @@ export function CooldownClash() {
     <div className="relative h-full w-full overflow-hidden">
       {/* Header - back button and score */}
       <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between gap-2 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-2">
-        <Link
-          href="/"
-          className="p-2 rounded-lg bg-dark-blue/80 hover:bg-dark-blue text-foreground transition-colors"
-          aria-label="Go back to menu"
+        <motion.div
+          whileHover={prefersReducedMotion ? undefined : { scale: 1.05 }}
+          whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
+          <Link
+            href="/"
+            className="block p-2 rounded-lg bg-dark-blue/80 hover:bg-dark-blue text-foreground transition-all border border-gold/30 hover:shadow-[0_0_12px_rgba(227,207,116,0.2)]"
+            aria-label="Go back to menu"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+        </motion.div>
         <ScoreDisplay
           score={state.score}
           highScore={state.highScore}
