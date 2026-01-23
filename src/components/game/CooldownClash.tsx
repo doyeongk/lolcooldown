@@ -3,14 +3,17 @@
 import { useReducer, useEffect, useCallback, useRef, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { SplitPanel } from './SplitPanel'
 import { VsDivider } from './VsDivider'
 import { GuessButtons } from './GuessButtons'
 import { ScoreDisplay } from './ScoreDisplay'
 import { GameOver } from './GameOver'
+import { TransitionOverlay } from './TransitionOverlay'
 import { useLocalStorage } from '@/lib/hooks/useLocalStorage'
-import { useImagePreloader } from '@/lib/hooks/useImagePreloader'
+import { useImagePreloader, useImagePreloaderWithState } from '@/lib/hooks/useImagePreloader'
 import { useIsMobile } from '@/lib/hooks/useMediaQuery'
+import { useReducedMotion } from '@/lib/motion'
 import type {
   GameState,
   GameAction,
@@ -18,11 +21,38 @@ import type {
   GuessChoice,
   Difficulty,
 } from '@/types/game'
+import type { Variants, Transition } from 'framer-motion'
 
 const INITIAL_LIVES = 3
-const REVEAL_DELAY = 1500
-const MOBILE_TRANSITION_DELAY = 450  // 400ms animation + 50ms buffer
-const DESKTOP_TRANSITION_DELAY = 550 // 500ms animation + 50ms buffer
+const REVEAL_DELAY = 1200
+const MOBILE_TRANSITION_DELAY = 350  // 300ms animation + 50ms buffer
+const DESKTOP_TRANSITION_DELAY = 400 // 350ms animation + 50ms buffer
+
+// Mobile carousel panel variants for Framer Motion
+// Panel positions use transform-based positioning relative to h-1/2 containers:
+// - Panel 1 (top): y=0 normally, y=-100% when exiting up
+// - Panel 2 (middle): y=100% normally (top-1/2), y=0 when shifting up
+// - Panel 3 (bottom): y=200% normally (top-full, hidden), y=100% when entering
+const mobileCarouselTransition: Transition = {
+  type: 'tween',
+  ease: 'easeOut',
+  duration: 0.3,
+}
+
+const mobilePanel1Variants: Variants = {
+  static: { y: 0 },
+  exit: { y: '-100%' },
+}
+
+const mobilePanel2Variants: Variants = {
+  static: { y: '100%' },
+  shift: { y: 0 },
+}
+
+const mobilePanel3Variants: Variants = {
+  hidden: { y: '200%' },
+  enter: { y: '100%' },
+}
 
 const initialState: GameState = {
   phase: 'idle',
@@ -135,10 +165,14 @@ async function fetchRounds(score: number, count = 2): Promise<GameRound[]> {
 export function CooldownClash() {
   const [state, dispatch] = useReducer(gameReducer, initialState)
   const [storedHighScore, setStoredHighScore] = useLocalStorage('cooldown-clash-highscore', 0)
+  const [sessionStartHighScore, setSessionStartHighScore] = useState<number>(storedHighScore)
   const isFetchingRef = useRef(false)
   const [prevPhase, setPrevPhase] = useState<string>(state.phase)
   const [animatedRoundId, setAnimatedRoundId] = useState<string | null>(null)
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false)
+  const [showContent, setShowContent] = useState(false)
   const isMobile = useIsMobile()
+  const prefersReducedMotion = useReducedMotion()
 
   // Generate stable ID for current round
   const currentRoundId = state.currentRound
@@ -163,6 +197,20 @@ export function CooldownClash() {
     setPrevPhase(state.phase)
   }
 
+  // Preload current round images into browser cache
+  const currentRoundImages = useMemo(() => {
+    if (!state.currentRound) return []
+    const { left, right } = state.currentRound
+    return [
+      left.ability.champion.splash,
+      left.ability.champion.icon,
+      left.ability.icon,
+      right.ability.champion.splash,
+      right.ability.champion.icon,
+      right.ability.icon,
+    ]
+  }, [state.currentRound])
+
   // Preload next round images into browser cache
   const nextRoundImages = useMemo(() => {
     if (!state.nextRound) return []
@@ -177,12 +225,32 @@ export function CooldownClash() {
     ]
   }, [state.nextRound])
 
+  // Only use loading state for initial load - after that, images are preloaded
+  const currentImagesLoaded = useImagePreloaderWithState(currentRoundImages)
   useImagePreloader(nextRoundImages)
+
+  // Handle initial load: wait for first round images, then show content permanently
+  useEffect(() => {
+    // Only run this logic during initial load
+    if (initialLoadComplete) return
+
+    if (currentImagesLoaded && state.currentRound) {
+      // Delay showing content to ensure opacity 0 is painted first
+      // This guarantees the fade-in animation plays even when images are cached
+      const rafId = requestAnimationFrame(() => {
+        setShowContent(true)
+        setInitialLoadComplete(true)
+      })
+      return () => cancelAnimationFrame(rafId)
+    }
+  }, [currentImagesLoaded, state.currentRound, initialLoadComplete])
 
   // Sync high score from localStorage on mount
   useEffect(() => {
     if (storedHighScore > 0) {
       dispatch({ type: 'SET_HIGH_SCORE', highScore: storedHighScore })
+      // Also sync sessionStartHighScore on initial load (when it's still 0)
+      setSessionStartHighScore(prev => prev === 0 ? storedHighScore : prev)
     }
   }, [storedHighScore])
 
@@ -264,37 +332,59 @@ export function CooldownClash() {
   }, [state.phase, state.nextRound, state.score])
 
   const handleRestart = useCallback(() => {
+    // Capture current high score as the baseline for next session
+    setSessionStartHighScore(storedHighScore)
+    // Reset loading states for new game
+    setInitialLoadComplete(false)
+    setShowContent(false)
     dispatch({ type: 'RESTART' })
-  }, [])
-
-  if (state.phase === 'idle' || !state.currentRound) {
-    return (
-      <div className="flex items-center justify-center h-screen w-screen bg-dark-blue">
-        <p className="text-foreground text-xl">Loading...</p>
-      </div>
-    )
-  }
+  }, [storedHighScore])
 
   const isRevealing = state.phase === 'revealing' || state.phase === 'transitioning'
   const isNewHighScore = state.score === state.highScore && state.score > storedHighScore
 
+  // Show overlay-only when no content ready yet
+  if (state.phase === 'idle' || !state.currentRound) {
+    return <TransitionOverlay prefersReducedMotion={prefersReducedMotion ?? false} />
+  }
+
   return (
-    <div className="relative h-full w-full overflow-hidden">
-      {/* Header - back button and score */}
-      <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between gap-2 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-2">
-        <Link
-          href="/"
-          className="p-2 rounded-lg bg-dark-blue/80 hover:bg-dark-blue text-foreground transition-colors"
-          aria-label="Go back to menu"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <ScoreDisplay
-          score={state.score}
-          highScore={state.highScore}
-          lives={state.lives}
-        />
-        <div className="w-9" aria-hidden="true" />
+    <>
+      {/* Game content - starts invisible, fades in when ready */}
+      <motion.div
+      className="relative h-full w-full overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: showContent ? 1 : 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
+      {/* Header - minimal floating bar */}
+      <header className="absolute top-0 left-0 right-0 z-30 px-3 md:px-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div className="flex items-center justify-between">
+          {/* Back button - circular */}
+          <Link
+            href="/"
+            className="
+              flex items-center justify-center
+              w-9 h-9 md:w-10 md:h-10
+              rounded-full
+              bg-black/50 backdrop-blur-md
+              border border-gold/20
+              text-foreground/60 hover:text-foreground
+              hover:border-gold/40
+              transition-colors duration-200
+            "
+          >
+            <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
+          </Link>
+
+          <ScoreDisplay
+            score={state.score}
+            highScore={sessionStartHighScore}
+            lives={state.lives}
+          />
+
+          <div className="w-9 md:w-10" /> {/* Spacer for balance */}
+        </div>
       </header>
 
       {/* Split container */}
@@ -305,15 +395,20 @@ export function CooldownClash() {
         aria-label="Ability comparison"
       >
         {isMobile ? (
-          // Mobile: Stable 3-panel DOM structure (no DOM changes during transitions)
+          // Mobile: Stable 3-panel DOM structure with Framer Motion animations
           <div className="relative h-full w-full overflow-hidden">
             {/* Panel 1: Top (exits during transition) */}
-            <div
-              className={`absolute inset-x-0 h-1/2 ${
+            <motion.div
+              className="absolute inset-x-0 h-1/2"
+              style={{ top: 0 }}
+              variants={mobilePanel1Variants}
+              initial={false}
+              animate={
                 state.phase === 'transitioning' && state.nextRound
-                  ? 'animate-mobile-exit-up z-10'
-                  : 'top-0'
-              }`}
+                  ? 'exit'
+                  : 'static'
+              }
+              transition={prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition}
             >
               <SplitPanel
                 gameAbility={state.currentRound.left}
@@ -322,15 +417,20 @@ export function CooldownClash() {
                 isCorrect={null}
                 skipAnimation={skipPanelAnimation}
               />
-            </div>
+            </motion.div>
 
             {/* Panel 2: Middle (shifts up during transition) */}
-            <div
-              className={`absolute inset-x-0 h-1/2 ${
+            <motion.div
+              className="absolute inset-x-0 h-1/2"
+              style={{ top: 0 }}
+              variants={mobilePanel2Variants}
+              initial={false}
+              animate={
                 state.phase === 'transitioning' && state.nextRound
-                  ? 'animate-mobile-shift-up'
-                  : 'top-1/2'
-              }`}
+                  ? 'shift'
+                  : 'static'
+              }
+              transition={prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition}
             >
               <SplitPanel
                 gameAbility={state.currentRound.right}
@@ -341,7 +441,7 @@ export function CooldownClash() {
                 guessDisabled={state.phase !== 'playing'}
                 skipAnimation={skipPanelAnimation}
               />
-            </div>
+            </motion.div>
 
             {/* VS divider */}
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center h-0 shrink-0">
@@ -349,12 +449,21 @@ export function CooldownClash() {
             </div>
 
             {/* Panel 3: Bottom (enters during transition, hidden otherwise) */}
-            <div
+            <motion.div
               className={`absolute inset-x-0 h-1/2 ${
-                state.phase === 'transitioning' && state.nextRound
-                  ? 'animate-mobile-enter-up'
-                  : 'top-full pointer-events-none'
+                !(state.phase === 'transitioning' && state.nextRound)
+                  ? 'pointer-events-none'
+                  : ''
               }`}
+              style={{ top: 0 }}
+              variants={mobilePanel3Variants}
+              initial={false}
+              animate={
+                state.phase === 'transitioning' && state.nextRound
+                  ? 'enter'
+                  : 'hidden'
+              }
+              transition={prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition}
             >
               {state.nextRound ? (
                 <SplitPanel
@@ -370,54 +479,34 @@ export function CooldownClash() {
                 // Placeholder panel when nextRound not yet loaded
                 <div className="h-full bg-dark-blue" />
               )}
-            </div>
+            </motion.div>
           </div>
-        ) : state.phase === 'transitioning' && state.nextRound ? (
-          // Desktop: Carousel slide transition
-          <>
-            {/* Exiting left - slides out to left */}
-            <div className="absolute inset-y-0 left-0 w-1/2 z-10 gpu-accelerated">
-              <SplitPanel
-                gameAbility={state.currentRound.left}
-                showCooldown={true}
-                side="left"
-                isCorrect={null}
-                exitAnimation="left"
-              />
-            </div>
-            {/* Old right moving to left position */}
-            <SplitPanel
-              gameAbility={state.currentRound.right}
-              showCooldown={true}
-              side="left"
-              isCorrect={state.lastGuessCorrect}
-              enterAnimation="shift-left"
-            />
-            {/* VS divider */}
-            <div className="relative z-20 flex items-center justify-center md:h-auto md:w-0 shrink-0">
-              <VsDivider />
-            </div>
-            {/* New right entering from off-screen right */}
-            <SplitPanel
-              gameAbility={state.nextRound.left}
-              showCooldown={false}
-              side="right"
-              isCorrect={null}
-              enterAnimation="right"
-              onGuess={handleGuess}
-              guessDisabled={true}
-            />
-          </>
         ) : (
-          // Desktop: Normal two-panel rendering
+          // Desktop: Unified rendering for both transitioning and normal states
+          // Using stable keys prevents remounting when phase changes
           <>
-            {/* Left panel: Known ability (always shows cooldown) */}
+            {/* Exiting left panel - only visible during transition */}
+            {state.phase === 'transitioning' && state.nextRound && (
+              <div className="absolute inset-y-0 left-0 w-1/2 z-10 gpu-accelerated">
+                <SplitPanel
+                  gameAbility={state.currentRound.left}
+                  showCooldown={true}
+                  side="left"
+                  isCorrect={null}
+                  exitAnimation="left"
+                />
+              </div>
+            )}
+
+            {/* Left panel - stable across phase changes */}
             <SplitPanel
-              gameAbility={state.currentRound.left}
+              key={`left-${state.phase === 'transitioning' && state.nextRound ? state.currentRound.right.ability.id : state.currentRound.left.ability.id}`}
+              gameAbility={state.phase === 'transitioning' && state.nextRound ? state.currentRound.right : state.currentRound.left}
               showCooldown={true}
               side="left"
-              isCorrect={null}
-              skipAnimation={skipPanelAnimation}
+              isCorrect={state.phase === 'transitioning' ? state.lastGuessCorrect : null}
+              enterAnimation={state.phase === 'transitioning' && state.nextRound ? 'shift-left' : undefined}
+              skipAnimation={state.phase !== 'transitioning' ? skipPanelAnimation : undefined}
             />
 
             {/* VS divider - zero-height/width flex item */}
@@ -425,15 +514,17 @@ export function CooldownClash() {
               <VsDivider />
             </div>
 
-            {/* Right panel: Challenger ability + buttons */}
+            {/* Right panel - stable across phase changes */}
             <SplitPanel
-              gameAbility={state.currentRound.right}
-              showCooldown={isRevealing}
+              key={`right-${state.phase === 'transitioning' && state.nextRound ? state.nextRound.left.ability.id : state.currentRound.right.ability.id}`}
+              gameAbility={state.phase === 'transitioning' && state.nextRound ? state.nextRound.left : state.currentRound.right}
+              showCooldown={state.phase === 'transitioning' ? false : isRevealing}
               side="right"
-              isCorrect={isRevealing ? state.lastGuessCorrect : null}
+              isCorrect={state.phase === 'transitioning' ? null : (isRevealing ? state.lastGuessCorrect : null)}
               onGuess={handleGuess}
               guessDisabled={state.phase !== 'playing'}
-              skipAnimation={skipPanelAnimation}
+              enterAnimation={state.phase === 'transitioning' && state.nextRound ? 'right' : undefined}
+              skipAnimation={state.phase !== 'transitioning' ? skipPanelAnimation : undefined}
             />
           </>
         )}
@@ -454,6 +545,14 @@ export function CooldownClash() {
         isNewHighScore={isNewHighScore}
         onRestart={handleRestart}
       />
-    </div>
+    </motion.div>
+
+      {/* Transition overlay - exits when content ready */}
+      <AnimatePresence>
+        {!showContent && (
+          <TransitionOverlay prefersReducedMotion={prefersReducedMotion ?? false} />
+        )}
+      </AnimatePresence>
+    </>
   )
 }

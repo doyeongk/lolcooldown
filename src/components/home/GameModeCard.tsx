@@ -39,7 +39,7 @@ export function GameModeCard({
             "hover:border-gold",
             "hover:shadow-[0_0_20px_rgba(227,207,116,0.2)]",
           ] : [
-            "border-foreground/10",
+            "border-gold/20",
             "hover:border-gold/40",
             "hover:shadow-[0_0_16px_rgba(227,207,116,0.1)]",
           ]
@@ -51,7 +51,7 @@ export function GameModeCard({
             "absolute -top-px -left-px w-3 h-3 border-t border-l transition-colors duration-300",
             isPrimary
               ? "border-gold group-hover:border-foreground"
-              : "border-foreground/20 group-hover:border-gold/60"
+              : "border-gold/30 group-hover:border-gold/60"
           )}
         />
         {/* Corner accents - bottom right */}
@@ -60,7 +60,7 @@ export function GameModeCard({
             "absolute -bottom-px -right-px w-3 h-3 border-b border-r transition-colors duration-300",
             isPrimary
               ? "border-gold group-hover:border-foreground"
-              : "border-foreground/20 group-hover:border-gold/60"
+              : "border-gold/30 group-hover:border-gold/60"
           )}
         />
 
@@ -85,7 +85,7 @@ export function GameModeCard({
           <div
             className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
             style={{
-              boxShadow: "inset 0 0 24px rgba(227, 207, 116, 0.08)",
+              boxShadow: "inset 0 0 24px rgba(var(--gold-rgb), 0.08)",
             }}
           />
         )}

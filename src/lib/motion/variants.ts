@@ -110,3 +110,55 @@ export const panelTransition: Transition = {
 
 // For AnimatePresence mode settings
 export const presenceMode = "popLayout" as const
+
+// Mobile panel transition (used in CooldownClash)
+export const mobilePanelTransition: Transition = {
+  type: 'tween',
+  ease: 'easeOut',
+  duration: 0.3,
+}
+
+// Game container staggered entrance
+export const gameContainerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.15,
+    },
+  },
+}
+
+// Gold glow pulse animation (2s loop)
+export const goldGlowPulse: Variants = {
+  initial: {
+    textShadow: '0 0 10px rgba(var(--gold-rgb), 0.3)',
+  },
+  animate: {
+    textShadow: [
+      '0 0 10px rgba(var(--gold-rgb), 0.3)',
+      '0 0 20px rgba(var(--gold-rgb), 0.6)',
+      '0 0 10px rgba(var(--gold-rgb), 0.3)',
+    ],
+    transition: {
+      duration: 2,
+      ease: 'easeInOut',
+      repeat: Infinity,
+    },
+  },
+}
+
+// Expanding glow reveal for page transitions
+export const glowReveal: Variants = {
+  breathing: {
+    scale: [1, 1.3, 1],
+    opacity: [0.3, 0.5, 0.3],
+    transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
+  },
+  exit: {
+    scale: 3,
+    opacity: 0,
+    transition: { duration: 0.5, ease: 'easeOut' },
+  },
+}

@@ -25,15 +25,17 @@ export function AbilityIcon({ icon, name, description }: AbilityIconProps) {
     <button
       type="button"
       onClick={() => isMobile && description && setSheetOpen(true)}
-      className="relative w-16 h-16 md:w-[72px] md:h-[72px] rounded-lg border-[3px] border-gold bg-dark-blue/60 shadow-[0_0_12px_rgba(227,207,116,0.3)] overflow-hidden flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-gold/50"
+      className="relative w-20 h-20 md:w-24 md:h-24 rounded-lg border-[3px] border-gold bg-dark-blue/60 shadow-[0_0_16px_rgba(var(--gold-rgb),0.4),inset_0_0_0_1px_rgba(0,0,0,0.3)] overflow-hidden flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-gold/50"
       aria-label={`${name} ability info`}
     >
+      {/* Inner border ring for depth */}
+      <div className="absolute inset-[3px] rounded-[5px] border border-gold/20 pointer-events-none z-10" />
       {icon ? (
         <Image
           src={icon}
           alt={name}
           fill
-          sizes="(max-width: 640px) 48px, 64px"
+          sizes="(max-width: 640px) 80px, 96px"
           className="object-cover"
           priority
         />
@@ -84,9 +86,10 @@ export function AbilityIcon({ icon, name, description }: AbilityIconProps) {
           side="top"
           className="w-80 max-w-[calc(100vw-2rem)] p-4 bg-dark-blue/95 backdrop-blur-sm border border-gold/30"
         >
+          <h3 className="font-bold text-gold uppercase tracking-wide mb-1">{name}</h3>
           {/* Content is sanitized via sanitizeHtml before rendering */}
           <div
-            className="ability-description text-base leading-relaxed text-foreground/90"
+            className="ability-description text-base leading-relaxed text-foreground/80"
             dangerouslySetInnerHTML={{ __html: sanitisedDescription }}
           />
         </TooltipContent>

@@ -99,30 +99,47 @@ This project emphasises **minimalism, simplicity, elegance, and aesthetics**. Ev
 |-------|------------|
 | Components | Shadcn/ui (Radix primitives) |
 | Styling | Tailwind CSS 4 + CSS variables |
-| Animation | Framer Motion + CSS keyframes |
+| Animation | Framer Motion (primary) |
 | Icons | Lucide React |
 
-### Reusable Components (`src/components/ui/`)
+### UI Components — Use These First
 
-**Always reuse these components for new features:**
+**Always use Shadcn/ui components from `src/components/ui/` unless strictly necessary:**
 
 - **Button** — Variant-driven (`primary`, `gold`, `outline`, `ghost`, etc.), multiple sizes, `asChild` slot composition
 - **Dialog** — Modal overlay with gold borders, dark-blue background, built-in animations
 - **Tooltip** — Hover hints with directional slide animations
-- **Sheet** — Slide-out panels
+- **Sheet** — Slide-out panels (mobile drawers)
 
 Use `class-variance-authority` (CVA) for new component variants. Use `cn()` from `src/lib/utils.ts` for conditional classnames.
 
-### Animation System (`src/lib/motion/`)
+**Do NOT create custom UI primitives** — extend existing Shadcn components or add new ones via `npx shadcn@latest add <component>`.
 
-**CSS keyframes** for transitions (performant, stable):
-- Panel slides, cooldown reveals, feedback pulses
+### Animation System — Framer Motion First
 
-**Framer Motion** for interactive feedback:
-- `fadeIn`, `scaleIn`, `numberPop`, `correctPulse`, `incorrectShake`
-- Import from `@/lib/motion`
+**Use Framer Motion for ALL animations.** Avoid CSS keyframes unless there's a specific performance reason.
 
-**Accessibility:** All animations respect `prefers-reduced-motion`.
+**Motion presets** (`src/lib/motion/`):
+- `fadeIn`, `scaleIn`, `numberPop`, `cooldownReveal` — entrance animations
+- `correctPulse`, `incorrectShake` — feedback animations
+- `slideInLeft`, `slideInRight` — directional slides
+- `desktopPanelVariants`, `mobilePanelVariants` — panel transitions
+
+**Patterns:**
+```tsx
+// State-driven animations
+<motion.div animate={isVisible ? 'visible' : 'hidden'} variants={fadeIn} />
+
+// Enter/exit animations
+<AnimatePresence mode="popLayout">
+  {items.map(item => <motion.div key={item.id} exit={{ opacity: 0 }} />)}
+</AnimatePresence>
+
+// Animation completion callbacks (instead of setTimeout)
+<motion.div onAnimationComplete={() => dispatch({ type: 'NEXT' })} />
+```
+
+**Accessibility:** Use `useReducedMotion()` hook — all motion presets respect `prefers-reduced-motion`.
 
 ### Colour Palette (`src/app/globals.css`)
 

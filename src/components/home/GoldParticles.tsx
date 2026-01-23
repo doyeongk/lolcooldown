@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useState } from "react"
 import { useReducedMotion } from "@/lib/motion"
 
 const PARTICLE_COUNT = 18
@@ -14,22 +14,22 @@ interface Particle {
   delay: number
 }
 
+function generateParticles(): Particle[] {
+  return Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
+    id: i,
+    left: `${Math.random() * 100}%`,
+    size: 2 + Math.random() * 2, // 2-4px
+    opacity: 0.1 + Math.random() * 0.1, // 10-20%
+    duration: 30 + Math.random() * 20, // 30-50s
+    delay: Math.random() * -30, // Stagger start times
+  }))
+}
+
 export function GoldParticles() {
   const reducedMotion = useReducedMotion()
 
-  // Safe to use Math.random() here - component is dynamically imported with ssr: false
-  const particles = useMemo<Particle[]>(
-    () =>
-      Array.from({ length: PARTICLE_COUNT }, (_, i) => ({
-        id: i,
-        left: `${Math.random() * 100}%`,
-        size: 2 + Math.random() * 2, // 2-4px
-        opacity: 0.1 + Math.random() * 0.1, // 10-20%
-        duration: 30 + Math.random() * 20, // 30-50s
-        delay: Math.random() * -30, // Stagger start times
-      })),
-    []
-  )
+  // Lazy initializer runs once on mount, not during render
+  const [particles] = useState<Particle[]>(generateParticles)
 
   if (reducedMotion) {
     return null

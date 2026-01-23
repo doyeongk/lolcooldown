@@ -1,13 +1,34 @@
 @import "tailwindcss";
 
+/*
+ * ============================================================================
+ * COLOR PALETTE
+ * ============================================================================
+ * Primary: Gold (#c9a227) - warm, rich gold inspired by League of Legends
+ * Background: Dark blue (#172b3b) - deep, immersive backdrop
+ * Text: Light gray (#e7e9ea) - high contrast, readable
+ *
+ * Gold opacity scale for borders/glows:
+ *   /60 - Strong emphasis (corner brackets, primary borders)
+ *   /40 - Medium emphasis (level badges, secondary borders)
+ *   /30 - Subtle emphasis (cards, buttons, tooltips)
+ *   /20 - Very subtle (secondary cards, disabled states)
+ * ============================================================================
+ */
+
 @theme inline {
-  --color-gold: #e3cf74;
-  --color-gold-hover: #d4c066;
+  /* Core palette */
+  --color-gold: #c9a227;
+  --color-gold-hover: #b8931f;
   --color-dark-blue: #172b3b;
   --color-dark-blue-hover: #1e3a4a;
   --color-foreground: #e7e9ea;
-  --color-ring: #e3cf74;
+
+  /* Focus ring */
+  --color-ring: #c9a227;
   --color-ring-offset: #172b3b;
+
+  /* Typography */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
@@ -63,14 +84,22 @@
 
 @layer base {
   :root {
-    --gold: #e3cf74;
-    --gold-hover: #d4c066;
+    /* Core colors - single source of truth */
+    --gold: #c9a227;
+    --gold-hover: #b8931f;
+    --gold-rgb: 201, 162, 39; /* For rgba() usage */
     --dark-blue: #172b3b;
     --dark-blue-hover: #1e3a4a;
     --background: #0f0d0a;
     --foreground: #e7e9ea;
-    --ring: #e3cf74;
+    --ring: #c9a227;
     --ring-offset: #0f0d0a;
+
+    /* Gold glow presets - use these for consistent shadows */
+    --glow-gold-subtle: 0 0 12px rgba(var(--gold-rgb), 0.15);
+    --glow-gold-medium: 0 0 16px rgba(var(--gold-rgb), 0.3);
+    --glow-gold-strong: 0 0 24px rgba(var(--gold-rgb), 0.5);
+    --glow-gold-intense: 0 0 30px rgba(var(--gold-rgb), 0.6);
   }
 
   html {
@@ -83,10 +112,10 @@
     /* Dark bronze/sepia base - warm undertones complement gold accents */
     background: linear-gradient(
       170deg,
-      #0f0d0a 0%,
-      #1a1611 30%,
-      #0d0b08 60%,
-      #0f0d0a 100%
+      #191714 0%,
+      #24201b 30%,
+      #171512 60%,
+      #191714 100%
     );
     min-height: 100vh; /* Fallback */
     min-height: 100svh; /* Modern browsers */
@@ -104,7 +133,7 @@
     inset: 0;
     background: radial-gradient(
       ellipse at 50% 40%,
-      rgba(227, 207, 116, 0.08) 0%,
+      rgba(var(--gold-rgb), 0.08) 0%,
       transparent 50%
     );
     pointer-events: none;
@@ -119,165 +148,6 @@
   }
   50% {
     background-position: 50% 100%;
-  }
-}
-
-/* Game animations */
-@keyframes cooldown-reveal {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes panel-slide-left {
-  from {
-    opacity: 0;
-    transform: translateX(-100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes panel-slide-right {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* Carousel transition animations */
-@keyframes panel-exit-left {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-100%);
-  }
-}
-
-@keyframes panel-shift-left {
-  from {
-    opacity: 1;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes panel-enter-right {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-/* Mobile cross-fade animations */
-@keyframes panel-cross-fade-exit {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes panel-cross-fade-enter {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* Mobile vertical slide carousel (match desktop pattern - use 2D transforms) */
-@keyframes panel-slide-up-exit {
-  from { transform: translateY(0); }
-  to { transform: translateY(-100%); }
-}
-
-@keyframes panel-slide-up-shift {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-@keyframes panel-slide-up-enter {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-/* Mobile stable-DOM animations (transform-based to avoid position snap on animation end) */
-@keyframes mobile-exit-up {
-  from { transform: translateY(0); }
-  to { transform: translateY(-100%); }
-}
-
-@keyframes mobile-shift-up {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-@keyframes mobile-enter-up {
-  from { transform: translateY(200%); }
-  to { transform: translateY(100%); }
-}
-
-
-@keyframes correct-pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-  }
-  50% {
-    box-shadow: 0 0 20px 10px rgba(34, 197, 94, 0.4);
-  }
-}
-
-@keyframes incorrect-shake {
-  0%, 100% {
-    transform: translateX(0);
-  }
-  10%, 30%, 50%, 70%, 90% {
-    transform: translateX(-5px);
-  }
-  20%, 40%, 60%, 80% {
-    transform: translateX(5px);
-  }
-}
-
-@keyframes slide-in-left {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
   }
 }
 
@@ -332,88 +202,6 @@
 
 
 @layer utilities {
-  .animate-cooldown-reveal {
-    animation: cooldown-reveal 0.3s ease-out forwards;
-  }
-
-  .animate-correct-pulse {
-    animation: correct-pulse 0.6s ease-in-out;
-  }
-
-  .animate-incorrect-shake {
-    animation: incorrect-shake 0.5s ease-in-out;
-  }
-
-  .animate-slide-in-left {
-    animation: slide-in-left 0.4s ease-out;
-  }
-
-  .animate-slide-in-right {
-    animation: slide-in-right 0.4s ease-out;
-  }
-
-  .animate-panel-slide-left {
-    animation: panel-slide-left 0.4s ease-out;
-  }
-
-  .animate-panel-slide-right {
-    animation: panel-slide-right 0.4s ease-out;
-  }
-
-  /* Carousel transition utilities */
-  .animate-panel-exit-left {
-    animation: panel-exit-left 0.5s ease-out forwards;
-  }
-
-  .animate-panel-shift-left {
-    animation: panel-shift-left 0.5s ease-out forwards;
-  }
-
-  .animate-panel-enter-right {
-    animation: panel-enter-right 0.5s ease-out forwards;
-  }
-
-  /* Mobile cross-fade utilities */
-  .animate-panel-cross-fade-exit {
-    animation: panel-cross-fade-exit 0.3s ease-out forwards;
-    will-change: opacity;
-    transform: translateZ(0);
-    backface-visibility: hidden;
-  }
-
-  .animate-panel-cross-fade-enter {
-    animation: panel-cross-fade-enter 0.3s ease-out both;
-    will-change: opacity;
-    transform: translateZ(0);
-    backface-visibility: hidden;
-  }
-
-  /* Mobile vertical slide utilities (match desktop pattern - no GPU hints) */
-  .animate-panel-slide-up-exit {
-    animation: panel-slide-up-exit 0.4s ease-out forwards;
-  }
-
-  .animate-panel-slide-up-shift {
-    animation: panel-slide-up-shift 0.4s ease-out forwards;
-  }
-
-  .animate-panel-slide-up-enter {
-    animation: panel-slide-up-enter 0.4s ease-out forwards;
-  }
-
-  /* Mobile stable-DOM animations (uses top property to avoid iOS Safari layer issues) */
-  .animate-mobile-exit-up {
-    animation: mobile-exit-up 0.4s ease-out forwards;
-  }
-
-  .animate-mobile-shift-up {
-    animation: mobile-shift-up 0.4s ease-out forwards;
-  }
-
-  .animate-mobile-enter-up {
-    animation: mobile-enter-up 0.4s ease-out forwards;
-  }
-
   /* GPU acceleration for containers (prevents iOS Safari flash) */
   .gpu-accelerated {
     transform: translate3d(0, 0, 0);
@@ -469,24 +257,6 @@
     background-position: 50% 50%;
   }
 
-  .animate-cooldown-reveal,
-  .animate-correct-pulse,
-  .animate-incorrect-shake,
-  .animate-slide-in-left,
-  .animate-slide-in-right,
-  .animate-panel-slide-left,
-  .animate-panel-slide-right,
-  .animate-panel-exit-left,
-  .animate-panel-shift-left,
-  .animate-panel-enter-right,
-  .animate-panel-cross-fade-exit,
-  .animate-panel-cross-fade-enter,
-  .animate-panel-slide-up-exit,
-  .animate-panel-slide-up-shift,
-  .animate-panel-slide-up-enter,
-  .animate-mobile-exit-up,
-  .animate-mobile-shift-up,
-  .animate-mobile-enter-up,
   .animate-icon-scroll-left,
   .animate-icon-scroll-right,
   .animate-wall-drift,

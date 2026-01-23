@@ -13,7 +13,7 @@ const buttonVariants = cva(
       variant: {
         default: "bg-gold text-dark-blue hover:bg-gold-hover",
         primary: "bg-gold text-dark-blue hover:bg-gold-hover",
-        secondary: "bg-dark-blue text-foreground border border-foreground/20 hover:bg-dark-blue-hover",
+        secondary: "bg-gradient-to-b from-black/50 to-black/60 backdrop-blur-sm text-foreground border border-gold/30 hover:from-black/60 hover:to-black/70 hover:shadow-[0_0_12px_rgba(var(--gold-rgb),0.2)]",
         outline: "border border-gold text-gold hover:bg-gold hover:text-dark-blue",
         gold: "bg-gold text-dark-blue border-2 border-dark-blue hover:bg-gold-hover",
         darkBlue: "bg-dark-blue text-gold border-2 border-gold hover:bg-dark-blue-hover",
