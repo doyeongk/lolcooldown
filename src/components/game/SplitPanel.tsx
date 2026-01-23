@@ -110,37 +110,33 @@ function ClickZones({ onGuess, disabled }: ClickZonesProps) {
 
   return (
     <>
-      {/* Center divider line */}
-      <div
-        className="absolute left-0 right-0 top-1/2 h-px z-20 pointer-events-none"
-        style={{
-          background: 'linear-gradient(90deg, transparent 10%, rgba(var(--gold-rgb), 0.3) 50%, transparent 90%)',
-        }}
-      />
-
-      {/* Top zone gradient overlay */}
+      {/* Top zone gradient overlay - fades from top edge toward center */}
       <motion.div
-        className="absolute inset-x-0 top-0 h-1/2 pointer-events-none z-20"
+        className="absolute inset-x-0 top-0 h-[60%] pointer-events-none z-20"
         variants={clickZoneOverlayVariants}
         initial="idle"
         animate={isTopActive ? 'active' : 'idle'}
         transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.25 }}
         style={{
-          background: 'linear-gradient(to bottom, rgba(var(--gold-rgb), 0.2) 0%, rgba(var(--gold-rgb), 0.08) 40%, transparent 100%)',
-          boxShadow: 'inset 0 2px 20px rgba(var(--gold-rgb), 0.4)',
+          background: `
+            radial-gradient(ellipse 120% 80% at 50% -10%, rgba(var(--gold-rgb), 0.25) 0%, rgba(var(--gold-rgb), 0.12) 30%, transparent 70%),
+            linear-gradient(to bottom, rgba(var(--gold-rgb), 0.15) 0%, rgba(var(--gold-rgb), 0.06) 30%, transparent 80%)
+          `,
         }}
       />
 
-      {/* Bottom zone gradient overlay */}
+      {/* Bottom zone gradient overlay - fades from bottom edge toward center */}
       <motion.div
-        className="absolute inset-x-0 bottom-0 h-1/2 pointer-events-none z-20"
+        className="absolute inset-x-0 bottom-0 h-[60%] pointer-events-none z-20"
         variants={clickZoneOverlayVariants}
         initial="idle"
         animate={isBottomActive ? 'active' : 'idle'}
         transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.25 }}
         style={{
-          background: 'linear-gradient(to top, rgba(var(--gold-rgb), 0.2) 0%, rgba(var(--gold-rgb), 0.08) 40%, transparent 100%)',
-          boxShadow: 'inset 0 -2px 20px rgba(var(--gold-rgb), 0.4)',
+          background: `
+            radial-gradient(ellipse 120% 80% at 50% 110%, rgba(var(--gold-rgb), 0.25) 0%, rgba(var(--gold-rgb), 0.12) 30%, transparent 70%),
+            linear-gradient(to top, rgba(var(--gold-rgb), 0.15) 0%, rgba(var(--gold-rgb), 0.06) 30%, transparent 80%)
+          `,
         }}
       />
 
