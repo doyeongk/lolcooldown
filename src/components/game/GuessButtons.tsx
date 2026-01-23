@@ -16,20 +16,6 @@ interface GuessButtonsProps {
 
 const springTransition = { type: 'spring', stiffness: 400, damping: 25 } as const
 
-// Corner accent component for rectangular buttons
-function CornerAccent({ position }: { position: 'top-left' | 'bottom-right' }) {
-  const positionClasses = position === 'top-left'
-    ? "-top-px -left-px border-t border-l"
-    : "-bottom-px -right-px border-b border-r"
-
-  return (
-    <div
-      className={`absolute w-3 h-3 ${positionClasses} border-dark-blue/30 pointer-events-none`}
-      aria-hidden="true"
-    />
-  )
-}
-
 export function GuessButtons({ onGuess, disabled, hidden = false, variant = 'inline' }: GuessButtonsProps) {
   const prefersReducedMotion = useReducedMotion()
 
@@ -73,59 +59,99 @@ export function GuessButtons({ onGuess, disabled, hidden = false, variant = 'inl
     )
   }
 
-  // Desktop inline layout - rectangular cards with corner accents
+  // Desktop inline layout - full-width stacked buttons anchored at bottom
   return (
-    <div className="hidden md:flex flex-col gap-4 w-56">
+    <div className="hidden md:flex flex-col gap-3 w-full max-w-sm lg:max-w-md">
       <motion.button
         type="button"
         onClick={() => onGuess('higher')}
         disabled={disabled}
-        whileHover={!prefersReducedMotion && !disabled ? { x: 4 } : undefined}
+        whileHover={!prefersReducedMotion && !disabled ? { scale: 1.02, boxShadow: '0 0 32px rgba(201,162,39,0.5), 0 6px 20px rgba(0,0,0,0.4)' } : undefined}
         whileTap={!prefersReducedMotion && !disabled ? { scale: 0.98 } : undefined}
         transition={springTransition}
         className="
-          relative flex items-center justify-center gap-2
-          px-6 py-5
-          bg-gold text-dark-blue font-bold text-lg uppercase tracking-wide
-          border border-gold
-          shadow-[0_0_16px_rgba(227,207,116,0.3)]
+          relative flex items-center justify-center gap-3
+          px-8 py-5 lg:py-6
+          text-dark-blue font-bold text-lg lg:text-xl uppercase tracking-wider
           transition-all duration-200
-          hover:shadow-[0_0_24px_rgba(227,207,116,0.5)]
           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue
           disabled:opacity-50 disabled:cursor-not-allowed
           touch-manipulation
+          overflow-hidden
         "
+        style={{
+          // Angular button shape
+          clipPath: 'polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px)',
+          background: 'linear-gradient(180deg, #f5e8a3 0%, #d4a84b 30%, #c9a227 70%, #a88a1f 100%)',
+          boxShadow: '0 0 24px rgba(201,162,39,0.4), 0 4px 16px rgba(0,0,0,0.4)',
+        }}
         aria-label="Guess higher cooldown"
       >
-        <CornerAccent position="top-left" />
-        <CornerAccent position="bottom-right" />
-        <ChevronUp className="w-5 h-5" strokeWidth={3} aria-hidden="true" />
-        Higher
+        {/* Inner border frame */}
+        <div
+          className="absolute inset-[2px] pointer-events-none"
+          style={{
+            clipPath: 'polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px)',
+            border: '1px solid rgba(255,255,255,0.2)',
+          }}
+          aria-hidden="true"
+        />
+        {/* Top highlight */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 35%, transparent 65%, rgba(0,0,0,0.15) 100%)',
+          }}
+          aria-hidden="true"
+        />
+        <ChevronUp className="w-6 h-6 lg:w-7 lg:h-7 relative z-10" strokeWidth={3} aria-hidden="true" />
+        <span className="relative z-10">Higher</span>
       </motion.button>
+
       <motion.button
         type="button"
         onClick={() => onGuess('lower')}
         disabled={disabled}
-        whileHover={!prefersReducedMotion && !disabled ? { x: 4, boxShadow: '0 0 20px rgba(var(--gold-rgb), 0.3)' } : undefined}
+        whileHover={!prefersReducedMotion && !disabled ? { scale: 1.02, boxShadow: '0 0 24px rgba(201,162,39,0.25), 0 6px 20px rgba(0,0,0,0.5)' } : undefined}
         whileTap={!prefersReducedMotion && !disabled ? { scale: 0.98 } : undefined}
         transition={springTransition}
         className="
-          relative flex items-center justify-center gap-2
-          px-6 py-5
-          bg-gradient-to-b from-black/50 to-black/60 backdrop-blur-sm text-foreground font-bold text-lg uppercase tracking-wide
-          border border-gold/30
+          relative flex items-center justify-center gap-3
+          px-8 py-5 lg:py-6
+          text-foreground font-bold text-lg lg:text-xl uppercase tracking-wider
           transition-all duration-200
-          hover:border-gold/60
           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue
           disabled:opacity-50 disabled:cursor-not-allowed
           touch-manipulation
+          overflow-hidden
         "
+        style={{
+          // Angular button shape
+          clipPath: 'polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px)',
+          background: 'linear-gradient(180deg, rgba(30,45,60,0.95) 0%, rgba(15,26,36,0.98) 100%)',
+          boxShadow: 'inset 0 0 0 1px rgba(201,162,39,0.3), 0 4px 16px rgba(0,0,0,0.5)',
+        }}
         aria-label="Guess lower cooldown"
       >
-        <CornerAccent position="top-left" />
-        <CornerAccent position="bottom-right" />
-        <ChevronDown className="w-5 h-5" strokeWidth={3} aria-hidden="true" />
-        Lower
+        {/* Inner border frame */}
+        <div
+          className="absolute inset-[2px] pointer-events-none"
+          style={{
+            clipPath: 'polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px)',
+            border: '1px solid rgba(201,162,39,0.15)',
+          }}
+          aria-hidden="true"
+        />
+        {/* Subtle highlight */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.1) 100%)',
+          }}
+          aria-hidden="true"
+        />
+        <ChevronDown className="w-6 h-6 lg:w-7 lg:h-7 relative z-10" strokeWidth={3} aria-hidden="true" />
+        <span className="relative z-10">Lower</span>
       </motion.button>
     </div>
   )

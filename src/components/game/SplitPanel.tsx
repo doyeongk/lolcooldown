@@ -201,48 +201,65 @@ export function SplitPanel({
       />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-4 gap-2 md:gap-4 py-4 md:py-6 h-full md:h-auto justify-between">
-        {/* Top section: Champion info */}
-        <div className="flex flex-col items-center gap-2 md:gap-4">
-          {/* Champion name + slot badge */}
+      <div className="relative z-10 flex flex-col items-center text-center px-4 py-4 md:py-6 h-full justify-between">
+        {/* Top spacer for header clearance on mobile */}
+        <div className="h-4 md:h-8 shrink-0" />
+
+        {/* Main content area - centered vertically */}
+        <div className="flex flex-col items-center gap-3 md:gap-5">
+          {/* Champion name */}
           <h2
-            className="flex items-center justify-center gap-3 text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg tracking-wide"
+            className="text-2xl md:text-3xl lg:text-4xl font-bold drop-shadow-lg tracking-wide"
             style={{ textShadow: '0 0 40px rgba(var(--gold-rgb), 0.25)' }}
           >
             <span className="text-foreground">{champion.name}</span>
-            <span className="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded bg-gold text-dark-blue font-bold text-xl md:text-2xl shadow-[0_0_12px_rgba(var(--gold-rgb),0.4)]">
-              {ability.slot}
-            </span>
           </h2>
 
-          {/* Ability icon and name */}
-          <div className="flex items-center gap-3">
+          {/* Ability icon with integrated badge - cohesive unit */}
+          <div className="relative">
+            {/* Main ability icon */}
             <AbilityIcon
               icon={ability.icon}
               name={ability.name}
               description={ability.description}
             />
-            <p className="text-lg md:text-xl lg:text-2xl text-foreground/90 uppercase tracking-wider font-medium drop-shadow-lg">
-              {ability.name}
-            </p>
+            {/* Ability slot badge - overlaps bottom-right corner */}
+            <div
+              className="absolute -bottom-2 -right-2 md:-bottom-2.5 md:-right-2.5 w-9 h-9 md:w-11 md:h-11 flex items-center justify-center font-bold text-base md:text-lg text-dark-blue z-10"
+              style={{
+                clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 15%)',
+                background: 'linear-gradient(135deg, #f5e8a3 0%, #d4a84b 35%, #c4983b 65%, #a87b2a 100%)',
+                boxShadow: '0 0 12px rgba(var(--gold-rgb), 0.5), 0 2px 6px rgba(0, 0, 0, 0.5)',
+              }}
+            >
+              {/* Inner highlight */}
+              <div
+                className="absolute inset-[1px] pointer-events-none"
+                style={{
+                  clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 15%)',
+                  background: 'linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 50%)',
+                }}
+              />
+              <span className="relative">{ability.slot}</span>
+            </div>
           </div>
+
+          {/* Ability name */}
+          <p className="text-base md:text-lg lg:text-xl text-foreground/90 uppercase tracking-wider font-medium drop-shadow-lg">
+            {ability.name}
+          </p>
 
           {/* Level pips */}
           <LevelPips level={level} slot={ability.slot as 'Q' | 'W' | 'E' | 'R' | 'P'} />
-        </div>
 
-        {/* Spacer - pushes action slot to vertical center of remaining space on mobile */}
-        <div className="flex-1 md:hidden" />
-
-        {/* Action slot - fixed height for layout stability */}
-        <div className="md:mt-auto h-[56px] md:h-[130px] flex items-center justify-center">
-          {showCooldown ? (
+          {/* Cooldown display (shown when revealing on both panels) */}
+          {showCooldown && (
             <motion.p
               key={`cooldown-${cooldown}`}
               variants={side === 'right' ? numberPop : undefined}
               initial={side === 'right' ? 'hidden' : false}
               animate={side === 'right' ? 'visible' : undefined}
-              className="text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg tracking-wide"
+              className="text-4xl md:text-5xl lg:text-6xl font-bold text-gold drop-shadow-lg tracking-wide mt-2"
               style={{
                 textShadow: '0 0 40px rgba(var(--gold-rgb), 0.5)',
                 filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5))',
@@ -250,15 +267,17 @@ export function SplitPanel({
             >
               {cooldown}s
             </motion.p>
-          ) : onGuess ? (
-            <GuessButtons onGuess={onGuess} disabled={guessDisabled} />
-          ) : (
-            <div className="w-56" />
           )}
         </div>
 
-        {/* Bottom spacer - balances the top spacer to center action slot */}
-        <div className="flex-1 md:hidden" />
+        {/* Bottom action area - buttons anchor here */}
+        <div className="shrink-0 w-full flex justify-center pb-2 md:pb-4">
+          {!showCooldown && onGuess ? (
+            <GuessButtons onGuess={onGuess} disabled={guessDisabled} />
+          ) : (
+            <div className="h-[130px] md:h-[160px]" /> // Spacer to maintain layout
+          )}
+        </div>
       </div>
     </motion.div>
   )

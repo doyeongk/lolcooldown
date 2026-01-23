@@ -54,6 +54,41 @@ const mobilePanel3Variants: Variants = {
   enter: { y: '100%' },
 }
 
+// Angular corner accent for League-style frames
+function AngularCorner({ position }: { position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' }) {
+  const isTop = position.includes('top')
+  const isLeft = position.includes('left')
+
+  return (
+    <div
+      className={`absolute w-3 h-3 md:w-4 md:h-4 pointer-events-none ${
+        isTop ? '-top-px' : '-bottom-px'
+      } ${isLeft ? '-left-px' : '-right-px'}`}
+      aria-hidden="true"
+    >
+      {/* Gold corner bracket */}
+      <svg
+        viewBox="0 0 16 16"
+        className="w-full h-full text-gold"
+        style={{
+          transform: `scale(${isLeft ? 1 : -1}, ${isTop ? 1 : -1})`,
+        }}
+      >
+        <path
+          d="M0 0 L16 0 L16 3 L3 3 L3 16 L0 16 Z"
+          fill="currentColor"
+          opacity="0.7"
+        />
+        <path
+          d="M0 0 L12 0 L12 2 L2 2 L2 12 L0 12 Z"
+          fill="currentColor"
+          opacity="0.3"
+        />
+      </svg>
+    </div>
+  )
+}
+
 const initialState: GameState = {
   phase: 'idle',
   score: 0,
@@ -354,34 +389,79 @@ export function CooldownClash() {
       animate={{ opacity: showContent ? 1 : 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
-      {/* Header - back button and score */}
-      <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between gap-2 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-2">
-        {/* Header backdrop gradient */}
+      {/* Header - angular League-inspired status bar */}
+      <header className="absolute top-0 left-0 right-0 z-30 pt-[max(0.5rem,env(safe-area-inset-top))] px-3 md:px-4">
         <div
-          className="absolute inset-0 pointer-events-none -z-10"
+          className="relative flex items-center justify-between gap-2 px-2 md:px-3 py-1.5 md:py-2 backdrop-blur-md"
           style={{
-            background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 70%, transparent 100%)',
+            // Angular shape with beveled corners
+            clipPath: 'polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 12px)',
+            background: 'linear-gradient(180deg, rgba(15,20,28,0.95) 0%, rgba(8,12,18,0.98) 100%)',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.03)',
           }}
-        />
-        <motion.div
-          whileHover={prefersReducedMotion ? undefined : { scale: 1.05 }}
-          whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         >
-          <Link
-            href="/"
-            className="block p-2 rounded-lg bg-gradient-to-b from-black/50 to-black/60 hover:from-black/60 hover:to-black/70 backdrop-blur-sm text-foreground transition-all border border-gold/30 hover:shadow-[0_0_12px_rgba(227,207,116,0.2)]"
-            aria-label="Go back to menu"
+          {/* Gold border frame - follows angular shape */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              clipPath: 'polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 12px)',
+              border: '1px solid rgba(201,162,39,0.4)',
+            }}
+          />
+
+          {/* Top edge gold accent */}
+          <div
+            className="absolute top-0 left-[16px] right-[16px] h-[2px] pointer-events-none"
+            style={{
+              background: 'linear-gradient(90deg, transparent 0%, rgba(201,162,39,0.6) 20%, rgba(201,162,39,0.8) 50%, rgba(201,162,39,0.6) 80%, transparent 100%)',
+            }}
+            aria-hidden="true"
+          />
+
+          {/* Angular corner accents */}
+          <AngularCorner position="top-left" />
+          <AngularCorner position="top-right" />
+          <AngularCorner position="bottom-left" />
+          <AngularCorner position="bottom-right" />
+
+          {/* Inner highlight line */}
+          <div
+            className="absolute top-[1px] left-[20px] right-[20px] h-px pointer-events-none"
+            style={{
+              background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 30%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.08) 70%, transparent 100%)',
+            }}
+            aria-hidden="true"
+          />
+
+          {/* Back button - angular style */}
+          <motion.div
+            whileHover={prefersReducedMotion ? undefined : { scale: 1.05 }}
+            whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
           >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-        </motion.div>
-        <ScoreDisplay
-          score={state.score}
-          highScore={state.highScore}
-          lives={state.lives}
-        />
-        <div className="w-9" aria-hidden="true" />
+            <Link
+              href="/"
+              className="relative flex items-center justify-center w-9 h-9 md:w-10 md:h-10 text-gold hover:text-gold-hover transition-all"
+              style={{
+                clipPath: 'polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px)',
+                background: 'linear-gradient(180deg, rgba(201,162,39,0.1) 0%, rgba(201,162,39,0.05) 100%)',
+                boxShadow: 'inset 0 0 0 1px rgba(201,162,39,0.3)',
+              }}
+              aria-label="Go back to menu"
+            >
+              <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
+            </Link>
+          </motion.div>
+
+          <ScoreDisplay
+            score={state.score}
+            highScore={state.highScore}
+            lives={state.lives}
+          />
+
+          {/* Spacer for symmetry */}
+          <div className="w-9 md:w-10" aria-hidden="true" />
+        </div>
       </header>
 
       {/* Split container */}
