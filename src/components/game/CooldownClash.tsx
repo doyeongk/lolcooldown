@@ -168,7 +168,7 @@ export function CooldownClash() {
   const isFetchingRef = useRef(false)
   const [prevPhase, setPrevPhase] = useState<string>(state.phase)
   const [animatedRoundId, setAnimatedRoundId] = useState<string | null>(null)
-  const [imagesLoaded, setImagesLoaded] = useState(false)
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false)
   const [showContent, setShowContent] = useState(false)
   const isMobile = useIsMobile()
   const prefersReducedMotion = useReducedMotion()
@@ -224,30 +224,25 @@ export function CooldownClash() {
     ]
   }, [state.nextRound])
 
+  // Only use loading state for initial load - after that, images are preloaded
   const currentImagesLoaded = useImagePreloaderWithState(currentRoundImages)
   useImagePreloader(nextRoundImages)
 
-  // Reset loaded state when round changes
+  // Handle initial load: wait for first round images, then show content permanently
   useEffect(() => {
-    if (!currentImagesLoaded) {
-      setImagesLoaded(false)
-    } else if (currentImagesLoaded && state.currentRound) {
-      setImagesLoaded(true)
-    }
-  }, [currentImagesLoaded, state.currentRound])
+    // Only run this logic during initial load
+    if (initialLoadComplete) return
 
-  // Delay showing content to ensure opacity 0 is painted first
-  // This guarantees the fade-in animation plays even when images are cached
-  useEffect(() => {
-    if (imagesLoaded) {
+    if (currentImagesLoaded && state.currentRound) {
+      // Delay showing content to ensure opacity 0 is painted first
+      // This guarantees the fade-in animation plays even when images are cached
       const rafId = requestAnimationFrame(() => {
         setShowContent(true)
+        setInitialLoadComplete(true)
       })
       return () => cancelAnimationFrame(rafId)
-    } else {
-      setShowContent(false)
     }
-  }, [imagesLoaded])
+  }, [currentImagesLoaded, state.currentRound, initialLoadComplete])
 
   // Sync high score from localStorage on mount
   useEffect(() => {
@@ -334,6 +329,9 @@ export function CooldownClash() {
   }, [state.phase, state.nextRound, state.score])
 
   const handleRestart = useCallback(() => {
+    // Reset loading states for new game
+    setInitialLoadComplete(false)
+    setShowContent(false)
     dispatch({ type: 'RESTART' })
   }, [])
 
@@ -474,52 +472,32 @@ export function CooldownClash() {
               )}
             </motion.div>
           </div>
-        ) : state.phase === 'transitioning' && state.nextRound ? (
-          // Desktop: Carousel slide transition
-          <>
-            {/* Exiting left - slides out to left */}
-            <div className="absolute inset-y-0 left-0 w-1/2 z-10 gpu-accelerated">
-              <SplitPanel
-                gameAbility={state.currentRound.left}
-                showCooldown={true}
-                side="left"
-                isCorrect={null}
-                exitAnimation="left"
-              />
-            </div>
-            {/* Old right moving to left position */}
-            <SplitPanel
-              gameAbility={state.currentRound.right}
-              showCooldown={true}
-              side="left"
-              isCorrect={state.lastGuessCorrect}
-              enterAnimation="shift-left"
-            />
-            {/* VS divider */}
-            <div className="relative z-20 flex items-center justify-center md:h-auto md:w-0 shrink-0">
-              <VsDivider />
-            </div>
-            {/* New right entering from off-screen right */}
-            <SplitPanel
-              gameAbility={state.nextRound.left}
-              showCooldown={false}
-              side="right"
-              isCorrect={null}
-              enterAnimation="right"
-              onGuess={handleGuess}
-              guessDisabled={true}
-            />
-          </>
         ) : (
-          // Desktop: Normal two-panel rendering
+          // Desktop: Unified rendering for both transitioning and normal states
+          // Using stable keys prevents remounting when phase changes
           <>
-            {/* Left panel: Known ability (always shows cooldown) */}
+            {/* Exiting left panel - only visible during transition */}
+            {state.phase === 'transitioning' && state.nextRound && (
+              <div className="absolute inset-y-0 left-0 w-1/2 z-10 gpu-accelerated">
+                <SplitPanel
+                  gameAbility={state.currentRound.left}
+                  showCooldown={true}
+                  side="left"
+                  isCorrect={null}
+                  exitAnimation="left"
+                />
+              </div>
+            )}
+
+            {/* Left panel - stable across phase changes */}
             <SplitPanel
-              gameAbility={state.currentRound.left}
+              key={`left-${state.phase === 'transitioning' && state.nextRound ? state.currentRound.right.ability.id : state.currentRound.left.ability.id}`}
+              gameAbility={state.phase === 'transitioning' && state.nextRound ? state.currentRound.right : state.currentRound.left}
               showCooldown={true}
               side="left"
-              isCorrect={null}
-              skipAnimation={skipPanelAnimation}
+              isCorrect={state.phase === 'transitioning' ? state.lastGuessCorrect : null}
+              enterAnimation={state.phase === 'transitioning' && state.nextRound ? 'shift-left' : undefined}
+              skipAnimation={state.phase !== 'transitioning' ? skipPanelAnimation : undefined}
             />
 
             {/* VS divider - zero-height/width flex item */}
@@ -527,15 +505,17 @@ export function CooldownClash() {
               <VsDivider />
             </div>
 
-            {/* Right panel: Challenger ability + buttons */}
+            {/* Right panel - stable across phase changes */}
             <SplitPanel
-              gameAbility={state.currentRound.right}
-              showCooldown={isRevealing}
+              key={`right-${state.phase === 'transitioning' && state.nextRound ? state.nextRound.left.ability.id : state.currentRound.right.ability.id}`}
+              gameAbility={state.phase === 'transitioning' && state.nextRound ? state.nextRound.left : state.currentRound.right}
+              showCooldown={state.phase === 'transitioning' ? false : isRevealing}
               side="right"
-              isCorrect={isRevealing ? state.lastGuessCorrect : null}
+              isCorrect={state.phase === 'transitioning' ? null : (isRevealing ? state.lastGuessCorrect : null)}
               onGuess={handleGuess}
               guessDisabled={state.phase !== 'playing'}
-              skipAnimation={skipPanelAnimation}
+              enterAnimation={state.phase === 'transitioning' && state.nextRound ? 'right' : undefined}
+              skipAnimation={state.phase !== 'transitioning' ? skipPanelAnimation : undefined}
             />
           </>
         )}
