@@ -106,7 +106,7 @@ function ClickZones({ onGuess, disabled }: ClickZonesProps) {
         onMouseEnter={() => !disabled && setHoveredZone('top')}
         onMouseLeave={() => setHoveredZone(null)}
         disabled={disabled}
-        className="absolute inset-x-0 top-0 h-1/2 z-30 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-inset disabled:cursor-not-allowed"
+        className="absolute inset-x-0 top-0 h-1/2 z-30 cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-inset"
         aria-label="Guess higher cooldown"
       >
         {/* Subtle label with icon */}
@@ -127,7 +127,7 @@ function ClickZones({ onGuess, disabled }: ClickZonesProps) {
         onMouseEnter={() => !disabled && setHoveredZone('bottom')}
         onMouseLeave={() => setHoveredZone(null)}
         disabled={disabled}
-        className="absolute inset-x-0 bottom-0 h-1/2 z-30 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-inset disabled:cursor-not-allowed"
+        className="absolute inset-x-0 bottom-0 h-1/2 z-30 cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-inset"
         aria-label="Guess lower cooldown"
       >
         {/* Subtle label with icon */}
@@ -299,8 +299,8 @@ export function SplitPanel({
         <ClickZones onGuess={onGuess} disabled={guessDisabled} />
       )}
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 py-4 md:py-6 h-full">
+      {/* Content - no z-index so AbilityIcon can escape to panel stacking context */}
+      <div className="relative flex flex-col items-center justify-center text-center px-4 py-4 md:py-6 h-full">
         {/* Main content area - centered vertically */}
         <div className="flex flex-col items-center gap-3 md:gap-5">
           {/* Champion name + ability slot */}
@@ -315,8 +315,8 @@ export function SplitPanel({
 
           {/* Ability icon + name row */}
           <div className="flex items-center gap-3 md:gap-4">
-            {/* Ability icon with integrated badge */}
-            <div className="relative">
+            {/* Ability icon with integrated badge - z-40 to sit above click zones (z-30) for tooltip access */}
+            <div className="relative z-40">
               <AbilityIcon
                 icon={ability.icon}
                 name={ability.name}
