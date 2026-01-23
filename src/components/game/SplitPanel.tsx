@@ -1,11 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 import { motion, type Variants, type Transition } from 'framer-motion'
+import { ChevronUp, ChevronDown } from 'lucide-react'
 import { AbilityIcon } from './AbilityIcon'
-import { GuessButtons } from './GuessButtons'
 import { LevelPips } from './LevelPips'
 import { numberPop, useReducedMotion } from '@/lib/motion'
+import { useIsMobile } from '@/lib/hooks/useMediaQuery'
 import type { GameAbility, GuessChoice } from '@/types/game'
 
 // Panel transition timing (matches existing CSS: 0.5s ease-out for carousel, 0.4s for slides, 0.3s for cross-fade)
@@ -55,6 +57,94 @@ const panelVariants: Variants = {
 
 const SPLASH_BLUR = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/2wBDAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAARCAACAAoDASIAAhEBAxEB/8QAHAAAAQUBAQEAAAAAAAAAAAAAAAIDBEEDBAUF/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwAA8A/9k="
 
+// Click zone hover glow variants
+const clickZoneVariants: Variants = {
+  idle: {
+    boxShadow: 'inset 0 0 0 rgba(var(--gold-rgb), 0)',
+  },
+  hoverTop: {
+    boxShadow: 'inset 0 4px 20px rgba(var(--gold-rgb), 0.4)',
+  },
+  hoverBottom: {
+    boxShadow: 'inset 0 -4px 20px rgba(var(--gold-rgb), 0.4)',
+  },
+}
+
+interface ClickZonesProps {
+  onGuess: (choice: GuessChoice) => void
+  disabled: boolean
+}
+
+function ClickZones({ onGuess, disabled }: ClickZonesProps) {
+  const [hoveredZone, setHoveredZone] = useState<'top' | 'bottom' | null>(null)
+  const prefersReducedMotion = useReducedMotion()
+
+  const handleClick = (choice: GuessChoice) => {
+    if (!disabled) {
+      onGuess(choice)
+    }
+  }
+
+  return (
+    <>
+      {/* Overlay showing hover state glow */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none z-20"
+        variants={clickZoneVariants}
+        initial="idle"
+        animate={
+          hoveredZone === 'top' ? 'hoverTop' :
+          hoveredZone === 'bottom' ? 'hoverBottom' : 'idle'
+        }
+        transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
+      />
+
+      {/* Top click zone - HIGHER */}
+      <button
+        type="button"
+        onClick={() => handleClick('higher')}
+        onMouseEnter={() => !disabled && setHoveredZone('top')}
+        onMouseLeave={() => setHoveredZone(null)}
+        disabled={disabled}
+        className="absolute inset-x-0 top-0 h-1/2 z-30 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-inset disabled:cursor-not-allowed"
+        aria-label="Guess higher cooldown"
+      >
+        {/* Subtle label with icon */}
+        <motion.div
+          className="absolute top-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-40"
+          animate={{ opacity: hoveredZone === 'top' && !disabled ? 0.9 : 0.4 }}
+          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
+        >
+          <ChevronUp className="w-5 h-5 text-gold" strokeWidth={2.5} />
+          <span className="text-xs font-semibold uppercase tracking-widest text-gold">Higher</span>
+        </motion.div>
+      </button>
+
+      {/* Bottom click zone - LOWER */}
+      <button
+        type="button"
+        onClick={() => handleClick('lower')}
+        onMouseEnter={() => !disabled && setHoveredZone('bottom')}
+        onMouseLeave={() => setHoveredZone(null)}
+        disabled={disabled}
+        className="absolute inset-x-0 bottom-0 h-1/2 z-30 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-inset disabled:cursor-not-allowed"
+        aria-label="Guess lower cooldown"
+      >
+        {/* Subtle label with icon */}
+        <motion.div
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-40"
+          animate={{ opacity: hoveredZone === 'bottom' && !disabled ? 0.9 : 0.4 }}
+          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }}
+        >
+          <span className="text-xs font-semibold uppercase tracking-widest text-gold">Lower</span>
+          <ChevronDown className="w-5 h-5 text-gold" strokeWidth={2.5} />
+        </motion.div>
+      </button>
+
+    </>
+  )
+}
+
 interface SplitPanelProps {
   gameAbility: GameAbility
   showCooldown: boolean
@@ -81,6 +171,10 @@ export function SplitPanel({
   const { ability, level, cooldown } = gameAbility
   const { champion } = ability
   const prefersReducedMotion = useReducedMotion()
+  const isMobile = useIsMobile()
+
+  // Desktop click zones: show on right panel when not revealing cooldown
+  const showClickZones = !isMobile && side === 'right' && !showCooldown && onGuess
 
   // Determine animation states based on props
   const getAnimationState = (): {
@@ -200,8 +294,13 @@ export function SplitPanel({
         }`}
       />
 
+      {/* Desktop click zones for right panel (pre-guess state only) */}
+      {showClickZones && onGuess && (
+        <ClickZones onGuess={onGuess} disabled={guessDisabled} />
+      )}
+
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-4 py-4 md:py-6 h-full justify-end">
+      <div className={`relative z-10 flex flex-col items-center text-center px-4 py-4 md:py-6 h-full ${showClickZones ? 'justify-center' : 'justify-end'}`}>
         {/* Main content area - centered vertically */}
         <div className="flex flex-col items-center gap-3 md:gap-5">
           {/* Champion name */}
@@ -260,16 +359,35 @@ export function SplitPanel({
               {cooldown}s
             </motion.p>
           )}
-        </div>
 
-        {/* Bottom action area */}
-        <div className="shrink-0 w-full h-[140px] md:h-[170px] flex flex-col justify-start items-center pt-4 md:pt-6">
-          {!showCooldown && onGuess ? (
-            <GuessButtons onGuess={onGuess} disabled={guessDisabled} />
-          ) : (
-            <div className="h-[130px] md:h-[160px]" /> // Spacer to maintain layout
+          {/* Mystery cooldown placeholder for right panel before guess */}
+          {showClickZones && (
+            <motion.p
+              className="text-4xl md:text-5xl lg:text-6xl font-bold text-gold drop-shadow-lg tracking-wide mt-2"
+              style={{
+                textShadow: '0 0 40px rgba(var(--gold-rgb), 0.5)',
+                filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5))',
+              }}
+              animate={prefersReducedMotion ? {} : {
+                opacity: [0.6, 1, 0.6],
+              }}
+              transition={{
+                duration: 2,
+                ease: 'easeInOut',
+                repeat: Infinity,
+              }}
+            >
+              ???
+            </motion.p>
           )}
         </div>
+
+        {/* Bottom action area - hidden on desktop when click zones are active */}
+        {!showClickZones && (
+          <div className="shrink-0 w-full h-[140px] md:h-[170px] flex flex-col justify-start items-center pt-4 md:pt-6">
+            <div className="h-[130px] md:h-[160px]" /> {/* Spacer to maintain layout */}
+          </div>
+        )}
       </div>
     </motion.div>
   )

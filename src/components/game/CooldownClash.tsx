@@ -354,26 +354,24 @@ export function CooldownClash() {
       animate={{ opacity: showContent ? 1 : 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
-      {/* Header - simplified rectangular status bar */}
-      <header className="absolute top-0 left-0 right-0 z-30 px-3 md:px-4 pt-[max(0.5rem,env(safe-area-inset-top))]">
-        <div className="
-          relative flex items-center justify-between
-          px-4 md:px-6 py-2 md:py-3
-          bg-gradient-to-b from-black/60 to-black/70
-          backdrop-blur-md
-          border border-gold/30
-          hover:border-gold/50
-          transition-colors duration-200
-        ">
-          {/* Corner accents */}
-          <div className="absolute -top-px -left-px w-4 h-4 border-t border-l border-gold/60" />
-          <div className="absolute -top-px -right-px w-4 h-4 border-t border-r border-gold/60" />
-          <div className="absolute -bottom-px -left-px w-4 h-4 border-b border-l border-gold/60" />
-          <div className="absolute -bottom-px -right-px w-4 h-4 border-b border-r border-gold/60" />
-
-          {/* Back button - simple rectangular */}
-          <Link href="/" className="p-2 text-foreground/60 hover:text-foreground transition-colors">
-            <ArrowLeft className="w-5 h-5" />
+      {/* Header - minimal floating bar */}
+      <header className="absolute top-0 left-0 right-0 z-30 px-3 md:px-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div className="flex items-center justify-between">
+          {/* Back button - circular */}
+          <Link
+            href="/"
+            className="
+              flex items-center justify-center
+              w-9 h-9 md:w-10 md:h-10
+              rounded-full
+              bg-black/50 backdrop-blur-md
+              border border-gold/20
+              text-foreground/60 hover:text-foreground
+              hover:border-gold/40
+              transition-colors duration-200
+            "
+          >
+            <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
           </Link>
 
           <ScoreDisplay score={state.score} highScore={state.highScore} lives={state.lives} />
