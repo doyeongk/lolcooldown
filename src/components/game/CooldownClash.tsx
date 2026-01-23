@@ -40,17 +40,17 @@ const mobileCarouselTransition: Transition = {
 }
 
 const mobilePanel1Variants: Variants = {
-  static: { y: 0 },
+  static: { y: 0, z: 0 },  // z: 0 pre-promotes GPU layer without overriding y
   exit: { y: '-100%' },
 }
 
 const mobilePanel2Variants: Variants = {
-  static: { y: '100%' },
+  static: { y: '100%', z: 0 },
   shift: { y: 0 },
 }
 
 const mobilePanel3Variants: Variants = {
-  hidden: { y: '200%' },
+  hidden: { y: '200%', z: 0 },
   enter: { y: '100%' },
 }
 
@@ -303,13 +303,12 @@ export function CooldownClash() {
     }
   }, [state.phase])
 
-  // Handle transition timing
+  // Handle transition timing (desktop only - mobile uses onAnimationComplete)
   useEffect(() => {
-    if (state.phase === 'transitioning') {
-      const transitionDelay = isMobile ? MOBILE_TRANSITION_DELAY : DESKTOP_TRANSITION_DELAY
+    if (state.phase === 'transitioning' && !isMobile) {
       const timer = setTimeout(() => {
         dispatch({ type: 'TRANSITION_COMPLETE' })
-      }, transitionDelay)
+      }, DESKTOP_TRANSITION_DELAY)
       return () => clearTimeout(timer)
     }
   }, [state.phase, isMobile])
@@ -430,6 +429,12 @@ export function CooldownClash() {
                   : 'static'
               }
               transition={isSnapBack ? { duration: 0 } : (prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition)}
+              onAnimationComplete={(definition) => {
+                // Only fire when shifting animation completes (not on mount or snap-back)
+                if (definition === 'shift' && state.phase === 'transitioning') {
+                  dispatch({ type: 'TRANSITION_COMPLETE' })
+                }
+              }}
             >
               <SplitPanel
                 gameAbility={state.currentRound.right}

@@ -312,9 +312,8 @@ export function SplitPanel({
     >
       {/* Champion splash background */}
       {champion.splash && (
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-background">
           <Image
-            key={`splash-${champion.id}`}
             src={champion.splash}
             alt=""
             fill
