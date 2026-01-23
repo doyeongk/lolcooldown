@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { motion, type Variants, type Transition } from 'framer-motion'
 import { AbilityIcon } from './AbilityIcon'
 import { GuessButtons } from './GuessButtons'
+import { LevelPips } from './LevelPips'
 import { numberPop, useReducedMotion } from '@/lib/motion'
 import type { GameAbility, GuessChoice } from '@/types/game'
 
@@ -200,45 +201,48 @@ export function SplitPanel({
       />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-4 gap-2 md:gap-4 py-4 md:py-6 h-full md:h-auto">
-        {/* Champion name + slot */}
-        <h2
-          className="text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg"
-          style={{ textShadow: '0 0 40px rgba(var(--gold-rgb), 0.25)' }}
-        >
-          <span className="text-foreground">{champion.name}</span>{' '}
-          <span className="text-gold">{ability.slot}</span>
-        </h2>
+      <div className="relative z-10 flex flex-col items-center text-center px-4 gap-2 md:gap-4 py-4 md:py-6 h-full md:h-auto justify-between">
+        {/* Top section: Champion info */}
+        <div className="flex flex-col items-center gap-2 md:gap-4">
+          {/* Champion name + slot badge */}
+          <h2
+            className="flex items-center justify-center gap-3 text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg tracking-wide"
+            style={{ textShadow: '0 0 40px rgba(var(--gold-rgb), 0.25)' }}
+          >
+            <span className="text-foreground">{champion.name}</span>
+            <span className="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded bg-gold text-dark-blue font-bold text-xl md:text-2xl shadow-[0_0_12px_rgba(var(--gold-rgb),0.4)]">
+              {ability.slot}
+            </span>
+          </h2>
 
-        {/* Ability icon and name */}
-        <div className="flex items-center gap-3">
-          <AbilityIcon
-            icon={ability.icon}
-            name={ability.name}
-            description={ability.description}
-          />
-          <p className="text-lg md:text-xl lg:text-2xl text-foreground/90 drop-shadow-lg">
-            {ability.name}
-          </p>
+          {/* Ability icon and name */}
+          <div className="flex items-center gap-3">
+            <AbilityIcon
+              icon={ability.icon}
+              name={ability.name}
+              description={ability.description}
+            />
+            <p className="text-lg md:text-xl lg:text-2xl text-foreground/90 uppercase tracking-wider font-medium drop-shadow-lg">
+              {ability.name}
+            </p>
+          </div>
+
+          {/* Level pips */}
+          <LevelPips level={level} slot={ability.slot as 'Q' | 'W' | 'E' | 'R' | 'P'} />
         </div>
-
-        {/* Level badge */}
-        <span className="text-base md:text-lg text-foreground/70 bg-gradient-to-b from-black/50 to-black/60 backdrop-blur-sm px-5 py-1.5 rounded-full border border-gold/40">
-          Lv. {level}
-        </span>
 
         {/* Spacer - pushes action slot to vertical center of remaining space on mobile */}
         <div className="flex-1 md:hidden" />
 
         {/* Action slot - fixed height for layout stability */}
-        <div className="md:mt-6 h-[56px] md:h-[110px] flex items-center justify-center">
+        <div className="md:mt-auto h-[56px] md:h-[130px] flex items-center justify-center">
           {showCooldown ? (
             <motion.p
               key={`cooldown-${cooldown}`}
               variants={side === 'right' ? numberPop : undefined}
               initial={side === 'right' ? 'hidden' : false}
               animate={side === 'right' ? 'visible' : undefined}
-              className="text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg"
+              className="text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg tracking-wide"
               style={{
                 textShadow: '0 0 40px rgba(var(--gold-rgb), 0.5)',
                 filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5))',
@@ -249,7 +253,7 @@ export function SplitPanel({
           ) : onGuess ? (
             <GuessButtons onGuess={onGuess} disabled={guessDisabled} />
           ) : (
-            <div className="w-48" />
+            <div className="w-56" />
           )}
         </div>
 
