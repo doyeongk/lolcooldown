@@ -1,6 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
+import { Shield } from 'lucide-react'
 import { useReducedMotion, gameContainerVariants } from '@/lib/motion'
 
 interface ScoreDisplayProps {
@@ -10,23 +11,22 @@ interface ScoreDisplayProps {
   maxLives?: number
 }
 
-// Diamond-shaped life indicator
-function LifeDiamond({ filled }: { filled: boolean }) {
+// Shield-shaped life indicator
+function LifeShield({ filled }: { filled: boolean }) {
   return (
-    <div
-      className={`w-3.5 h-3.5 md:w-4 md:h-4 rotate-45 transition-all duration-200 ${
+    <Shield
+      className={`w-4 h-4 md:w-5 md:h-5 transition-all duration-200 ${
         filled
-          ? 'bg-gradient-to-br from-red-400 via-red-500 to-red-600 shadow-[0_0_6px_rgba(239,68,68,0.5)]'
-          : 'bg-dark-blue/40 border border-red-500/20'
+          ? 'fill-gold text-gold drop-shadow-[0_0_4px_rgba(201,162,39,0.5)]'
+          : 'fill-transparent text-gold/25'
       }`}
-      style={{
-        clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
-      }}
+      strokeWidth={filled ? 2 : 1.5}
     />
   )
 }
 
 export function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDisplayProps) {
+  const isBeatingHighScore = score > highScore
   const prefersReducedMotion = useReducedMotion()
 
   const scoreTransition = prefersReducedMotion
@@ -42,21 +42,22 @@ export function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDis
         inline-flex items-center gap-3 md:gap-4
         px-4 md:px-5 py-2 md:py-2.5
         rounded-full
-        bg-black/60 backdrop-blur-md
+        bg-gradient-to-b from-black/50 to-black/60
+        backdrop-blur-sm
         border border-gold/20
         shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)]
       "
     >
       {/* Best Score */}
       <div className="flex flex-col items-center">
-        <span className="text-[9px] md:text-[10px] text-gold/60 uppercase tracking-[0.15em]">Best</span>
-        <span className="text-base md:text-lg font-bold text-foreground tabular-nums">{highScore}</span>
+        <span className="text-[10px] md:text-xs font-semibold text-gold/70 uppercase tracking-[0.15em]">Best</span>
+        <span className={`text-base md:text-lg font-bold tabular-nums ${isBeatingHighScore ? 'text-foreground' : 'text-gold'}`}>{highScore}</span>
       </div>
 
       {/* Divider */}
       <div className="w-px h-6 md:h-7 bg-gold/20" />
 
-      {/* Lives - diamond indicators */}
+      {/* Lives - shield indicators */}
       <div className="flex items-center gap-1.5 md:gap-2" aria-label={`${lives} lives remaining`}>
         {Array.from({ length: maxLives }).map((_, i) => (
           <motion.div
@@ -67,7 +68,7 @@ export function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDis
             }}
             transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 20 }}
           >
-            <LifeDiamond filled={i < lives} />
+            <LifeShield filled={i < lives} />
           </motion.div>
         ))}
       </div>
@@ -77,7 +78,7 @@ export function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDis
 
       {/* Current Score */}
       <div className="flex flex-col items-center">
-        <span className="text-[9px] md:text-[10px] text-gold/60 uppercase tracking-[0.15em]">Score</span>
+        <span className="text-[10px] md:text-xs font-semibold text-gold/70 uppercase tracking-[0.15em]">Score</span>
         <AnimatePresence mode="popLayout">
           <motion.span
             key={score}
@@ -85,7 +86,7 @@ export function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDis
             animate={{ scale: 1, opacity: 1 }}
             exit={prefersReducedMotion ? undefined : { scale: 0.8, opacity: 0 }}
             transition={scoreTransition}
-            className="text-base md:text-lg font-bold text-gold tabular-nums"
+            className={`text-base md:text-lg font-bold tabular-nums ${score >= highScore ? 'text-gold' : 'text-foreground'}`}
           >
             {score}
           </motion.span>

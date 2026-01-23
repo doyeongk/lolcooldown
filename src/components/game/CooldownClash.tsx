@@ -165,6 +165,7 @@ async function fetchRounds(score: number, count = 2): Promise<GameRound[]> {
 export function CooldownClash() {
   const [state, dispatch] = useReducer(gameReducer, initialState)
   const [storedHighScore, setStoredHighScore] = useLocalStorage('cooldown-clash-highscore', 0)
+  const [sessionStartHighScore, setSessionStartHighScore] = useState<number>(storedHighScore)
   const isFetchingRef = useRef(false)
   const [prevPhase, setPrevPhase] = useState<string>(state.phase)
   const [animatedRoundId, setAnimatedRoundId] = useState<string | null>(null)
@@ -248,6 +249,8 @@ export function CooldownClash() {
   useEffect(() => {
     if (storedHighScore > 0) {
       dispatch({ type: 'SET_HIGH_SCORE', highScore: storedHighScore })
+      // Also sync sessionStartHighScore on initial load (when it's still 0)
+      setSessionStartHighScore(prev => prev === 0 ? storedHighScore : prev)
     }
   }, [storedHighScore])
 
@@ -329,11 +332,13 @@ export function CooldownClash() {
   }, [state.phase, state.nextRound, state.score])
 
   const handleRestart = useCallback(() => {
+    // Capture current high score as the baseline for next session
+    setSessionStartHighScore(storedHighScore)
     // Reset loading states for new game
     setInitialLoadComplete(false)
     setShowContent(false)
     dispatch({ type: 'RESTART' })
-  }, [])
+  }, [storedHighScore])
 
   const isRevealing = state.phase === 'revealing' || state.phase === 'transitioning'
   const isNewHighScore = state.score === state.highScore && state.score > storedHighScore
@@ -372,7 +377,11 @@ export function CooldownClash() {
             <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
           </Link>
 
-          <ScoreDisplay score={state.score} highScore={state.highScore} lives={state.lives} />
+          <ScoreDisplay
+            score={state.score}
+            highScore={sessionStartHighScore}
+            lives={state.lives}
+          />
 
           <div className="w-9 md:w-10" /> {/* Spacer for balance */}
         </div>
