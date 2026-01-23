@@ -356,6 +356,13 @@ export function CooldownClash() {
     >
       {/* Header - back button and score */}
       <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between gap-2 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-2">
+        {/* Header backdrop gradient */}
+        <div
+          className="absolute inset-0 pointer-events-none -z-10"
+          style={{
+            background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.3) 70%, transparent 100%)',
+          }}
+        />
         <motion.div
           whileHover={prefersReducedMotion ? undefined : { scale: 1.05 }}
           whileTap={prefersReducedMotion ? undefined : { scale: 0.95 }}

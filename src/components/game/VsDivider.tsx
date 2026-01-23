@@ -8,6 +8,13 @@ export function VsDivider() {
 
   return (
     <div className="flex items-center justify-center">
+      {/* Soft glow spread - blends the center seam */}
+      <div
+        className="absolute w-48 h-48 md:w-64 md:h-64 pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle at center, rgba(var(--gold-rgb), 0.15) 0%, transparent 50%)',
+        }}
+      />
       <div
         className="
           relative w-16 h-16 md:w-20 md:h-20

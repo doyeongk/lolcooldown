@@ -153,16 +153,40 @@ export function SplitPanel({
             quality={60}
             placeholder="blur"
             blurDataURL={SPLASH_BLUR}
-            className="object-cover object-top"
+            className="object-cover object-top saturate-[0.7]"
           />
         </div>
       )}
 
       {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/40" />
 
-      {/* Vignette overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.4)_100%)] pointer-events-none" />
+      {/* Blur vignette - depth-of-field effect */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backdropFilter: 'blur(3px)',
+          WebkitBackdropFilter: 'blur(3px)',
+          maskImage: 'radial-gradient(ellipse 75% 65% at center, transparent 0%, black 75%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 75% 65% at center, transparent 0%, black 75%)',
+        }}
+      />
+
+      {/* Atmospheric haze */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse 85% 75% at center, rgba(15, 13, 10, 0.05) 0%, rgba(15, 13, 10, 0.25) 100%)',
+        }}
+      />
+
+      {/* Cinematic vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse 80% 70% at center, transparent 25%, rgba(0, 0, 0, 0.4) 60%, rgba(0, 0, 0, 0.7) 100%)',
+        }}
+      />
 
       {/* Correct/incorrect feedback overlay - always rendered, controlled via opacity */}
       <div
@@ -215,7 +239,10 @@ export function SplitPanel({
               initial={side === 'right' ? 'hidden' : false}
               animate={side === 'right' ? 'visible' : undefined}
               className="text-5xl md:text-6xl lg:text-7xl font-bold text-gold drop-shadow-lg"
-              style={{ textShadow: '0 0 40px rgba(var(--gold-rgb), 0.5)' }}
+              style={{
+                textShadow: '0 0 40px rgba(var(--gold-rgb), 0.5)',
+                filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5))',
+              }}
             >
               {cooldown}s
             </motion.p>
