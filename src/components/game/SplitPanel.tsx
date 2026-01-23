@@ -10,23 +10,23 @@ import { numberPop, useReducedMotion } from '@/lib/motion'
 import { useIsMobile } from '@/lib/hooks/useMediaQuery'
 import type { GameAbility, GuessChoice } from '@/types/game'
 
-// Panel transition timing (matches existing CSS: 0.5s ease-out for carousel, 0.4s for slides, 0.3s for cross-fade)
+// Panel transition timing - optimized for 60fps (shorter = fewer frames where jank is visible)
 const panelTransition: Transition = {
   type: 'tween',
-  ease: [0.25, 0.1, 0.25, 1], // cubic-bezier approximating ease-out
-  duration: 0.5,
+  ease: [0.32, 0, 0.67, 0], // ease-out-quart - snappier feel
+  duration: 0.28,
 }
 
 const slideTransition: Transition = {
   type: 'tween',
-  ease: [0.25, 0.1, 0.25, 1],
-  duration: 0.4,
+  ease: [0.32, 0, 0.67, 0],
+  duration: 0.25,
 }
 
 const crossFadeTransition: Transition = {
   type: 'tween',
-  ease: [0.25, 0.1, 0.25, 1],
-  duration: 0.3,
+  ease: [0.32, 0, 0.67, 0],
+  duration: 0.2,
 }
 
 // Panel variants for different animation states
@@ -304,6 +304,8 @@ export function SplitPanel({
       animate={animationState.animate}
       transition={animationState.transition}
       style={{
+        willChange: 'transform',
+        contain: 'layout paint',
         backfaceVisibility: 'hidden',
         WebkitBackfaceVisibility: 'hidden',
       }}

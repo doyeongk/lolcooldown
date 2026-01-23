@@ -36,16 +36,16 @@ export interface GameState {
   highScore: number
   lives: number
   currentRound: GameRound | null
-  nextRound: GameRound | null
+  roundQueue: GameRound[]  // Buffer of upcoming rounds for smoother transitions
   lastGuessCorrect: boolean | null
   difficulty: Difficulty
 }
 
 export type GameAction =
-  | { type: 'START_GAME'; round: GameRound; nextRound: GameRound }
+  | { type: 'START_GAME'; round: GameRound; queue: GameRound[] }
   | { type: 'GUESS'; choice: GuessChoice }
   | { type: 'REVEAL_COMPLETE' }
-  | { type: 'TRANSITION_COMPLETE'; nextRound: GameRound | null }
-  | { type: 'SET_NEXT_ROUND'; round: GameRound }
+  | { type: 'TRANSITION_COMPLETE' }
+  | { type: 'QUEUE_ROUNDS'; rounds: GameRound[] }
   | { type: 'RESTART' }
   | { type: 'SET_HIGH_SCORE'; highScore: number }
