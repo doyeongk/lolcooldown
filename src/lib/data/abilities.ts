@@ -96,9 +96,10 @@ function getMatchingSlots(ability: AbilityWithChampion): string[] {
 
 export function generateRound(
   abilities: AbilityWithChampion[],
-  difficulty: Difficulty
+  difficulty: Difficulty,
+  excludeFromLeft?: AbilityWithChampion
 ): GameRound {
-  const left = pickRandomAbility(abilities, null, difficulty)
+  const left = pickRandomAbility(abilities, excludeFromLeft ?? null, difficulty)
   const matchingSlots = getMatchingSlots(left.ability)
 
   // Filter abilities to only matching slots (and exclude transform ults when left is R)
