@@ -300,7 +300,7 @@ export function SplitPanel({
       )}
 
       {/* Content */}
-      <div className={`relative z-10 flex flex-col items-center text-center px-4 py-4 md:py-6 h-full ${showClickZones ? 'justify-center' : 'justify-end'}`}>
+      <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 py-4 md:py-6 h-full">
         {/* Main content area - centered vertically */}
         <div className="flex flex-col items-center gap-3 md:gap-5">
           {/* Champion name */}
@@ -382,12 +382,6 @@ export function SplitPanel({
           )}
         </div>
 
-        {/* Bottom action area - hidden on desktop when click zones are active */}
-        {!showClickZones && (
-          <div className="shrink-0 w-full h-[140px] md:h-[170px] flex flex-col justify-start items-center pt-4 md:pt-6">
-            <div className="h-[130px] md:h-[160px]" /> {/* Spacer to maintain layout */}
-          </div>
-        )}
       </div>
     </motion.div>
   )
