@@ -447,11 +447,6 @@ export function CooldownClash() {
               />
             </motion.div>
 
-            {/* VS divider */}
-            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center h-0 shrink-0">
-              <VsDivider />
-            </div>
-
             {/* Panel 3: Bottom (enters during transition, hidden otherwise) */}
             <motion.div
               className={`absolute inset-x-0 h-1/2 ${
