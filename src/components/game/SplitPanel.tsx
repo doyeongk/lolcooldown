@@ -322,24 +322,34 @@ export function SplitPanel({
                 name={ability.name}
                 description={ability.description}
               />
-              {/* Ability slot badge - overlaps bottom-right corner */}
+              {/* Ability slot badge - overlaps bottom-left corner */}
+              {/* Outer border layer */}
               <div
-                className="absolute -bottom-2 -right-2 md:-bottom-2.5 md:-right-2.5 w-9 h-9 md:w-11 md:h-11 flex items-center justify-center font-bold text-base md:text-lg text-dark-blue z-10"
+                className="absolute -bottom-2 -left-2 md:-bottom-2.5 md:-left-2.5 w-10 h-10 md:w-12 md:h-12 z-10"
                 style={{
                   clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 15%)',
-                  background: 'linear-gradient(135deg, #f5e8a3 0%, #d4a84b 35%, #c4983b 65%, #a87b2a 100%)',
+                  background: 'linear-gradient(135deg, #1e3a4a 0%, #172b3b 50%, #0f1f2a 100%)',
                   boxShadow: '0 0 12px rgba(var(--gold-rgb), 0.5), 0 2px 6px rgba(0, 0, 0, 0.5)',
                 }}
               >
-                {/* Inner highlight */}
+                {/* Inner gold badge */}
                 <div
-                  className="absolute inset-[1px] pointer-events-none"
+                  className="absolute inset-[2px] flex items-center justify-center font-bold text-base md:text-lg text-dark-blue"
                   style={{
                     clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 15%)',
-                    background: 'linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 50%)',
+                    background: 'linear-gradient(135deg, #f5e8a3 0%, #d4a84b 35%, #c4983b 65%, #a87b2a 100%)',
                   }}
-                />
-                <span className="relative">{ability.slot}</span>
+                >
+                  {/* Inner highlight */}
+                  <div
+                    className="absolute inset-[1px] pointer-events-none"
+                    style={{
+                      clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 15%)',
+                      background: 'linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 50%)',
+                    }}
+                  />
+                  <span className="relative">{ability.slot}</span>
+                </div>
               </div>
             </div>
 
