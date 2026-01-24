@@ -298,7 +298,7 @@ export const SplitPanel = memo(function SplitPanel({
 
   return (
     <motion.div
-      className="relative h-full md:flex-1 flex flex-col items-center overflow-hidden pt-[calc(5.5rem+env(safe-area-inset-top))] pb-16 md:justify-center md:pt-0 md:pb-0"
+      className="relative h-full md:flex-1 overflow-hidden"
       variants={panelVariants}
       initial={animationState.initial}
       animate={animationState.animate}
@@ -372,110 +372,126 @@ export const SplitPanel = memo(function SplitPanel({
         <ClickZones onGuess={onGuess} disabled={guessDisabled} />
       )}
 
-      {/* Content - no z-index so AbilityIcon can escape to panel stacking context */}
-      <div className="relative flex flex-col items-center md:justify-center text-center px-4 h-full">
-        <div className="flex flex-col items-center gap-1 md:gap-5">
-          {/* Champion name + ability slot */}
-          <h2
-            className="text-lg md:text-2xl lg:text-3xl font-bold drop-shadow-lg tracking-wider uppercase"
-            style={{ textShadow: '0 0 40px rgba(var(--gold-rgb), 0.25)' }}
-          >
-            <span className="text-foreground">{champion.name}</span>
-            {' '}
-            <span className="text-gold">{ability.slot}</span>
-          </h2>
+      {/*
+        Safe Zone Layout (mobile):
+        - Top 20%: Buffer for scoreboard overlay
+        - Middle 60%: Content zone (vertically centred)
+        - Bottom 20%: Buffer for Higher/Lower buttons overlay
 
-          {/* Ability icon + name row */}
-          <div className="flex items-center gap-3 md:gap-4">
-            {/* Ability icon with integrated badge - z-40 to sit above click zones (z-30) for tooltip access */}
-            <div className="relative z-40">
-              <AbilityIcon
-                icon={ability.icon}
-                name={ability.name}
-                description={ability.description}
-              />
-              {/* Ability slot badge - overlaps bottom-left corner */}
-              {/* Outer border layer */}
-              <div
-                className="absolute -bottom-1 -left-1 md:-bottom-2.5 md:-left-2.5 w-7 h-7 md:w-12 md:h-12 z-10"
-                style={{
-                  clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 15%)',
-                  background: 'linear-gradient(135deg, #1e3a4a 0%, #172b3b 50%, #0f1f2a 100%)',
-                  boxShadow: '0 0 12px rgba(var(--gold-rgb), 0.5), 0 2px 6px rgba(0, 0, 0, 0.5)',
-                }}
-              >
-                {/* Inner gold badge */}
+        Desktop uses full height with justify-center.
+      */}
+      <div className="relative h-full flex flex-col md:items-center md:justify-center">
+        {/* Top buffer zone - 20% height on mobile, hidden on desktop */}
+        <div className="h-[20%] shrink-0 md:hidden" aria-hidden="true" />
+
+        {/* Content zone - 60% height on mobile, auto on desktop */}
+        <div className="h-[60%] md:h-auto shrink-0 flex flex-col items-center justify-center text-center px-4">
+          <div className="flex flex-col items-center gap-1 md:gap-5">
+            {/* Champion name + ability slot */}
+            <h2
+              className="text-lg md:text-2xl lg:text-3xl font-bold drop-shadow-lg tracking-wider uppercase"
+              style={{ textShadow: '0 0 40px rgba(var(--gold-rgb), 0.25)' }}
+            >
+              <span className="text-foreground">{champion.name}</span>
+              {' '}
+              <span className="text-gold">{ability.slot}</span>
+            </h2>
+
+            {/* Ability icon + name row */}
+            <div className="flex items-center gap-3 md:gap-4">
+              {/* Ability icon with integrated badge - z-40 to sit above click zones (z-30) for tooltip access */}
+              <div className="relative z-40">
+                <AbilityIcon
+                  icon={ability.icon}
+                  name={ability.name}
+                  description={ability.description}
+                />
+                {/* Ability slot badge - overlaps bottom-left corner */}
+                {/* Outer border layer */}
                 <div
-                  className="absolute inset-[2px] flex items-center justify-center font-bold text-sm md:text-lg text-dark-blue"
+                  className="absolute -bottom-1 -left-1 md:-bottom-2.5 md:-left-2.5 w-7 h-7 md:w-12 md:h-12 z-10"
                   style={{
                     clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 15%)',
-                    background: 'linear-gradient(135deg, #f5e8a3 0%, #d4a84b 35%, #c4983b 65%, #a87b2a 100%)',
+                    background: 'linear-gradient(135deg, #1e3a4a 0%, #172b3b 50%, #0f1f2a 100%)',
+                    boxShadow: '0 0 12px rgba(var(--gold-rgb), 0.5), 0 2px 6px rgba(0, 0, 0, 0.5)',
                   }}
                 >
-                  {/* Inner highlight */}
+                  {/* Inner gold badge */}
                   <div
-                    className="absolute inset-[1px] pointer-events-none"
+                    className="absolute inset-[2px] flex items-center justify-center font-bold text-sm md:text-lg text-dark-blue"
                     style={{
                       clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 15%)',
-                      background: 'linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 50%)',
+                      background: 'linear-gradient(135deg, #f5e8a3 0%, #d4a84b 35%, #c4983b 65%, #a87b2a 100%)',
                     }}
-                  />
-                  <span className="relative">{ability.slot}</span>
+                  >
+                    {/* Inner highlight */}
+                    <div
+                      className="absolute inset-[1px] pointer-events-none"
+                      style={{
+                        clipPath: 'polygon(15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%, 0% 15%)',
+                        background: 'linear-gradient(180deg, rgba(255,255,255,0.3) 0%, transparent 50%)',
+                      }}
+                    />
+                    <span className="relative">{ability.slot}</span>
+                  </div>
                 </div>
               </div>
+
+              {/* Ability name */}
+              <p
+                className="text-sm md:text-lg text-foreground/80 font-medium tracking-wide uppercase"
+                style={{ textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)' }}
+              >
+                {ability.name}
+              </p>
             </div>
 
-            {/* Ability name */}
-            <p
-              className="text-sm md:text-lg text-foreground/80 font-medium tracking-wide uppercase"
-              style={{ textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)' }}
-            >
-              {ability.name}
-            </p>
-          </div>
+            {/* Level pips */}
+            <div className="mt-1 md:mt-3">
+              <LevelPips level={level} slot={ability.slot as 'Q' | 'W' | 'E' | 'R' | 'P'} />
+            </div>
 
-          {/* Level pips */}
-          <div className="mt-1 md:mt-3">
-            <LevelPips level={level} slot={ability.slot as 'Q' | 'W' | 'E' | 'R' | 'P'} />
-          </div>
-
-          {/* Cooldown display - wrapper reserves space to prevent layout shift */}
-          <div className="min-h-[2.5rem] md:min-h-[4rem] lg:min-h-[5rem] mt-1 flex items-center justify-center">
-            {showCooldown ? (
-              <motion.p
-                key={`cooldown-${cooldown}`}
-                variants={side === 'right' ? numberPop : undefined}
-                initial={side === 'right' ? 'hidden' : false}
-                animate={side === 'right' ? 'visible' : undefined}
-                className="text-3xl md:text-5xl lg:text-6xl font-bold text-gold drop-shadow-lg tracking-wide"
-                style={{
-                  textShadow: '0 0 40px rgba(var(--gold-rgb), 0.5)',
-                  filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5))',
-                }}
-              >
-                {cooldown}s
-              </motion.p>
-            ) : side === 'right' ? (
-              <motion.p
-                className="text-3xl md:text-5xl lg:text-6xl font-bold text-gold drop-shadow-lg tracking-wide"
-                style={{
-                  textShadow: '0 0 40px rgba(var(--gold-rgb), 0.5)',
-                  filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5))',
-                }}
-                animate={prefersReducedMotion ? {} : {
-                  opacity: [0.6, 1, 0.6],
-                }}
-                transition={{
-                  duration: 2,
-                  ease: 'easeInOut',
-                  repeat: Infinity,
-                }}
-              >
-                ???
-              </motion.p>
-            ) : null}
+            {/* Cooldown display - wrapper reserves space to prevent layout shift */}
+            <div className="min-h-[2.5rem] md:min-h-[4rem] lg:min-h-[5rem] mt-1 flex items-center justify-center">
+              {showCooldown ? (
+                <motion.p
+                  key={`cooldown-${cooldown}`}
+                  variants={side === 'right' ? numberPop : undefined}
+                  initial={side === 'right' ? 'hidden' : false}
+                  animate={side === 'right' ? 'visible' : undefined}
+                  className="text-3xl md:text-5xl lg:text-6xl font-bold text-gold drop-shadow-lg tracking-wide"
+                  style={{
+                    textShadow: '0 0 40px rgba(var(--gold-rgb), 0.5)',
+                    filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5))',
+                  }}
+                >
+                  {cooldown}s
+                </motion.p>
+              ) : side === 'right' ? (
+                <motion.p
+                  className="text-3xl md:text-5xl lg:text-6xl font-bold text-gold drop-shadow-lg tracking-wide"
+                  style={{
+                    textShadow: '0 0 40px rgba(var(--gold-rgb), 0.5)',
+                    filter: 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5))',
+                  }}
+                  animate={prefersReducedMotion ? {} : {
+                    opacity: [0.6, 1, 0.6],
+                  }}
+                  transition={{
+                    duration: 2,
+                    ease: 'easeInOut',
+                    repeat: Infinity,
+                  }}
+                >
+                  ???
+                </motion.p>
+              ) : null}
+            </div>
           </div>
         </div>
+
+        {/* Bottom buffer zone - 20% height on mobile, hidden on desktop */}
+        <div className="h-[20%] shrink-0 md:hidden" aria-hidden="true" />
       </div>
     </motion.div>
   )
