@@ -200,6 +200,16 @@
   }
 }
 
+/* Feedback overlay shake animation (opacity handled by CSS transition) */
+@keyframes feedback-shake {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+  100% { transform: translateX(0); }
+}
+
 
 @layer utilities {
   /* GPU acceleration for containers (prevents iOS Safari flash) */
@@ -237,6 +247,11 @@
   .animate-particle-float {
     animation: particle-float linear infinite;
   }
+
+  /* Feedback overlay shake animation (opacity handled by CSS transition) */
+  .animate-feedback-shake {
+    animation: feedback-shake 0.4s ease-out;
+  }
 }
 
 /* Ability description styles */
@@ -261,7 +276,8 @@
   .animate-icon-scroll-right,
   .animate-wall-drift,
   .animate-icon-row-scroll,
-  .animate-particle-float {
+  .animate-particle-float,
+  .animate-feedback-shake {
     animation: none;
   }
 }
