@@ -132,9 +132,5 @@ export function generateRound(
   return { left, right }
 }
 
-export function getDifficultyForScore(score: number): Difficulty {
-  if (score < 10) return 'beginner'
-  if (score < 20) return 'medium'
-  if (score < 30) return 'hard'
-  return 'expert'
-}
+// Re-export from shared location for backwards compatibility
+export { getDifficultyForScore } from '@/lib/game/difficulty'

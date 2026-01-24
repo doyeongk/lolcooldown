@@ -6,7 +6,7 @@ import { motion, type Variants, type Transition } from 'framer-motion'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 import { AbilityIcon } from './AbilityIcon'
 import { LevelPips } from './LevelPips'
-import { numberPop, useReducedMotion } from '@/lib/motion'
+import { numberPop, useReducedMotion, TIMING } from '@/lib/motion'
 import { useIsMobile } from '@/lib/hooks/useMediaQuery'
 import type { GameAbility, GuessChoice } from '@/types/game'
 
@@ -14,7 +14,7 @@ import type { GameAbility, GuessChoice } from '@/types/game'
 const panelTransition: Transition = {
   type: 'tween',
   ease: [0.32, 0, 0.67, 0], // ease-out-quart - snappier feel
-  duration: 0.28,
+  duration: TIMING.PANEL_DURATION,
 }
 
 const slideTransition: Transition = {

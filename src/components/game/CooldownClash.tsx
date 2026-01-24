@@ -13,7 +13,15 @@ import { TransitionOverlay } from './TransitionOverlay'
 import { useLocalStorage } from '@/lib/hooks/useLocalStorage'
 import { useImagePreloader, useImagePreloaderWithState } from '@/lib/hooks/useImagePreloader'
 import { useIsMobile } from '@/lib/hooks/useMediaQuery'
-import { useReducedMotion } from '@/lib/motion'
+import {
+  useReducedMotion,
+  TIMING,
+  mobileCarouselTransition,
+  mobilePanel1Variants,
+  mobilePanel2Variants,
+  mobilePanel3Variants,
+} from '@/lib/motion'
+import { getDifficultyForScore } from '@/lib/game/difficulty'
 import type {
   GameState,
   GameAction,
@@ -21,39 +29,9 @@ import type {
   GuessChoice,
   Difficulty,
 } from '@/types/game'
-import type { Variants, Transition } from 'framer-motion'
+import type { Variants } from 'framer-motion'
 
 const INITIAL_LIVES = 3
-const REVEAL_DELAY = 1200
-const MOBILE_TRANSITION_DELAY = 350  // 300ms animation + 50ms buffer
-const DESKTOP_TRANSITION_DELAY = 400 // 350ms animation + 50ms buffer
-
-// Mobile carousel panel variants for Framer Motion
-// Panel positions use transform-based positioning relative to h-1/2 containers:
-// - Panel 1 (top): y=0 normally, y=-100% when exiting up
-// - Panel 2 (middle): y=100% normally (top-1/2), y=0 when shifting up
-// - Panel 3 (bottom): y=200% normally (top-full, hidden), y=100% when entering
-const mobileCarouselTransition: Transition = {
-  type: 'tween',
-  ease: 'easeOut',
-  duration: 0.3,
-}
-
-const mobilePanel1Variants: Variants = {
-  static: { y: 0, z: 0 },  // z: 0 pre-promotes GPU layer without overriding y
-  exit: { y: '-100%' },
-}
-
-const mobilePanel2Variants: Variants = {
-  static: { y: '100%', z: 0 },
-  shift: { y: 0 },
-}
-
-const mobilePanel3Variants: Variants = {
-  hidden: { y: '200%', z: 0 },
-  enter: { y: '100%' },
-}
-
 const QUEUE_SIZE = 3  // Keep 3 rounds buffered ahead for image preloading
 
 const initialState: GameState = {
@@ -65,13 +43,6 @@ const initialState: GameState = {
   roundQueue: [],
   lastGuessCorrect: null,
   difficulty: 'beginner',
-}
-
-function getDifficultyForScore(score: number): Difficulty {
-  if (score < 10) return 'beginner'
-  if (score < 20) return 'medium'
-  if (score < 30) return 'hard'
-  return 'expert'
 }
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -300,7 +271,7 @@ export function CooldownClash() {
     if (state.phase === 'revealing') {
       const timer = setTimeout(() => {
         dispatch({ type: 'REVEAL_COMPLETE' })
-      }, REVEAL_DELAY)
+      }, TIMING.REVEAL_DELAY)
       return () => clearTimeout(timer)
     }
   }, [state.phase])
@@ -310,7 +281,7 @@ export function CooldownClash() {
     if (state.phase === 'transitioning' && !isMobile) {
       const timer = setTimeout(() => {
         dispatch({ type: 'TRANSITION_COMPLETE' })
-      }, DESKTOP_TRANSITION_DELAY)
+      }, TIMING.DESKTOP_TRANSITION)
       return () => clearTimeout(timer)
     }
   }, [state.phase, isMobile])
