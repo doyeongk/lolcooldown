@@ -85,19 +85,20 @@ Hover hints with directional animations.
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 
-<TooltipProvider>
-  <Tooltip>
-    <TooltipTrigger>Hover me</TooltipTrigger>
-    <TooltipContent side="top">
-      Helpful information
-    </TooltipContent>
-  </Tooltip>
-</TooltipProvider>
+// TooltipProvider is at app-level (src/components/Providers.tsx)
+// No need to wrap individual tooltips
+<Tooltip>
+  <TooltipTrigger>Hover me</TooltipTrigger>
+  <TooltipContent side="top">
+    Helpful information
+  </TooltipContent>
+</Tooltip>
 ```
+
+**Note:** `TooltipProvider` is configured at the app root in `src/components/Providers.tsx` with a 200ms delay. Individual tooltips don't need their own provider.
 
 ### Props
 
