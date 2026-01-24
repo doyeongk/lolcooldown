@@ -17,11 +17,11 @@ interface ScoreDisplayProps {
   maxLives?: number
 }
 
-// Shield-shaped life indicator
+// Shield-shaped life indicator - uses clamp() for proportional scaling on mobile
 function LifeShield({ filled }: { filled: boolean }) {
   return (
     <Shield
-      className={`w-4 h-4 md:w-5 md:h-5 transition-all duration-200 ${
+      className={`w-[clamp(0.75rem,2vh,1rem)] h-[clamp(0.75rem,2vh,1rem)] md:w-5 md:h-5 transition-all duration-200 ${
         filled
           ? 'fill-gold text-gold drop-shadow-[0_0_4px_rgba(201,162,39,0.5)]'
           : 'fill-transparent text-gold/25'
@@ -43,8 +43,8 @@ export const ScoreDisplay = memo(function ScoreDisplay({ score, highScore, lives
       initial={prefersReducedMotion ? false : 'hidden'}
       animate="visible"
       className="
-        inline-flex items-center gap-3 md:gap-4
-        px-4 md:px-5 py-2 md:py-2.5
+        inline-flex items-center gap-[clamp(0.5rem,1.5vh,0.75rem)] md:gap-4
+        px-[clamp(0.75rem,2vh,1rem)] md:px-5 py-[clamp(0.375rem,1vh,0.5rem)] md:py-2.5
         rounded-full
         bg-gradient-to-b from-black/50 to-black/60
         backdrop-blur-sm
@@ -54,15 +54,15 @@ export const ScoreDisplay = memo(function ScoreDisplay({ score, highScore, lives
     >
       {/* Best Score */}
       <div className="flex flex-col items-center">
-        <span className="text-[10px] md:text-xs font-semibold text-gold/70 uppercase tracking-[0.15em]">Best</span>
-        <span className={`text-base md:text-lg font-bold tabular-nums ${isBeatingHighScore ? 'text-foreground' : 'text-gold'}`}>{highScore}</span>
+        <span className="text-[clamp(0.5rem,1.2vh,0.625rem)] md:text-xs font-semibold text-gold/70 uppercase tracking-[0.15em]">Best</span>
+        <span className={`text-[clamp(0.875rem,1.8vh,1rem)] md:text-lg font-bold tabular-nums ${isBeatingHighScore ? 'text-foreground' : 'text-gold'}`}>{highScore}</span>
       </div>
 
-      {/* Divider */}
-      <div className="w-px h-6 md:h-7 bg-gold/20" />
+      {/* Divider - scales with viewport */}
+      <div className="w-px h-[clamp(1.25rem,3vh,1.75rem)] md:h-7 bg-gold/20" />
 
       {/* Lives - shield indicators */}
-      <div className="flex items-center gap-1.5 md:gap-2" aria-label={`${lives} lives remaining`}>
+      <div className="flex items-center gap-[clamp(0.25rem,0.8vh,0.5rem)] md:gap-2" aria-label={`${lives} lives remaining`}>
         {Array.from({ length: maxLives }).map((_, i) => (
           <motion.div
             key={i}
@@ -77,12 +77,12 @@ export const ScoreDisplay = memo(function ScoreDisplay({ score, highScore, lives
         ))}
       </div>
 
-      {/* Divider */}
-      <div className="w-px h-6 md:h-7 bg-gold/20" />
+      {/* Divider - scales with viewport */}
+      <div className="w-px h-[clamp(1.25rem,3vh,1.75rem)] md:h-7 bg-gold/20" />
 
       {/* Current Score */}
       <div className="flex flex-col items-center">
-        <span className="text-[10px] md:text-xs font-semibold text-gold/70 uppercase tracking-[0.15em]">Score</span>
+        <span className="text-[clamp(0.5rem,1.2vh,0.625rem)] md:text-xs font-semibold text-gold/70 uppercase tracking-[0.15em]">Score</span>
         <AnimatePresence mode="popLayout">
           <motion.span
             key={score}
@@ -90,7 +90,7 @@ export const ScoreDisplay = memo(function ScoreDisplay({ score, highScore, lives
             animate={{ scale: 1, opacity: 1 }}
             exit={prefersReducedMotion ? undefined : { scale: 0.8, opacity: 0 }}
             transition={scoreTransition}
-            className={`text-base md:text-lg font-bold tabular-nums ${score >= highScore ? 'text-gold' : 'text-foreground'}`}
+            className={`text-[clamp(0.875rem,1.8vh,1rem)] md:text-lg font-bold tabular-nums ${score >= highScore ? 'text-gold' : 'text-foreground'}`}
           >
             {score}
           </motion.span>

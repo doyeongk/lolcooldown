@@ -358,15 +358,16 @@ export function CooldownClash() {
       animate={{ opacity: showContent ? 1 : 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
-      {/* Header - minimal floating bar */}
-      <header className="absolute top-0 left-0 right-0 z-30 px-3 md:px-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
+      {/* Header - minimal floating bar with viewport-scaled sizing for mobile */}
+      <header className="absolute top-0 left-0 right-0 z-30 px-3 md:px-4 pt-[max(1.5vh,env(safe-area-inset-top))] md:pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div className="flex items-center justify-between">
-          {/* Back button - circular */}
+          {/* Back button - circular, scales with viewport on mobile using clamp() */}
           <Link
             href="/"
             className="
               flex items-center justify-center
-              w-9 h-9 md:w-10 md:h-10
+              w-[clamp(1.75rem,4.5vh,2.5rem)] h-[clamp(1.75rem,4.5vh,2.5rem)]
+              md:w-10 md:h-10
               rounded-full
               bg-black/50 backdrop-blur-md
               border border-gold/20
@@ -375,7 +376,7 @@ export function CooldownClash() {
               transition-colors duration-200
             "
           >
-            <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
+            <ArrowLeft className="w-[clamp(0.875rem,2vh,1.25rem)] h-[clamp(0.875rem,2vh,1.25rem)] md:w-5 md:h-5" />
           </Link>
 
           <ScoreDisplay
@@ -384,7 +385,8 @@ export function CooldownClash() {
             lives={state.lives}
           />
 
-          <div className="w-9 md:w-10" /> {/* Spacer for balance */}
+          {/* Spacer for balance - matches back button sizing */}
+          <div className="w-[clamp(1.75rem,4.5vh,2.5rem)] md:w-10" />
         </div>
       </header>
 

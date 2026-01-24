@@ -23,15 +23,15 @@ export const GuessButtons = memo(function GuessButtons({ onGuess, disabled, hidd
   const prefersReducedMotion = useReducedMotion()
 
   if (variant === 'fixed') {
-    // Mobile fixed bottom layout - rounded for touch friendliness
+    // Mobile fixed bottom layout - uses clamp() for proportional scaling across viewport sizes
     return (
       <motion.div
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-sm"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 px-[clamp(0.75rem,2vh,1rem)] pb-[calc(clamp(0.5rem,1.5vh,1rem)+env(safe-area-inset-bottom))] backdrop-blur-sm"
         animate={{ opacity: hidden ? 0 : 1 }}
         transition={{ duration: 0.2 }}
         style={{ pointerEvents: hidden ? 'none' : 'auto' }}
       >
-        <div className="flex gap-3 max-w-md mx-auto">
+        <div className="flex gap-[clamp(0.5rem,1.5vh,0.75rem)] max-w-md mx-auto">
           <motion.button
             type="button"
             onClick={() => onGuess('lower')}
@@ -39,10 +39,10 @@ export const GuessButtons = memo(function GuessButtons({ onGuess, disabled, hidd
             whileTap={!prefersReducedMotion && !disabled ? { scale: 0.98 } : undefined}
             whileHover={!prefersReducedMotion && !disabled ? { boxShadow: '0 0 20px rgba(var(--gold-rgb), 0.3)' } : undefined}
             transition={springTransition}
-            className="relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-b from-black/50 to-black/60 backdrop-blur-sm text-foreground font-bold text-base uppercase tracking-wide border-2 border-gold/30 shadow-lg shadow-black/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue disabled:opacity-50 touch-manipulation hover:border-gold/60"
+            className="relative flex-1 flex items-center justify-center gap-[clamp(0.25rem,1vh,0.5rem)] px-[clamp(0.75rem,2vh,1rem)] py-[clamp(0.5rem,1.5vh,0.75rem)] rounded-lg bg-gradient-to-b from-black/50 to-black/60 backdrop-blur-sm text-foreground font-bold text-[clamp(0.875rem,1.8vh,1rem)] uppercase tracking-wide border-2 border-gold/30 shadow-lg shadow-black/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue disabled:opacity-50 touch-manipulation hover:border-gold/60"
             aria-label="Guess lower cooldown"
           >
-            <ChevronDown className="w-5 h-5" strokeWidth={3} aria-hidden="true" />
+            <ChevronDown className="w-[clamp(1rem,2.5vh,1.25rem)] h-[clamp(1rem,2.5vh,1.25rem)]" strokeWidth={3} aria-hidden="true" />
             Lower
           </motion.button>
           <motion.button
@@ -51,10 +51,10 @@ export const GuessButtons = memo(function GuessButtons({ onGuess, disabled, hidd
             disabled={disabled}
             whileTap={!prefersReducedMotion && !disabled ? { scale: 0.98 } : undefined}
             transition={springTransition}
-            className="relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gold text-dark-blue font-bold text-base uppercase tracking-wide shadow-[0_0_16px_rgba(227,207,116,0.3)] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue disabled:opacity-50 touch-manipulation hover:shadow-[0_0_24px_rgba(227,207,116,0.5)]"
+            className="relative flex-1 flex items-center justify-center gap-[clamp(0.25rem,1vh,0.5rem)] px-[clamp(0.75rem,2vh,1rem)] py-[clamp(0.5rem,1.5vh,0.75rem)] rounded-lg bg-gold text-dark-blue font-bold text-[clamp(0.875rem,1.8vh,1rem)] uppercase tracking-wide shadow-[0_0_16px_rgba(227,207,116,0.3)] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue disabled:opacity-50 touch-manipulation hover:shadow-[0_0_24px_rgba(227,207,116,0.5)]"
             aria-label="Guess higher cooldown"
           >
-            <ChevronUp className="w-5 h-5" strokeWidth={3} aria-hidden="true" />
+            <ChevronUp className="w-[clamp(1rem,2.5vh,1.25rem)] h-[clamp(1rem,2.5vh,1.25rem)]" strokeWidth={3} aria-hidden="true" />
             Higher
           </motion.button>
         </div>
