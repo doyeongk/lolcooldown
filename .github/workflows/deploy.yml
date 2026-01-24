@@ -1,0 +1,32 @@
+name: Deploy to Dev
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H poby.duckdns.org >> ~/.ssh/known_hosts
+
+      - name: Deploy
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "$DEPLOY_HOST" '
+            cd /home/do/Code/lolcooldown &&
+            git checkout -- . &&
+            git pull &&
+            docker compose -f docker-compose.prod.yml build &&
+            docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+          '
