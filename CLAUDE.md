@@ -144,8 +144,8 @@ Use `class-variance-authority` (CVA) for new component variants. Use `cn()` from
 ### Colour Palette (`src/app/globals.css`)
 
 ```css
---gold: #e3cf74           /* Primary accent */
---gold-hover: #d4c066     /* Hover state */
+--gold: #c9a227           /* Primary accent */
+--gold-hover: #b8931f     /* Hover state */
 --dark-blue: #172b3b      /* Background */
 --dark-blue-hover: #1e3a4a
 --foreground: #e7e9ea     /* Text */
@@ -185,3 +185,13 @@ For UI changes, describe what you see or ask the user to verify.
 Additional conventions in `.claude/rules/`:
 - `git-commits.md` — Conventional Commits format, no AI signatures
 - `prisma.md` — Database commands and gotchas
+
+## Documentation
+
+Detailed technical docs in `docs/`:
+- `architecture.md` — System overview, component hierarchy, data flow
+- `state-management.md` — Game reducer pattern, phase machine, actions
+- `animation-system.md` — Framer Motion patterns, timing constants
+- `game-logic.md` — Rules, difficulty scaling, special champions
+- `api-reference.md` — `/api/game/random` endpoint
+- `ui-components.md` — Shadcn/ui patterns, CVA variants
