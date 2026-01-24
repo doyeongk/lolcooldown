@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 import { useReducedMotion } from '@/lib/motion'
@@ -14,9 +15,11 @@ interface GuessButtonsProps {
   variant?: 'inline' | 'fixed'
 }
 
+// Module-level transition objects to avoid re-creation on each render
 const springTransition = { type: 'spring', stiffness: 400, damping: 25 } as const
+const buttonSpringTransition = { type: 'spring', stiffness: 400, damping: 30 } as const
 
-export function GuessButtons({ onGuess, disabled, hidden = false, variant = 'inline' }: GuessButtonsProps) {
+export const GuessButtons = memo(function GuessButtons({ onGuess, disabled, hidden = false, variant = 'inline' }: GuessButtonsProps) {
   const prefersReducedMotion = useReducedMotion()
 
   if (variant === 'fixed') {
@@ -69,7 +72,7 @@ export function GuessButtons({ onGuess, disabled, hidden = false, variant = 'inl
         disabled={disabled}
         whileHover={!prefersReducedMotion && !disabled ? { x: 4 } : undefined}
         whileTap={!prefersReducedMotion && !disabled ? { scale: 0.98 } : undefined}
-        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        transition={buttonSpringTransition}
         className="
           relative flex items-center justify-center gap-3
           px-8 py-5 lg:py-6
@@ -99,7 +102,7 @@ export function GuessButtons({ onGuess, disabled, hidden = false, variant = 'inl
         disabled={disabled}
         whileHover={!prefersReducedMotion && !disabled ? { x: 4 } : undefined}
         whileTap={!prefersReducedMotion && !disabled ? { scale: 0.98 } : undefined}
-        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        transition={buttonSpringTransition}
         className="
           relative flex items-center justify-center gap-3
           px-8 py-5 lg:py-6
@@ -122,4 +125,4 @@ export function GuessButtons({ onGuess, disabled, hidden = false, variant = 'inl
       </motion.button>
     </div>
   )
-}
+})

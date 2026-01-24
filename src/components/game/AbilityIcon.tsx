@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { useIsMobile } from '@/lib/hooks/useMediaQuery'
 import { sanitizeHtml } from '@/lib/utils/sanitizeHtml'
@@ -77,23 +77,21 @@ export function AbilityIcon({ icon, name, description }: AbilityIconProps) {
   }
 
   return (
-    <TooltipProvider delayDuration={200}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          {iconButton}
-        </TooltipTrigger>
-        <TooltipContent
-          side="top"
-          className="w-80 max-w-[calc(100vw-2rem)] p-4 bg-dark-blue/95 backdrop-blur-sm border border-gold/30"
-        >
-          <h3 className="font-bold text-gold uppercase tracking-wide mb-1">{name}</h3>
-          {/* Content is sanitized via sanitizeHtml before rendering */}
-          <div
-            className="ability-description text-base leading-relaxed text-foreground/80"
-            dangerouslySetInnerHTML={{ __html: sanitisedDescription }}
-          />
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {iconButton}
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="w-80 max-w-[calc(100vw-2rem)] p-4 bg-dark-blue/95 backdrop-blur-sm border border-gold/30"
+      >
+        <h3 className="font-bold text-gold uppercase tracking-wide mb-1">{name}</h3>
+        {/* Content is sanitized via sanitizeHtml before rendering */}
+        <div
+          className="ability-description text-base leading-relaxed text-foreground/80"
+          dangerouslySetInnerHTML={{ __html: sanitisedDescription }}
+        />
+      </TooltipContent>
+    </Tooltip>
   )
 }

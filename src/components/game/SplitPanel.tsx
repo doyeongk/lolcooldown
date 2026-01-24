@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import Image from 'next/image'
 import { motion, type Variants, type Transition } from 'framer-motion'
 import { ChevronUp, ChevronDown } from 'lucide-react'
@@ -229,7 +229,7 @@ interface SplitPanelProps {
   skipAnimation?: boolean
 }
 
-export function SplitPanel({
+export const SplitPanel = memo(function SplitPanel({
   gameAbility,
   showCooldown,
   side,
@@ -479,4 +479,4 @@ export function SplitPanel({
       </div>
     </motion.div>
   )
-}
+})

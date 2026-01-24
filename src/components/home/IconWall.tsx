@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useEffect, useState } from "react"
+import { useMemo, useEffect, useState, memo } from "react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { useReducedMotion } from "@/lib/motion"
@@ -112,7 +112,7 @@ function SplashRow({ splashes, speed, offset, size, disableAnimation, rowIndex, 
   )
 }
 
-export function IconWall() {
+export const IconWall = memo(function IconWall() {
   const reducedMotion = useReducedMotion()
   const isMobile = useIsMobile()
   const [mounted, setMounted] = useState(false)
@@ -212,4 +212,4 @@ export function IconWall() {
       />
     </div>
   )
-}
+})

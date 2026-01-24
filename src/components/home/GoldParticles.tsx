@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, memo } from "react"
 import { useReducedMotion } from "@/lib/motion"
 
 const PARTICLE_COUNT = 18
@@ -25,7 +25,7 @@ function generateParticles(): Particle[] {
   }))
 }
 
-export function GoldParticles() {
+export const GoldParticles = memo(function GoldParticles() {
   const reducedMotion = useReducedMotion()
 
   // Lazy initializer runs once on mount, not during render
@@ -57,4 +57,4 @@ export function GoldParticles() {
       ))}
     </div>
   )
-}
+})

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ViewportHeight } from "@/components/ViewportHeight";
+import { Providers } from "@/components/Providers";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,7 +36,7 @@ export default function RootLayout({
       >
         <ViewportHeight />
         <div className="fixed inset-0 overflow-hidden bg-background">
-          {children}
+          <Providers>{children}</Providers>
         </div>
       </body>
     </html>

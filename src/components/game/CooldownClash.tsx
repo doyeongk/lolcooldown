@@ -11,7 +11,7 @@ import { ScoreDisplay } from './ScoreDisplay'
 import { GameOver } from './GameOver'
 import { TransitionOverlay } from './TransitionOverlay'
 import { useLocalStorage } from '@/lib/hooks/useLocalStorage'
-import { useImagePreloader, useImagePreloaderWithState } from '@/lib/hooks/useImagePreloader'
+import { useImagePreloaderWithState, useBackgroundPreloader } from '@/lib/hooks/useImagePreloader'
 import { useIsMobile } from '@/lib/hooks/useMediaQuery'
 import {
   useReducedMotion,
@@ -174,7 +174,10 @@ export function CooldownClash() {
     setAnimatedRoundId(currentRoundId)
   }
 
-  // Preload current round images into browser cache
+  // Background preloader for queued round images (non-blocking)
+  const { preload: preloadImages } = useBackgroundPreloader()
+
+  // Collect current round images for initial load blocking
   const currentRoundImages = useMemo(() => {
     if (!state.currentRound) return []
     const { left, right } = state.currentRound
@@ -188,26 +191,29 @@ export function CooldownClash() {
     ]
   }, [state.currentRound])
 
-  // Preload all queued round images into browser cache (2 rounds ahead)
-  const queuedRoundImages = useMemo(() => {
-    if (state.roundQueue.length === 0) return []
-    return state.roundQueue.flatMap(({ left, right }) => [
-      left.ability.champion.splash,
-      left.ability.champion.icon,
-      left.ability.icon,
-      right.ability.champion.splash,
-      right.ability.champion.icon,
-      right.ability.icon,
-    ])
-  }, [state.roundQueue])
-
-  // Only use loading state for initial load - after that, images are preloaded
+  // Block initial render until first round images are ready
   const currentImagesLoaded = useImagePreloaderWithState(currentRoundImages)
-  useImagePreloader(queuedRoundImages)
+
+  // Preload queued round images in the background (non-blocking)
+  useEffect(() => {
+    if (state.roundQueue.length === 0) return
+
+    const queuedImages = state.roundQueue
+      .flatMap(({ left, right }) => [
+        left.ability.champion.splash,
+        left.ability.champion.icon,
+        left.ability.icon,
+        right.ability.champion.splash,
+        right.ability.champion.icon,
+        right.ability.icon,
+      ])
+      .filter((url): url is string => url !== null)
+
+    preloadImages(queuedImages)
+  }, [state.roundQueue, preloadImages])
 
   // Handle initial load: wait for first round images, then show content permanently
   useEffect(() => {
-    // Only run this logic during initial load
     if (initialLoadComplete) return
 
     if (currentImagesLoaded && state.currentRound) {

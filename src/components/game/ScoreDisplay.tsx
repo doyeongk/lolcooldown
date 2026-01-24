@@ -1,8 +1,14 @@
 'use client'
 
+import { memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Shield } from 'lucide-react'
 import { useReducedMotion, gameContainerVariants } from '@/lib/motion'
+
+// Module-level transition objects to avoid re-creation on each render
+const instantTransition = { duration: 0 } as const
+const scoreSpringTransition = { type: 'spring' as const, stiffness: 400, damping: 20 }
+const lifeSpringTransition = { type: 'spring' as const, stiffness: 300, damping: 20 }
 
 interface ScoreDisplayProps {
   score: number
@@ -25,13 +31,11 @@ function LifeShield({ filled }: { filled: boolean }) {
   )
 }
 
-export function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDisplayProps) {
+export const ScoreDisplay = memo(function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDisplayProps) {
   const isBeatingHighScore = score > highScore
   const prefersReducedMotion = useReducedMotion()
 
-  const scoreTransition = prefersReducedMotion
-    ? { duration: 0 }
-    : { type: 'spring' as const, stiffness: 400, damping: 20 }
+  const scoreTransition = prefersReducedMotion ? instantTransition : scoreSpringTransition
 
   return (
     <motion.div
@@ -66,7 +70,7 @@ export function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDis
               scale: prefersReducedMotion ? 1 : (i < lives ? 1 : 0.75),
               opacity: i < lives ? 1 : 0.4,
             }}
-            transition={prefersReducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 20 }}
+            transition={prefersReducedMotion ? instantTransition : lifeSpringTransition}
           >
             <LifeShield filled={i < lives} />
           </motion.div>
@@ -94,4 +98,4 @@ export function ScoreDisplay({ score, highScore, lives, maxLives = 3 }: ScoreDis
       </div>
     </motion.div>
   )
-}
+})
