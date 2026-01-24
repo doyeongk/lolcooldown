@@ -25,6 +25,7 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key "$DEPLOY_HOST" '
             cd /home/do/Code/lolcooldown &&
+            sudo chown -R do:do . &&
             git checkout -- . &&
             git pull &&
             docker compose -f docker-compose.prod.yml build &&
