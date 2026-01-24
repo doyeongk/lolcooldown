@@ -1,4 +1,3 @@
-export { AbilityCard } from './AbilityCard'
 export { AbilityIcon } from './AbilityIcon'
 export { CooldownClash } from './CooldownClash'
 export { GameOver } from './GameOver'

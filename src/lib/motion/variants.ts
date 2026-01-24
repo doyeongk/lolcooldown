@@ -162,3 +162,29 @@ export const glowReveal: Variants = {
     transition: { duration: 0.5, ease: 'easeOut' },
   },
 }
+
+// Mobile carousel panel variants for Framer Motion
+// Panel positions use transform-based positioning relative to h-1/2 containers:
+// - Panel 1 (top): y=0 normally, y=-100% when exiting up
+// - Panel 2 (middle): y=100% normally (top-1/2), y=0 when shifting up
+// - Panel 3 (bottom): y=200% normally (top-full, hidden), y=100% when entering
+export const mobileCarouselTransition: Transition = {
+  type: 'tween',
+  ease: 'easeOut',
+  duration: 0.3,
+}
+
+export const mobilePanel1Variants: Variants = {
+  static: { y: 0, z: 0 },  // z: 0 pre-promotes GPU layer without overriding y
+  exit: { y: '-100%' },
+}
+
+export const mobilePanel2Variants: Variants = {
+  static: { y: '100%', z: 0 },
+  shift: { y: 0 },
+}
+
+export const mobilePanel3Variants: Variants = {
+  hidden: { y: '200%', z: 0 },
+  enter: { y: '100%' },
+}

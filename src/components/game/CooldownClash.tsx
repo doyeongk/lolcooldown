@@ -11,9 +11,17 @@ import { ScoreDisplay } from './ScoreDisplay'
 import { GameOver } from './GameOver'
 import { TransitionOverlay } from './TransitionOverlay'
 import { useLocalStorage } from '@/lib/hooks/useLocalStorage'
-import { useImagePreloader, useImagePreloaderWithState } from '@/lib/hooks/useImagePreloader'
+import { useImagePreloaderWithState, useBackgroundPreloader } from '@/lib/hooks/useImagePreloader'
 import { useIsMobile } from '@/lib/hooks/useMediaQuery'
-import { useReducedMotion } from '@/lib/motion'
+import {
+  useReducedMotion,
+  TIMING,
+  mobileCarouselTransition,
+  mobilePanel1Variants,
+  mobilePanel2Variants,
+  mobilePanel3Variants,
+} from '@/lib/motion'
+import { getDifficultyForScore } from '@/lib/game/difficulty'
 import type {
   GameState,
   GameAction,
@@ -21,39 +29,9 @@ import type {
   GuessChoice,
   Difficulty,
 } from '@/types/game'
-import type { Variants, Transition } from 'framer-motion'
+import type { Variants } from 'framer-motion'
 
 const INITIAL_LIVES = 3
-const REVEAL_DELAY = 1200
-const MOBILE_TRANSITION_DELAY = 350  // 300ms animation + 50ms buffer
-const DESKTOP_TRANSITION_DELAY = 400 // 350ms animation + 50ms buffer
-
-// Mobile carousel panel variants for Framer Motion
-// Panel positions use transform-based positioning relative to h-1/2 containers:
-// - Panel 1 (top): y=0 normally, y=-100% when exiting up
-// - Panel 2 (middle): y=100% normally (top-1/2), y=0 when shifting up
-// - Panel 3 (bottom): y=200% normally (top-full, hidden), y=100% when entering
-const mobileCarouselTransition: Transition = {
-  type: 'tween',
-  ease: 'easeOut',
-  duration: 0.3,
-}
-
-const mobilePanel1Variants: Variants = {
-  static: { y: 0, z: 0 },  // z: 0 pre-promotes GPU layer without overriding y
-  exit: { y: '-100%' },
-}
-
-const mobilePanel2Variants: Variants = {
-  static: { y: '100%', z: 0 },
-  shift: { y: 0 },
-}
-
-const mobilePanel3Variants: Variants = {
-  hidden: { y: '200%', z: 0 },
-  enter: { y: '100%' },
-}
-
 const QUEUE_SIZE = 3  // Keep 3 rounds buffered ahead for image preloading
 
 const initialState: GameState = {
@@ -65,13 +43,6 @@ const initialState: GameState = {
   roundQueue: [],
   lastGuessCorrect: null,
   difficulty: 'beginner',
-}
-
-function getDifficultyForScore(score: number): Difficulty {
-  if (score < 10) return 'beginner'
-  if (score < 20) return 'medium'
-  if (score < 30) return 'hard'
-  return 'expert'
 }
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -203,7 +174,10 @@ export function CooldownClash() {
     setAnimatedRoundId(currentRoundId)
   }
 
-  // Preload current round images into browser cache
+  // Background preloader for queued round images (non-blocking)
+  const { preload: preloadImages } = useBackgroundPreloader()
+
+  // Collect current round images for initial load blocking
   const currentRoundImages = useMemo(() => {
     if (!state.currentRound) return []
     const { left, right } = state.currentRound
@@ -217,26 +191,29 @@ export function CooldownClash() {
     ]
   }, [state.currentRound])
 
-  // Preload all queued round images into browser cache (2 rounds ahead)
-  const queuedRoundImages = useMemo(() => {
-    if (state.roundQueue.length === 0) return []
-    return state.roundQueue.flatMap(({ left, right }) => [
-      left.ability.champion.splash,
-      left.ability.champion.icon,
-      left.ability.icon,
-      right.ability.champion.splash,
-      right.ability.champion.icon,
-      right.ability.icon,
-    ])
-  }, [state.roundQueue])
-
-  // Only use loading state for initial load - after that, images are preloaded
+  // Block initial render until first round images are ready
   const currentImagesLoaded = useImagePreloaderWithState(currentRoundImages)
-  useImagePreloader(queuedRoundImages)
+
+  // Preload queued round images in the background (non-blocking)
+  useEffect(() => {
+    if (state.roundQueue.length === 0) return
+
+    const queuedImages = state.roundQueue
+      .flatMap(({ left, right }) => [
+        left.ability.champion.splash,
+        left.ability.champion.icon,
+        left.ability.icon,
+        right.ability.champion.splash,
+        right.ability.champion.icon,
+        right.ability.icon,
+      ])
+      .filter((url): url is string => url !== null)
+
+    preloadImages(queuedImages)
+  }, [state.roundQueue, preloadImages])
 
   // Handle initial load: wait for first round images, then show content permanently
   useEffect(() => {
-    // Only run this logic during initial load
     if (initialLoadComplete) return
 
     if (currentImagesLoaded && state.currentRound) {
@@ -300,7 +277,7 @@ export function CooldownClash() {
     if (state.phase === 'revealing') {
       const timer = setTimeout(() => {
         dispatch({ type: 'REVEAL_COMPLETE' })
-      }, REVEAL_DELAY)
+      }, TIMING.REVEAL_DELAY)
       return () => clearTimeout(timer)
     }
   }, [state.phase])
@@ -310,7 +287,7 @@ export function CooldownClash() {
     if (state.phase === 'transitioning' && !isMobile) {
       const timer = setTimeout(() => {
         dispatch({ type: 'TRANSITION_COMPLETE' })
-      }, DESKTOP_TRANSITION_DELAY)
+      }, TIMING.DESKTOP_TRANSITION)
       return () => clearTimeout(timer)
     }
   }, [state.phase, isMobile])
