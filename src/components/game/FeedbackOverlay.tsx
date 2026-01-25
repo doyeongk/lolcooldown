@@ -37,12 +37,9 @@ export function FeedbackOverlay({ isCorrect }: FeedbackOverlayProps) {
         ${isNewIncorrect && !prefersReducedMotion ? 'animate-feedback-shake' : ''}
       `}
       style={{
-        background: showCorrectColour === false
-          ? 'radial-gradient(ellipse 70% 60% at center, rgba(239, 68, 68, 0.4) 0%, rgba(239, 68, 68, 0.2) 40%, transparent 70%)'
-          : 'radial-gradient(ellipse 70% 60% at center, rgba(34, 197, 94, 0.5) 0%, rgba(34, 197, 94, 0.25) 40%, transparent 70%)',
         boxShadow: showCorrectColour === false
-          ? 'inset 0 0 80px 30px rgba(239, 68, 68, 0.35)'
-          : 'inset 0 0 60px 20px rgba(34, 197, 94, 0.3)',
+          ? 'inset 0 0 100px 40px rgba(239, 68, 68, 0.4)'
+          : 'inset 0 0 80px 30px rgba(34, 197, 94, 0.35)',
       }}
     />
   )
