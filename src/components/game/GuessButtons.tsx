@@ -41,6 +41,7 @@ export const GuessButtons = memo(function GuessButtons({ onGuess, disabled, hidd
             transition={springTransition}
             className="relative flex-1 flex items-center justify-center gap-[clamp(0.25rem,1vh,0.5rem)] px-[clamp(0.75rem,2vh,1rem)] py-[clamp(0.5rem,1.5vh,0.75rem)] rounded-lg bg-gradient-to-b from-black/50 to-black/60 backdrop-blur-sm text-foreground font-bold text-[clamp(0.875rem,1.8vh,1rem)] uppercase tracking-wide border-2 border-gold/30 shadow-lg shadow-black/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue disabled:opacity-50 touch-manipulation hover:border-gold/60"
             aria-label="Guess lower cooldown"
+            data-testid="lower-button"
           >
             <ChevronDown className="w-[clamp(1rem,2.5vh,1.25rem)] h-[clamp(1rem,2.5vh,1.25rem)]" strokeWidth={3} aria-hidden="true" />
             Lower
@@ -53,6 +54,7 @@ export const GuessButtons = memo(function GuessButtons({ onGuess, disabled, hidd
             transition={springTransition}
             className="relative flex-1 flex items-center justify-center gap-[clamp(0.25rem,1vh,0.5rem)] px-[clamp(0.75rem,2vh,1rem)] py-[clamp(0.5rem,1.5vh,0.75rem)] rounded-lg bg-gold text-dark-blue font-bold text-[clamp(0.875rem,1.8vh,1rem)] uppercase tracking-wide shadow-[0_0_16px_rgba(227,207,116,0.3)] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-dark-blue disabled:opacity-50 touch-manipulation hover:shadow-[0_0_24px_rgba(227,207,116,0.5)]"
             aria-label="Guess higher cooldown"
+            data-testid="higher-button"
           >
             <ChevronUp className="w-[clamp(1rem,2.5vh,1.25rem)] h-[clamp(1rem,2.5vh,1.25rem)]" strokeWidth={3} aria-hidden="true" />
             Higher
@@ -87,6 +89,7 @@ export const GuessButtons = memo(function GuessButtons({ onGuess, disabled, hidd
           disabled:opacity-50 disabled:cursor-not-allowed
         "
         aria-label="Guess higher cooldown"
+        data-testid="higher-button"
       >
         {/* Corner accents */}
         <div className="absolute -top-px -left-px w-3 h-3 border-t border-l border-gold" />
@@ -117,6 +120,7 @@ export const GuessButtons = memo(function GuessButtons({ onGuess, disabled, hidd
           disabled:opacity-50 disabled:cursor-not-allowed
         "
         aria-label="Guess lower cooldown"
+        data-testid="lower-button"
       >
         <div className="absolute -top-px -left-px w-3 h-3 border-t border-l border-gold/30 group-hover:border-gold/60" />
         <div className="absolute -bottom-px -right-px w-3 h-3 border-b border-r border-gold/30 group-hover:border-gold/60" />

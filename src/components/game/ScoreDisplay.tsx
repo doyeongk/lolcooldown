@@ -62,7 +62,7 @@ export const ScoreDisplay = memo(function ScoreDisplay({ score, highScore, lives
       <div className="w-px h-[clamp(1.25rem,3vh,1.75rem)] md:h-7 bg-gold/20" />
 
       {/* Lives - shield indicators */}
-      <div className="flex items-center gap-[clamp(0.25rem,0.8vh,0.5rem)] md:gap-2" aria-label={`${lives} lives remaining`}>
+      <div className="flex items-center gap-[clamp(0.25rem,0.8vh,0.5rem)] md:gap-2" aria-label={`${lives} lives remaining`} data-testid="lives">
         {Array.from({ length: maxLives }).map((_, i) => (
           <motion.div
             key={i}
@@ -91,6 +91,7 @@ export const ScoreDisplay = memo(function ScoreDisplay({ score, highScore, lives
             exit={prefersReducedMotion ? undefined : { scale: 0.8, opacity: 0 }}
             transition={scoreTransition}
             className={`text-[clamp(0.875rem,1.8vh,1rem)] md:text-lg font-bold tabular-nums ${score >= highScore ? 'text-gold' : 'text-foreground'}`}
+            data-testid="score"
           >
             {score}
           </motion.span>

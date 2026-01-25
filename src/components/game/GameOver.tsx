@@ -45,7 +45,7 @@ export function GameOver({ open, score, highScore, isNewHighScore, onRestart }: 
 
   return (
     <Dialog open={open}>
-      <DialogContent className="relative max-w-sm text-center [&>button]:hidden shadow-[0_0_30px_rgba(227,207,116,0.2)]">
+      <DialogContent className="relative max-w-sm text-center [&>button]:hidden shadow-[0_0_30px_rgba(227,207,116,0.2)]" data-testid="game-over">
         {/* Corner bracket decorations */}
         <div className="absolute -top-px -left-px w-4 h-4 border-t-2 border-l-2 border-gold/60" />
         <div className="absolute -top-px -right-px w-4 h-4 border-t-2 border-r-2 border-gold/60" />
@@ -103,7 +103,7 @@ export function GameOver({ open, score, highScore, isNewHighScore, onRestart }: 
           </motion.div>
 
           <motion.div variants={fadeInUp} className="flex flex-col gap-3">
-            <Button variant="primary" size="lg" onClick={onRestart} className="w-full">
+            <Button variant="primary" size="lg" onClick={onRestart} className="w-full" data-testid="restart-button">
               Try Again
             </Button>
             <Button asChild variant="secondary" size="md" className="w-full">

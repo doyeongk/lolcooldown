@@ -310,6 +310,7 @@ export const SplitPanel = memo(function SplitPanel({
         backfaceVisibility: 'hidden',
         WebkitBackfaceVisibility: 'hidden',
       }}
+      data-testid={`${side}-panel`}
     >
       {/* Champion splash background */}
       {champion.splash && (

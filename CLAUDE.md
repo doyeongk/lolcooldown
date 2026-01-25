@@ -93,12 +93,29 @@ Minimalism, simplicity, elegance. Dark blue + gold palette inspired by League of
 - **Prisma:** `source .env` won't work; must use `export` — see `.claude/rules/prisma.md`
 - **Images:** Core images cached locally; non-base skins still load from `raw.communitydragon.org`
 
+## Testing
+
+```bash
+npm test              # Vitest watch mode
+npm run test:run      # Single run
+npm run test:coverage # With coverage
+npm run test:e2e      # Playwright E2E
+```
+
+- Co-locate unit tests with source: `*.test.ts` next to `*.ts`
+- Use `data-testid` for E2E selectors, not CSS classes
+- Framer Motion is mocked in `vitest.setup.ts`
+- For async Server Components, use Playwright E2E instead of unit tests
+
+**Detailed docs:** `docs/testing/`
+
 ## Validation
 
 After changes:
-1. Run `npm run dev` and open affected page in browser
-2. Verify functionality works (not just build passing)
-3. Check browser console for errors
+1. Run `npm run test:run` for unit tests
+2. Run `npm run dev` and open affected page in browser
+3. Verify functionality works (not just build passing)
+4. Check browser console for errors
 
 For UI changes, describe what you see or ask the user to verify.
 
@@ -117,3 +134,4 @@ Detailed technical docs in `docs/`:
 - `game-logic.md` — Rules, difficulty scaling, special champions
 - `api-reference.md` — `/api/game/random` endpoint
 - `ui-components.md` — Shadcn/ui patterns, CVA variants
+- `testing/` — Vitest setup, test strategy, known issues

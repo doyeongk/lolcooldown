@@ -10,6 +10,7 @@ Technical documentation for lolcooldown - a League of Legends cooldown guessing 
 - [Game Logic](./game-logic.md) - Rules, scoring, difficulty scaling, special champions
 - [API Reference](./api-reference.md) - `/api/game/random` endpoint documentation
 - [UI Components](./ui-components.md) - Shadcn/ui patterns, CVA variants, theming
+- [Testing](./testing/) - Vitest setup, Playwright E2E, test strategy
 
 ## Quick Links
 
@@ -20,3 +21,4 @@ Technical documentation for lolcooldown - a League of Legends cooldown guessing 
 | Data fetching | `src/lib/data/abilities.ts` |
 | API routes | `src/app/api/game/random/route.ts` |
 | UI components | `src/components/ui/` |
+| Tests | `src/**/*.test.ts`, `tests/` |
