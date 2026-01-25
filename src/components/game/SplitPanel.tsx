@@ -6,6 +6,7 @@ import { motion, type Variants, type Transition } from 'framer-motion'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 import { AbilityIcon } from './AbilityIcon'
 import { LevelPips } from './LevelPips'
+import { FeedbackOverlay } from './FeedbackOverlay'
 import { numberPop, useReducedMotion, TIMING } from '@/lib/motion'
 import { useIsMobile } from '@/lib/hooks/useMediaQuery'
 import type { GameAbility, GuessChoice } from '@/types/game'
@@ -356,16 +357,8 @@ export const SplitPanel = memo(function SplitPanel({
         }}
       />
 
-      {/* Correct/incorrect feedback overlay - always rendered, controlled via opacity */}
-      <div
-        className={`absolute inset-0 transition-opacity duration-400 pointer-events-none ${
-          isCorrect === true
-            ? 'bg-green-500/30 opacity-100'
-            : isCorrect === false
-              ? 'bg-red-500/30 opacity-100'
-              : 'opacity-[0.01]'
-        }`}
-      />
+      {/* Correct/incorrect feedback overlay */}
+      <FeedbackOverlay isCorrect={isCorrect} />
 
       {/* Desktop click zones for right panel (pre-guess state only) */}
       {showClickZones && onGuess && (
