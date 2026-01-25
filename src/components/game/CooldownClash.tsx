@@ -21,113 +21,10 @@ import {
   mobilePanel2Variants,
   mobilePanel3Variants,
 } from '@/lib/motion'
-import { getDifficultyForScore } from '@/lib/game/difficulty'
-import type {
-  GameState,
-  GameAction,
-  GameRound,
-  GuessChoice,
-  Difficulty,
-} from '@/types/game'
-import type { Variants } from 'framer-motion'
+import { gameReducer, initialState } from '@/lib/game/reducer'
+import type { GameRound, GuessChoice } from '@/types/game'
 
-const INITIAL_LIVES = 3
 const QUEUE_SIZE = 3  // Keep 3 rounds buffered ahead for image preloading
-
-const initialState: GameState = {
-  phase: 'idle',
-  score: 0,
-  highScore: 0,
-  lives: INITIAL_LIVES,
-  currentRound: null,
-  roundQueue: [],
-  lastGuessCorrect: null,
-  difficulty: 'beginner',
-}
-
-function gameReducer(state: GameState, action: GameAction): GameState {
-  switch (action.type) {
-    case 'START_GAME':
-      return {
-        ...initialState,
-        phase: 'playing',
-        highScore: state.highScore,
-        currentRound: action.round,
-        roundQueue: action.queue,
-      }
-
-    case 'GUESS': {
-      if (!state.currentRound || state.phase !== 'playing') return state
-
-      const { left, right } = state.currentRound
-      const rightIsHigher = right.cooldown > left.cooldown
-      const rightIsLower = right.cooldown < left.cooldown
-      const isEqual = right.cooldown === left.cooldown
-      const isCorrect =
-        isEqual || // Ties count as correct
-        (action.choice === 'higher' && rightIsHigher) ||
-        (action.choice === 'lower' && rightIsLower)
-
-      const newScore = isCorrect ? state.score + 1 : state.score
-      const newLives = isCorrect ? state.lives : state.lives - 1
-      const newHighScore = Math.max(state.highScore, newScore)
-
-      return {
-        ...state,
-        phase: 'revealing',
-        score: newScore,
-        lives: newLives,
-        highScore: newHighScore,
-        lastGuessCorrect: isCorrect,
-        difficulty: getDifficultyForScore(newScore),
-      }
-    }
-
-    case 'REVEAL_COMPLETE':
-      if (state.lives <= 0) {
-        return { ...state, phase: 'gameover' }
-      }
-      return { ...state, phase: 'transitioning' }
-
-    case 'TRANSITION_COMPLETE': {
-      // Pop next round from queue
-      const [nextRound, ...remainingQueue] = state.roundQueue
-      const newLeft = state.currentRound?.right
-      const newRight = nextRound?.left
-
-      if (!newLeft || !newRight) {
-        // Fallback if queue is empty (shouldn't happen normally)
-        return {
-          ...state,
-          phase: 'playing',
-          currentRound: nextRound ?? state.currentRound,
-          roundQueue: remainingQueue,
-          lastGuessCorrect: null,
-        }
-      }
-
-      return {
-        ...state,
-        phase: 'playing',
-        currentRound: { left: newLeft, right: newRight },
-        roundQueue: remainingQueue,
-        lastGuessCorrect: null,
-      }
-    }
-
-    case 'QUEUE_ROUNDS':
-      return { ...state, roundQueue: [...state.roundQueue, ...action.rounds] }
-
-    case 'RESTART':
-      return { ...initialState, highScore: state.highScore, phase: 'idle' }
-
-    case 'SET_HIGH_SCORE':
-      return { ...state, highScore: action.highScore }
-
-    default:
-      return state
-  }
-}
 
 async function fetchRounds(score: number, count = 2, excludeId?: number): Promise<GameRound[]> {
   const params = new URLSearchParams({ score: String(score), count: String(count) })
@@ -357,6 +254,7 @@ export function CooldownClash() {
       initial={{ opacity: 0 }}
       animate={{ opacity: showContent ? 1 : 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
+      data-testid="game-container"
     >
       {/* Header - minimal floating bar with viewport-scaled sizing for mobile */}
       <header className="absolute top-0 left-0 right-0 z-30 px-3 md:px-4 pt-[max(1.5vh,env(safe-area-inset-top))] md:pt-[max(0.75rem,env(safe-area-inset-top))]">
