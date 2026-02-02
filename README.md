@@ -4,7 +4,7 @@
 
 **Test your League of Legends knowledge — guess which ability has the lower cooldown.**
 
-[**Play Now →**](https://lolcooldown.doyeong.kim)
+[**Play Now →**](https://lolcooldown.com)
 
 <!-- TODO: Replace with gameplay recording (15-30s MP4 showing a few rounds) -->
 <!-- Drag-drop an MP4 into this file on GitHub, or use: -->
@@ -110,6 +110,6 @@ All ability data is sourced from [Community Dragon](https://communitydragon.org/
 
 <div align="center">
 
-**[Play Now →](https://lolcooldown.doyeong.kim)**
+**[Play Now →](https://lolcooldown.com)**
 
 </div>
