@@ -1,119 +1,115 @@
-# lolcooldown
+<div align="center">
 
-A League of Legends cooldown guessing game.
+# ⚔️ lolcooldown
 
-<!-- Screenshot placeholder: add screenshot.png to repo root or use external URL -->
-<!-- ![Screenshot](screenshot.png) -->
+**Test your League of Legends knowledge — guess which ability has the lower cooldown.**
 
-**[Play Now →](https://lolcooldown.doyeong.kim)**
+[**Play Now →**](https://lolcooldown.doyeong.kim)
+
+<!-- TODO: Replace with gameplay recording (15-30s MP4 showing a few rounds) -->
+<!-- Drag-drop an MP4 into this file on GitHub, or use: -->
+<!-- https://github.com/doyeongk/lolcooldown/assets/VIDEO_ID -->
+
+https://github.com/user-attachments/assets/REPLACE_WITH_VIDEO_ID
+
+</div>
+
+---
+
+## How It Works
+
+Two abilities appear side by side. The left one shows its cooldown — the right one is hidden. Guess **Higher** or **Lower**. Build a streak, but watch out: three wrong answers and it's game over.
+
+Difficulty scales as your streak grows — from beginner-friendly matchups to expert-level cooldown knowledge.
 
 ## Features
 
-- Cooldown Clash game mode — guess which ability has the lower cooldown
-- Streak-based scoring with 3 lives
-- Progressive difficulty scaling (beginner → expert)
-- High score persistence
-- Mobile-optimised with iOS Safari support
-
-## How to Play
-
-1. Two abilities appear side-by-side
-2. Left ability shows its cooldown; right is hidden
-3. Guess if the right ability's cooldown is Higher or Lower
-4. Correct = +1 point; Wrong = lose 1 life
-5. 3 wrong answers = game over
-6. Difficulty increases as your score rises
+- 🎮 **Cooldown Clash** — Higher/Lower guessing with every ability in League
+- 📈 **Progressive difficulty** — matchups get harder as your streak grows
+- ❤️ **3-life system** — no room for guessing blindly
+- ⌨️ **Keyboard controls** — Arrow keys or H/L for fast play
+- 📱 **Mobile-first** — optimised for phones with iOS Safari support
+- 🏆 **High score tracking** — persistent local leaderboard
+- ✨ **Polished UI** — Framer Motion animations, 60fps transitions
 
 ## Tech Stack
 
-- Next.js 16 / React 19
-- TypeScript
-- Tailwind CSS
-- PostgreSQL + Prisma 7
-- Docker
+- **Framework:** Next.js 16 / React 19
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS
+- **Animation:** Framer Motion
+- **Database:** PostgreSQL + Prisma 7
+- **Data:** Community Dragon API
+- **Deployment:** Docker + GitHub Actions
 
 ## Quick Start
 
-### Prerequisites
+```bash
+# Clone and install
+git clone https://github.com/doyeongk/lolcooldown.git
+cd lolcooldown
+npm install
 
-- Node.js 20+
-- Docker & Docker Compose
+# Start database
+docker compose up -d
 
-### Local Development
+# Set up environment
+cp .env.example .env
 
-1. Start PostgreSQL:
-   ```bash
-   docker compose up -d
-   ```
+# Initialise database
+npx prisma db push
+npm run db:seed
 
-2. Set up environment:
-   ```bash
-   cp .env.example .env
-   ```
+# Run dev server
+npm run dev
+```
 
-3. Initialise database:
-   ```bash
-   export $(grep DATABASE_URL .env | xargs)
-   npx prisma db push
-   npm run db:seed
-   ```
-
-4. Start dev server:
-   ```bash
-   npm run dev
-   ```
-
-   Open [localhost:3000](http://localhost:3000)
+Open [localhost:3000](http://localhost:3000).
 
 ## Project Structure
 
 ```
 src/
-├── app/                 # Next.js pages and API routes
-│   ├── api/game/        # Game round generation endpoint
-│   └── play/            # Game pages
+├── app/              # Pages and API routes
+│   ├── api/game/     # Round generation endpoint
+│   └── play/         # Game pages
 ├── components/
-│   ├── game/            # CooldownClash, SplitPanel, GuessButtons
-│   └── ui/              # Button, LinkButton, Portal
+│   ├── game/         # CooldownClash, SplitPanel, GuessButtons
+│   ├── home/         # Landing page components
+│   └── ui/           # Shared UI primitives
 ├── lib/
-│   ├── data/            # Ability fetching and caching
-│   ├── hooks/           # useLocalStorage, useMediaQuery
-│   └── db.ts            # Prisma client singleton
-├── types/               # TypeScript definitions
-└── scripts/             # Database seeding
+│   ├── data/         # Ability fetching and caching
+│   └── hooks/        # useLocalStorage, useMediaQuery
+└── types/            # TypeScript definitions
 ```
-
-## Environment Variables
-
-| Variable | Purpose |
-|----------|---------|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `DEPLOY_HOST` | SSH target for deployment (user@host) |
 
 ## Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start development server |
+| `npm run dev` | Development server |
 | `npm run build` | Production build |
-| `npm run lint` | Run ESLint |
-| `npm run db:seed` | Seed database from Community Dragon |
-| `npm run db:studio` | Open Prisma Studio |
+| `npm run lint` | ESLint |
+| `npm run db:seed` | Seed abilities from Community Dragon |
 | `npm run deploy` | Deploy via SSH |
 
 ## Data Source
 
-Ability data sourced from [Community Dragon](https://communitydragon.org/).
+All ability data is sourced from [Community Dragon](https://communitydragon.org/) and seeded into the database on setup.
 
-## Deployment
+## Roadmap
 
-1. Create `.env.local`:
-   ```bash
-   cp .env.local.example .env.local
-   # Set DEPLOY_HOST=user@your-server
-   ```
+- [x] Core gameplay loop
+- [x] Progressive difficulty
+- [x] Mobile optimisation
+- [x] Keyboard controls
+- [x] CI/CD pipeline
+- [ ] Sound effects
 
-2. Deploy:
-   ```bash
-   npm run deploy
-   ```
+---
+
+<div align="center">
+
+**[Play Now →](https://lolcooldown.doyeong.kim)**
+
+</div>
