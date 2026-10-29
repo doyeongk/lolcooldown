@@ -63,7 +63,9 @@ See `docs/game-logic.md` for rules and difficulty scaling.
 
 ## Frontend Design
 
-**Use the `frontend-design` skill for all UI work.**
+**Use Emil Kowalski's skills in `.agents/skills/` for all UI and motion work:**
+`emil-design-eng` for principles, `animate` to build motion, `review-animations` to review it,
+and `improve-animations` to audit the codebase.
 
 ### Principles
 
