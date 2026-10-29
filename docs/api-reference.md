@@ -14,8 +14,8 @@ GET /api/game/random?score=0&count=3&excludeId=123
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `score` | number | `0` | Current player score (affects difficulty) |
-| `count` | number | `1` | Number of rounds to generate |
+| `score` | number | `0` | Current player score (sets difficulty; invalid values fall back to 0) |
+| `count` | number | `2` | Number of rounds to generate (clamped to 1–5) |
 | `excludeId` | number | - | Ability ID to exclude from left position (prevents duplicates) |
 
 ### Response
@@ -46,12 +46,10 @@ interface AbilityWithChampion {
   slot: 'Q' | 'W' | 'E' | 'R'
   description: string | null
   icon: string | null
-  cooldowns: number[]
   champion: {
     id: number
     name: string
-    icon: string
-    splash: string | null
+    splash: string | null  // random skin, chosen per round
   }
 }
 ```
@@ -75,11 +73,9 @@ curl "http://localhost:3000/api/game/random?score=15&count=3"
           "slot": "Q",
           "description": "Ezreal fires a bolt...",
           "icon": "/images/abilities/ezreal/q.png",
-          "cooldowns": [5.5, 5.25, 5, 4.75, 4.5],
           "champion": {
             "id": 81,
             "name": "Ezreal",
-            "icon": "/images/champions/ezreal.png",
             "splash": "/images/splashes/ezreal_0.jpg"
           }
         },
@@ -93,11 +89,9 @@ curl "http://localhost:3000/api/game/random?score=15&count=3"
           "slot": "Q",
           "description": "Morgana releases a sphere...",
           "icon": "/images/abilities/morgana/q.png",
-          "cooldowns": [10, 10, 10, 10, 10],
           "champion": {
             "id": 25,
             "name": "Morgana",
-            "icon": "/images/champions/morgana.png",
             "splash": "/images/splashes/morgana_0.jpg"
           }
         },

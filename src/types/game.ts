@@ -6,11 +6,9 @@ export interface AbilityWithChampion {
   description: string | null
   slot: string
   icon: string | null
-  cooldowns: number[]
   champion: {
     id: number
     name: string
-    icon: string
     splash: string | null
   }
 }

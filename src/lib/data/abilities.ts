@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db'
 import { createCachedFetcher } from './cache'
-import type { AbilityWithChampion, Difficulty, GameAbility, GameRound } from '@/types/game'
+import type { Difficulty, GameAbility, GameRound } from '@/types/game'
 
 const VALID_SLOTS = ['Q', 'W', 'E', 'R']
 const BASIC_SLOTS = ['Q', 'W', 'E']
@@ -12,19 +12,36 @@ const TRANSFORM_ULT_CHAMPIONS = [
   'Nidalee', 'Jayce', 'Anivia', "Kha'Zix"
 ]
 
-export const getValidAbilities = createCachedFetcher(async (): Promise<AbilityWithChampion[]> => {
+/** Server-side ability record: every skin splash, so each round can pick one. */
+interface AbilityRecord {
+  id: number
+  name: string
+  description: string | null
+  slot: string
+  icon: string | null
+  cooldowns: number[]
+  champion: { id: number; name: string; splashes: string[] }
+}
+
+export const getValidAbilities = createCachedFetcher(async (): Promise<AbilityRecord[]> => {
   const abilities = await prisma.ability.findMany({
     where: {
       slot: { in: VALID_SLOTS },
       cooldowns: { isEmpty: false },
     },
-    include: {
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      slot: true,
+      icon: true,
+      cooldowns: true,
       champion: {
         select: {
           id: true,
           name: true,
-          icon: true,
           skins: {
+            where: { splashPath: { not: null } },
             select: { splashPath: true },
           },
         },
@@ -33,21 +50,25 @@ export const getValidAbilities = createCachedFetcher(async (): Promise<AbilityWi
   })
 
   return abilities
-    .filter(a => a.cooldowns.length > 0 && a.cooldowns.some(cd => cd > 0))
-    .map(a => {
-      const skins = a.champion.skins
-      const randomSkin = skins[Math.floor(Math.random() * skins.length)]
-      return {
-        ...a,
-        champion: {
-          id: a.champion.id,
-          name: a.champion.name,
-          icon: a.champion.icon,
-          splash: randomSkin?.splashPath ?? null,
-        },
-      }
-    })
+    .filter(a => a.cooldowns.some(cd => cd > 0))
+    .map(({ champion, ...a }) => ({
+      ...a,
+      champion: {
+        id: champion.id,
+        name: champion.name,
+        splashes: champion.skins.map(s => s.splashPath as string),
+      },
+    }))
 })
+
+/** Base-skin splashes for the home page background, newest champions included. */
+export const getBaseSplashes = createCachedFetcher(async (): Promise<string[]> => {
+  const skins = await prisma.skin.findMany({
+    where: { isBase: true, splashPath: { not: null } },
+    select: { splashPath: true },
+  })
+  return skins.map(s => s.splashPath as string)
+}, { key: 'base-splashes' })
 
 function getRandomLevel(difficulty: Difficulty, slot: string): number {
   if (difficulty === 'beginner') return 1
@@ -60,32 +81,62 @@ function getCooldownAtLevel(cooldowns: number[], level: number): number {
   return cooldowns[index]
 }
 
+function pickRandom<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length)]
+}
+
+interface Pick {
+  record: AbilityRecord
+  level: number
+  cooldown: number
+}
+
 function pickRandomAbility(
-  abilities: AbilityWithChampion[],
-  exclude: AbilityWithChampion | null,
+  abilities: AbilityRecord[],
+  excludeId: number | null,
   difficulty: Difficulty
-): GameAbility {
-  let ability: AbilityWithChampion
+): Pick {
+  let record: AbilityRecord
   let attempts = 0
   const maxAttempts = 100
 
   do {
-    const index = Math.floor(Math.random() * abilities.length)
-    ability = abilities[index]
+    record = pickRandom(abilities)
     attempts++
-  } while (exclude && ability.id === exclude.id && attempts < maxAttempts)
+  } while (record.id === excludeId && attempts < maxAttempts)
 
-  const level = getRandomLevel(difficulty, ability.slot)
-  const cooldown = getCooldownAtLevel(ability.cooldowns, level)
+  const level = getRandomLevel(difficulty, record.slot)
+  const cooldown = getCooldownAtLevel(record.cooldowns, level)
 
-  return { ability, level, cooldown }
+  return { record, level, cooldown }
 }
 
-function isTransformUlt(ability: AbilityWithChampion): boolean {
+/** Shapes a pick for the client, choosing a random skin splash per round. */
+function toGameAbility({ record, level, cooldown }: Pick): GameAbility {
+  const { champion } = record
+  return {
+    ability: {
+      id: record.id,
+      name: record.name,
+      description: record.description,
+      slot: record.slot,
+      icon: record.icon,
+      champion: {
+        id: champion.id,
+        name: champion.name,
+        splash: champion.splashes.length > 0 ? pickRandom(champion.splashes) : null,
+      },
+    },
+    level,
+    cooldown,
+  }
+}
+
+function isTransformUlt(ability: AbilityRecord): boolean {
   return ability.slot === 'R' && TRANSFORM_ULT_CHAMPIONS.includes(ability.champion.name)
 }
 
-function getMatchingSlots(ability: AbilityWithChampion): string[] {
+function getMatchingSlots(ability: AbilityRecord): string[] {
   // R abilities match only with other R abilities, unless it's a transform ult
   if (ability.slot === 'R' && !isTransformUlt(ability)) {
     return ['R']
@@ -95,18 +146,18 @@ function getMatchingSlots(ability: AbilityWithChampion): string[] {
 }
 
 export function generateRound(
-  abilities: AbilityWithChampion[],
+  abilities: AbilityRecord[],
   difficulty: Difficulty,
-  excludeFromLeft?: AbilityWithChampion
+  excludeFromLeftId: number | null
 ): GameRound {
-  const left = pickRandomAbility(abilities, excludeFromLeft ?? null, difficulty)
-  const matchingSlots = getMatchingSlots(left.ability)
+  const left = pickRandomAbility(abilities, excludeFromLeftId, difficulty)
+  const matchingSlots = getMatchingSlots(left.record)
 
   // Filter abilities to only matching slots (and exclude transform ults when left is R)
   const filteredAbilities = abilities.filter(a => {
     if (!matchingSlots.includes(a.slot)) return false
     // If left is a regular R, only match with other regular Rs
-    if (left.ability.slot === 'R' && !isTransformUlt(left.ability)) {
+    if (left.record.slot === 'R' && !isTransformUlt(left.record)) {
       return a.slot === 'R' && !isTransformUlt(a)
     }
     // If left is Q/W/E or transform ult, match with Q/W/E and transform ults
@@ -116,20 +167,20 @@ export function generateRound(
     return true
   })
 
-  let right: GameAbility
+  let right: Pick
   let attempts = 0
   const maxAttempts = 100
 
+  // Avoid self-matches and, where possible, ties (see docs/game-logic.md)
   do {
-    right = pickRandomAbility(filteredAbilities, left.ability, difficulty)
+    right = pickRandomAbility(filteredAbilities, left.record.id, difficulty)
     attempts++
   } while (
-    left.cooldown === right.cooldown &&
-    left.ability.id === right.ability.id &&
+    (left.cooldown === right.cooldown || left.record.id === right.record.id) &&
     attempts < maxAttempts
   )
 
-  return { left, right }
+  return { left: toGameAbility(left), right: toGameAbility(right) }
 }
 
 // Re-export from shared location for backwards compatibility

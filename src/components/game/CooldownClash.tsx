@@ -183,10 +183,8 @@ export function CooldownClash() {
     const { left, right } = state.currentRound
     return [
       left.ability.champion.splash,
-      left.ability.champion.icon,
       left.ability.icon,
       right.ability.champion.splash,
-      right.ability.champion.icon,
       right.ability.icon,
     ]
   }, [state.currentRound])
@@ -201,11 +199,9 @@ export function CooldownClash() {
     const queuedImages = state.roundQueue
       .flatMap(({ left, right }) => [
         left.ability.champion.splash,
-        left.ability.champion.icon,
-        left.ability.icon,
+          left.ability.icon,
         right.ability.champion.splash,
-        right.ability.champion.icon,
-        right.ability.icon,
+          right.ability.icon,
       ])
       .filter((url): url is string => url !== null)
 
