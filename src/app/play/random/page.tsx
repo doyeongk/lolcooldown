@@ -1,4 +1,4 @@
-import { CooldownClash } from '@/components/game'
+import { CooldownClash } from '@/components/game/CooldownClash'
 
 export const metadata = {
   title: 'Cooldown Clash | lolcooldown',

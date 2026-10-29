@@ -1,0 +1,36 @@
+name: Refresh champion data
+
+# Picks up new champions, abilities and skins from Community Dragon.
+# The app reads the database through a one-hour cache and serves newly
+# downloaded images from the shared volume, so no redeploy is needed.
+on:
+  schedule:
+    - cron: "0 3 * * 4" # Thursdays 03:00 UTC, after the usual Wednesday patch
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  reseed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H poby.duckdns.org >> ~/.ssh/known_hosts
+
+      - name: Seed
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy_key "$DEPLOY_HOST" '
+            cd /home/do/Code/lolcooldown &&
+            docker compose --env-file .env.prod -f docker-compose.prod.yml --profile tools build seed &&
+            docker compose --env-file .env.prod -f docker-compose.prod.yml --profile tools run --rm seed
+          '

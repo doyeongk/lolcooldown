@@ -1,0 +1,9 @@
+services:
+  postgres:
+    command: sudo -n -u postgres "$(ls -d /usr/lib/postgresql/*/bin | sort -V | tail -n1)/postgres" -D "/var/lib/postgresql/$(ls /usr/lib/postgresql | sort -V | tail -n1)/main" -c "config_file=/etc/postgresql/$(ls /usr/lib/postgresql | sort -V | tail -n1)/main/postgresql.conf"
+    port: 5432
+  web:
+    command: npm run dev -- --port "$PORT"
+    port: 3000
+    portal:
+      title: lolcooldown

@@ -15,7 +15,7 @@ npm run lint         # ESLint
 - `src/app/` — Next.js pages and API routes
 - `src/components/game/` — Game components (CooldownClash, SplitPanel, etc.)
 - `src/components/ui/` — Shadcn/ui (Button, Dialog, Tooltip, Sheet)
-- `src/lib/` — Utilities, hooks, data fetching, motion presets
+- `src/lib/` — Utilities, hooks, data fetching
 - `public/images/` — Cached CDragon images (gitignored)
 
 See `docs/architecture.md` for component hierarchy and data flow.
@@ -55,15 +55,16 @@ See `docs/game-logic.md` for rules and difficulty scaling.
 ## Code Patterns
 
 - **Client components:** Use `'use client'` directive for interactivity
-- **State management:** `useReducer` for complex game state — see `docs/state-management.md`
-- **Styling:** Tailwind CSS 4 + CSS variables — see `docs/ui-components.md`
+- **State management:** one `useReducer` in `CooldownClash.tsx` — see `docs/architecture.md`
+- **Styling:** Tailwind CSS 4 + CSS variables in `src/app/globals.css`
 - **Images:** Locally cached in `public/images/` (downloaded at seed time from CDragon)
 - **Caching:** Use `createCachedFetcher()` from `src/lib/data/cache.ts` for server-side data with TTL
-- **Performance:** Use `React.memo` for expensive components; define transition objects at module level
 
 ## Frontend Design
 
-**Use the `frontend-design` skill for all UI work.**
+**Use Emil Kowalski's skills in `.agents/skills/` for all UI and motion work:**
+`emil-design-eng` for principles, `animate` to build motion, `review-animations` to review it,
+and `improve-animations` to audit the codebase.
 
 ### Principles
 
@@ -75,21 +76,19 @@ Minimalism, simplicity, elegance. Dark blue + gold palette inspired by League of
 |-------|------------|
 | Components | Shadcn/ui (Radix primitives) |
 | Styling | Tailwind CSS 4 + CSS variables |
-| Animation | Framer Motion |
+| Animation | CSS transitions and keyframes (`globals.css`) |
 | Icons | Lucide React |
 
 ### Key Rules
 
 - Use existing Shadcn/ui components from `src/components/ui/` first
-- Use Framer Motion for all animations (not CSS keyframes)
+- Animate with CSS using the `--ease-out` / `--ease-drawer` tokens; keep the `prefers-reduced-motion` block in `globals.css` up to date
 - Extend components with CVA variants; use `cn()` for conditional classes
 - Test on mobile Safari (most restrictive environment)
 
-**Detailed docs:** `docs/ui-components.md`, `docs/animation-system.md`
-
 ## Gotchas
 
-- **iOS Safari:** Uses `--vh` CSS variable for viewport height (see `ViewportHeight.tsx`)
+- **iOS Safari:** Use `svh`/`dvh` units for viewport height, not `vh`
 - **Prisma:** `source .env` won't work; must use `export` — see `.claude/rules/prisma.md`
 - **Images:** Core images cached locally; non-base skins still load from `raw.communitydragon.org`
 
@@ -111,9 +110,5 @@ Additional conventions in `.claude/rules/`:
 ## Documentation
 
 Detailed technical docs in `docs/`:
-- `architecture.md` — System overview, component hierarchy, data flow
-- `state-management.md` — Game reducer pattern, phase machine, actions
-- `animation-system.md` — Framer Motion patterns, timing constants
-- `game-logic.md` — Rules, difficulty scaling, special champions
-- `api-reference.md` — `/api/game/random` endpoint
-- `ui-components.md` — Shadcn/ui patterns, CVA variants
+- `architecture.md` — Pages, game state machine, API, data and motion
+- `game-logic.md` — Rules, difficulty scaling, ability matching

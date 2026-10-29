@@ -1,7 +1,6 @@
 /**
  * Allowlist-based HTML sanitiser for CDragon ability descriptions.
- * Strips all tags except safe formatting tags, removes all attributes
- * except 'class' on <span>.
+ * Keeps only safe formatting tags and drops every attribute.
  */
 
 const ALLOWED_TAGS = new Set(['br', 'span', 'b', 'i', 'em', 'strong'])
@@ -12,8 +11,9 @@ const ALLOWED_TAGS = new Set(['br', 'span', 'b', 'i', 'em', 'strong'])
  */
 export function sanitizeHtml(html: string): string {
   if (typeof window === 'undefined') {
-    // SSR fallback: strip all tags
-    return html.replace(/<[^>]*>/g, '')
+    // SSR fallback: plain text only. Escape after stripping so an unclosed
+    // tag such as "<img onerror=..." can never reach innerHTML.
+    return escapeHtml(html.replace(/<[^>]*>/g, ''))
   }
 
   const parser = new DOMParser()
@@ -33,16 +33,9 @@ export function sanitizeHtml(html: string): string {
         return Array.from(element.childNodes).map(sanitizeNode).join('')
       }
 
-      // Build sanitised element
-      let result = `<${tagName}`
-
-      // Only allow 'class' attribute on <span>
-      if (tagName === 'span' && element.hasAttribute('class')) {
-        const classValue = escapeHtml(element.getAttribute('class') ?? '')
-        result += ` class="${classValue}"`
-      }
-
-      result += '>'
+      // Build sanitised element (no attributes: CDragon descriptions don't use them,
+      // and arbitrary classes could restyle the page with Tailwind utilities)
+      const result = `<${tagName}>`
 
       // Self-closing tags
       if (tagName === 'br') {
@@ -50,10 +43,7 @@ export function sanitizeHtml(html: string): string {
       }
 
       // Process children
-      result += Array.from(element.childNodes).map(sanitizeNode).join('')
-      result += `</${tagName}>`
-
-      return result
+      return result + Array.from(element.childNodes).map(sanitizeNode).join('') + `</${tagName}>`
     }
 
     return ''

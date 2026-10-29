@@ -1,51 +1,38 @@
 import { NextResponse } from 'next/server'
-import { getValidAbilities, generateRound, getDifficultyForScore } from '@/lib/data/abilities'
-import type { Difficulty, GameRound } from '@/types/game'
+import { getValidAbilities, generateChain } from '@/lib/data/abilities'
+import { getDifficultyForScore } from '@/lib/game/difficulty'
 
+const MAX_COUNT = 10
+
+/** Parses a non-negative integer query param; null when absent or malformed. */
+function parseNonNegativeInt(value: string | null): number | null {
+  return value !== null && /^\d{1,9}$/.test(value) ? Number(value) : null
+}
+
+/**
+ * GET /api/game/random?score=&count=&after=&afterCooldown=
+ * Returns the next `count` abilities of a game. `after` (ability id) and
+ * `afterCooldown` continue an existing chain so the first new ability is
+ * slot-matched to, and avoids tying with, the last one the client has.
+ */
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-  const difficultyParam = searchParams.get('difficulty') as Difficulty | null
-  const scoreParam = searchParams.get('score')
-  const count = Math.min(parseInt(searchParams.get('count') || '2', 10), 5)
-  // Ability ID to exclude from the first round's left (for queue continuity)
-  const excludeId = searchParams.get('excludeId')
-
-  const score = scoreParam ? parseInt(scoreParam, 10) : 0
-  const difficulty = difficultyParam || getDifficultyForScore(score)
+  const params = new URL(request.url).searchParams
+  const score = parseNonNegativeInt(params.get('score')) ?? 0
+  const count = Math.min(Math.max(parseNonNegativeInt(params.get('count')) ?? 4, 1), MAX_COUNT)
+  const afterId = parseNonNegativeInt(params.get('after'))
+  const afterCooldown = Number(params.get('afterCooldown'))
 
   try {
     const abilities = await getValidAbilities()
-
     if (abilities.length < 2) {
-      return NextResponse.json(
-        { error: 'Not enough abilities in database' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Not enough abilities in database' }, { status: 500 })
     }
-
-    // Find the ability to exclude from first round's left (if provided)
-    const excludeIdNum = excludeId ? parseInt(excludeId, 10) : null
-    const initialExclude = excludeIdNum
-      ? abilities.find(a => a.id === excludeIdNum)
-      : undefined
-
-    const rounds: GameRound[] = []
-    for (let i = 0; i < count; i++) {
-      // Exclude previous round's right ability from next round's left
-      // For first round, use the excludeId param (for queue continuity)
-      // This prevents duplicates during carousel transitions
-      const excludeFromLeft = i > 0
-        ? rounds[i - 1].right.ability
-        : initialExclude
-      rounds.push(generateRound(abilities, difficulty, excludeFromLeft))
-    }
-
-    return NextResponse.json({ rounds, difficulty })
+    const record = abilities.find(a => a.id === afterId)
+    const after = record ? { record, cooldown: afterCooldown } : null
+    const chain = generateChain(abilities, getDifficultyForScore(score), count, after)
+    return NextResponse.json({ abilities: chain }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
-    console.error('Error generating game rounds:', error)
-    return NextResponse.json(
-      { error: 'Failed to generate game rounds' },
-      { status: 500 }
-    )
+    console.error('Error generating abilities:', error)
+    return NextResponse.json({ error: 'Failed to generate abilities' }, { status: 500 })
   }
 }

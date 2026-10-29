@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Prepares an Amp orb: Postgres, npm dependencies, Prisma client, seeded data.
+# Idempotent and fast on a warm snapshot. Long-running processes live in .amp/services.yaml.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+step() { printf '\n==> %s\n' "$*"; STEP_START=$SECONDS; }
+done_step() { printf '    (%ss)\n' "$((SECONDS - STEP_START))"; }
+
+step "Postgres"
+if ! compgen -G "/usr/lib/postgresql/*/bin/postgres" >/dev/null; then
+  sudo apt-get update -q
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q postgresql
+fi
+PG_VERSION=$(ls /usr/lib/postgresql | sort -V | tail -n1)
+PG_CONF_DIR=/etc/postgresql/$PG_VERSION/main
+# Ephemeral sandbox: trade durability for speed (the seed is ~40x faster without fsync)
+printf 'fsync = off\nsynchronous_commit = off\nfull_page_writes = off\n' \
+  | sudo tee "$PG_CONF_DIR/conf.d/orb-speed.conf" >/dev/null
+started_pg=0
+if ! pg_isready -q -h localhost -p 5432; then
+  sudo pg_ctlcluster "$PG_VERSION" main start
+  started_pg=1
+fi
+# Stop the cluster we started so the snapshot holds a clean shutdown; services.yaml runs it later
+trap '[ "$started_pg" = 1 ] && sudo pg_ctlcluster "$PG_VERSION" main stop || true' EXIT
+for _ in $(seq 1 30); do pg_isready -q -h localhost -p 5432 && break; sleep 0.5; done
+psql_admin() { sudo -u postgres psql -qtAX "$@"; }
+[ "$(psql_admin -c "SELECT 1 FROM pg_roles WHERE rolname = 'lolcd'")" = 1 ] \
+  || psql_admin -c "CREATE ROLE lolcd LOGIN CREATEDB PASSWORD 'lolcd_dev'"
+[ "$(psql_admin -c "SELECT 1 FROM pg_database WHERE datname = 'lolcooldown'")" = 1 ] \
+  || psql_admin -c "CREATE DATABASE lolcooldown OWNER lolcd"
+done_step
+
+step "Environment file"
+[ -f .env ] || cp -- .env.example .env
+DATABASE_URL=$(grep -E '^DATABASE_URL=' .env | cut -d= -f2- | tr -d '"')
+export DATABASE_URL
+done_step
+
+step "npm ci"
+npm ci --no-audit --no-fund
+done_step
+
+step "Prisma schema and client"
+npx prisma db push
+npx prisma generate
+done_step
+
+step "Seed (only when empty)"
+champions=$(psql "$DATABASE_URL" -qtAX -c 'SELECT count(*) FROM "Champion"')
+if [ "$champions" = 0 ] || [ -z "$(ls -A public/images/splashes 2>/dev/null)" ]; then
+  npx tsx src/scripts/seed.ts
+else
+  echo "    $champions champions already seeded; run 'npm run db:seed' to refresh"
+fi
+done_step

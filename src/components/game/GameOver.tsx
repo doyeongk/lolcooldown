@@ -1,116 +1,71 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { RotateCcw } from 'lucide-react'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
-import { useReducedMotion, numberPop, goldGlowPulse } from '@/lib/motion'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 interface GameOverProps {
   open: boolean
   score: number
-  highScore: number
-  isNewHighScore: boolean
+  best: number
+  isNewBest: boolean
   onRestart: () => void
 }
 
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1,
-    },
-  },
-}
+const CORNERS = ['-top-px -left-px border-t-2 border-l-2', '-top-px -right-px border-t-2 border-r-2', '-bottom-px -left-px border-b-2 border-l-2', '-bottom-px -right-px border-b-2 border-r-2']
 
-const fadeInUp = {
-  hidden: { opacity: 0, y: 10 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { type: 'spring' as const, stiffness: 300, damping: 25 },
-  },
-}
+// Contents rise in 60ms apart once the dialog has started scaling in
+const step = (i: number) => ({ animationDelay: `${80 + i * 60}ms`, '--fade-y': '8px', animationDuration: '300ms' }) as React.CSSProperties
 
-export function GameOver({ open, score, highScore, isNewHighScore, onRestart }: GameOverProps) {
-  const prefersReducedMotion = useReducedMotion()
-
+export function GameOver({ open, score, best, isNewBest, onRestart }: GameOverProps) {
   return (
     <Dialog open={open}>
-      <DialogContent className="relative max-w-sm text-center [&>button]:hidden shadow-[0_0_30px_rgba(227,207,116,0.2)]">
-        {/* Corner bracket decorations */}
-        <div className="absolute -top-px -left-px w-4 h-4 border-t-2 border-l-2 border-gold/60" />
-        <div className="absolute -top-px -right-px w-4 h-4 border-t-2 border-r-2 border-gold/60" />
-        <div className="absolute -bottom-px -left-px w-4 h-4 border-b-2 border-l-2 border-gold/60" />
-        <div className="absolute -bottom-px -right-px w-4 h-4 border-b-2 border-r-2 border-gold/60" />
-
+      <DialogContent className="max-w-sm text-center shadow-[0_0_30px_rgba(227,207,116,0.2)]">
+        {CORNERS.map((corner) => (
+          <div key={corner} className={cn('absolute w-4 h-4 border-gold/60', corner)} />
+        ))}
         <VisuallyHidden>
           <DialogDescription>Game over screen showing your final score</DialogDescription>
         </VisuallyHidden>
 
-        <motion.div
-          variants={staggerContainer}
-          initial={prefersReducedMotion ? false : 'hidden'}
-          animate="visible"
+        <DialogTitle
+          className="animate-fade-up text-3xl font-bold text-foreground"
+          style={{ ...step(0), textShadow: '0 0 30px rgba(var(--gold-rgb), 0.3)' }}
         >
-          <motion.div variants={fadeInUp}>
-            <DialogTitle
-              className="text-3xl font-bold text-foreground mb-2"
-              style={{ textShadow: '0 0 30px rgba(var(--gold-rgb), 0.3)' }}
-            >
-              Game Over
-            </DialogTitle>
-          </motion.div>
+          Game Over
+        </DialogTitle>
 
-          <AnimatePresence>
-            {isNewHighScore && (
-              <motion.p
-                variants={prefersReducedMotion ? undefined : goldGlowPulse}
-                initial={prefersReducedMotion ? undefined : 'initial'}
-                animate={prefersReducedMotion ? undefined : 'animate'}
-                className="text-gold text-lg mb-4"
-              >
-                New High Score!
-              </motion.p>
+        <div className="animate-fade-up space-y-4 mb-4" style={step(1)}>
+          <div>
+            <p className="text-sm text-foreground/60">Final Score</p>
+            <p className="text-5xl font-bold tabular-nums text-gold" style={{ textShadow: '0 0 20px rgba(var(--gold-rgb), 0.4)' }}>
+              {score}
+            </p>
+            {isNewBest && (
+              <p className="animate-fade-up mt-1 text-sm font-semibold uppercase tracking-[0.15em] text-gold" style={step(3)}>
+                New High Score
+              </p>
             )}
-          </AnimatePresence>
+          </div>
+          <div>
+            <p className="text-sm text-foreground/60">High Score</p>
+            <p className="text-2xl font-semibold tabular-nums text-foreground">{best}</p>
+          </div>
+        </div>
 
-          <motion.div variants={fadeInUp} className="space-y-4 mb-8">
-            <div>
-              <p className="text-sm text-foreground/60">Final Score</p>
-              <motion.p
-                variants={prefersReducedMotion ? undefined : numberPop}
-                initial={prefersReducedMotion ? false : 'hidden'}
-                animate="visible"
-                className="text-4xl font-bold text-gold"
-                style={{ textShadow: '0 0 20px rgba(var(--gold-rgb), 0.4)' }}
-              >
-                {score}
-              </motion.p>
-            </div>
-            <div>
-              <p className="text-sm text-foreground/60">High Score</p>
-              <p className="text-2xl font-semibold text-foreground">{highScore}</p>
-            </div>
-          </motion.div>
-
-          <motion.div variants={fadeInUp} className="flex flex-col gap-3">
-            <Button variant="primary" size="lg" onClick={onRestart} className="w-full">
-              Try Again
-            </Button>
-            <Button asChild variant="secondary" size="md" className="w-full">
-              <Link href="/">Back to Menu</Link>
-            </Button>
-          </motion.div>
-        </motion.div>
+        <div className="animate-fade-up flex flex-col gap-3" style={step(2)}>
+          {/* Radix focuses this first, so Enter plays again; the arrow spins back on hover */}
+          <Button variant="primary" size="lg" onClick={onRestart} className="group w-full">
+            <RotateCcw className="transition-transform duration-300 ease-(--ease-out) group-hover:-rotate-180 motion-reduce:transition-none" aria-hidden="true" />
+            Try Again
+          </Button>
+          <Button asChild variant="secondary" size="md" className="w-full">
+            <Link href="/">Back to Menu</Link>
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   )

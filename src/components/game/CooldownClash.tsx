@@ -1,562 +1,259 @@
 'use client'
 
-import { useReducer, useEffect, useCallback, useRef, useMemo, useState } from 'react'
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { SplitPanel } from './SplitPanel'
-import { VsDivider } from './VsDivider'
 import { GuessButtons } from './GuessButtons'
 import { ScoreDisplay } from './ScoreDisplay'
 import { GameOver } from './GameOver'
-import { TransitionOverlay } from './TransitionOverlay'
 import { useLocalStorage } from '@/lib/hooks/useLocalStorage'
-import { useImagePreloaderWithState, useBackgroundPreloader } from '@/lib/hooks/useImagePreloader'
-import { useIsMobile } from '@/lib/hooks/useMediaQuery'
-import {
-  useReducedMotion,
-  TIMING,
-  mobileCarouselTransition,
-  mobilePanel1Variants,
-  mobilePanel2Variants,
-  mobilePanel3Variants,
-} from '@/lib/motion'
-import { getDifficultyForScore } from '@/lib/game/difficulty'
-import type {
-  GameState,
-  GameAction,
-  GameRound,
-  GuessChoice,
-  Difficulty,
-} from '@/types/game'
-import type { Variants } from 'framer-motion'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { HIGH_SCORE_KEY } from '@/lib/game/difficulty'
+import { cn } from '@/lib/utils'
+import type { GameAbility, GuessChoice } from '@/types/game'
 
-const INITIAL_LIVES = 3
-const QUEUE_SIZE = 3  // Keep 3 rounds buffered ahead for image preloading
+const LIVES = 3
+/** How long the answer stays up before the next round slides in */
+const REVEAL_MS = 1200
+/** Keep at least this many abilities loaded past the current one */
+const BUFFER = 4
 
-const initialState: GameState = {
-  phase: 'idle',
-  score: 0,
-  highScore: 0,
-  lives: INITIAL_LIVES,
-  currentRound: null,
-  roundQueue: [],
-  lastGuessCorrect: null,
-  difficulty: 'beginner',
+/*
+ * A game is a chain of abilities; each round compares chain[index] (left/top)
+ * with chain[index + 1] (right/bottom). After a correct reveal the track slides
+ * one panel along and index advances, so the right ability becomes the left.
+ *
+ *   loading → guessing → revealed → sliding → guessing …
+ *                              ↘ over (no lives left) → restart → guessing
+ */
+type Status = 'loading' | 'guessing' | 'revealed' | 'sliding' | 'over'
+
+interface State {
+  status: Status
+  /** Incremented per game so panels remount (and fade in) on restart */
+  game: number
+  chain: GameAbility[]
+  index: number
+  score: number
+  lives: number
+  /** Result of the last guess, cleared when the track slides on */
+  correct: boolean | null
+  bestAtStart: number
 }
 
-function gameReducer(state: GameState, action: GameAction): GameState {
-  switch (action.type) {
-    case 'START_GAME':
-      return {
-        ...initialState,
-        phase: 'playing',
-        highScore: state.highScore,
-        currentRound: action.round,
-        roundQueue: action.queue,
-      }
+type Action =
+  | { type: 'start'; chain: GameAbility[]; best: number }
+  | { type: 'append'; game: number; abilities: GameAbility[] }
+  | { type: 'guess'; choice: GuessChoice }
+  | { type: 'next'; instant: boolean }
+  | { type: 'advance' }
 
-    case 'GUESS': {
-      if (!state.currentRound || state.phase !== 'playing') return state
+const initialState: State = {
+  status: 'loading', game: 0, chain: [], index: 0, score: 0, lives: LIVES, correct: null, bestAtStart: 0,
+}
 
-      const { left, right } = state.currentRound
-      const rightIsHigher = right.cooldown > left.cooldown
-      const rightIsLower = right.cooldown < left.cooldown
-      const isEqual = right.cooldown === left.cooldown
-      const isCorrect =
-        isEqual || // Ties count as correct
-        (action.choice === 'higher' && rightIsHigher) ||
-        (action.choice === 'lower' && rightIsLower)
+const advance = (s: State): State => ({ ...s, status: 'guessing', index: s.index + 1, correct: null })
 
-      const newScore = isCorrect ? state.score + 1 : state.score
-      const newLives = isCorrect ? state.lives : state.lives - 1
-      const newHighScore = Math.max(state.highScore, newScore)
-
-      return {
-        ...state,
-        phase: 'revealing',
-        score: newScore,
-        lives: newLives,
-        highScore: newHighScore,
-        lastGuessCorrect: isCorrect,
-        difficulty: getDifficultyForScore(newScore),
-      }
+function reducer(s: State, a: Action): State {
+  switch (a.type) {
+    case 'start':
+      return { ...initialState, status: 'guessing', game: s.game + 1, chain: a.chain, bestAtStart: a.best }
+    case 'append':
+      return a.game === s.game ? { ...s, chain: [...s.chain, ...a.abilities] } : s
+    case 'guess': {
+      if (s.status !== 'guessing') return s
+      const left = s.chain[s.index].cooldown
+      const right = s.chain[s.index + 1].cooldown
+      // Ties count as correct
+      const correct = right === left || (a.choice === 'higher') === (right > left)
+      return { ...s, status: 'revealed', correct, score: s.score + Number(correct), lives: s.lives - Number(!correct) }
     }
-
-    case 'REVEAL_COMPLETE':
-      if (state.lives <= 0) {
-        return { ...state, phase: 'gameover' }
-      }
-      return { ...state, phase: 'transitioning' }
-
-    case 'TRANSITION_COMPLETE': {
-      // Pop next round from queue
-      const [nextRound, ...remainingQueue] = state.roundQueue
-      const newLeft = state.currentRound?.right
-      const newRight = nextRound?.left
-
-      if (!newLeft || !newRight) {
-        // Fallback if queue is empty (shouldn't happen normally)
-        return {
-          ...state,
-          phase: 'playing',
-          currentRound: nextRound ?? state.currentRound,
-          roundQueue: remainingQueue,
-          lastGuessCorrect: null,
-        }
-      }
-
-      return {
-        ...state,
-        phase: 'playing',
-        currentRound: { left: newLeft, right: newRight },
-        roundQueue: remainingQueue,
-        lastGuessCorrect: null,
-      }
-    }
-
-    case 'QUEUE_ROUNDS':
-      return { ...state, roundQueue: [...state.roundQueue, ...action.rounds] }
-
-    case 'RESTART':
-      return { ...initialState, highScore: state.highScore, phase: 'idle' }
-
-    case 'SET_HIGH_SCORE':
-      return { ...state, highScore: action.highScore }
-
-    default:
-      return state
+    case 'next':
+      if (s.status !== 'revealed') return s
+      if (s.lives <= 0) return { ...s, status: 'over' }
+      if (!s.chain[s.index + 2]) return s // next ability still loading; the timer retries
+      return a.instant ? advance(s) : { ...s, status: 'sliding', correct: null }
+    case 'advance':
+      return s.status === 'sliding' ? advance(s) : s
   }
 }
 
-async function fetchRounds(score: number, count = 2, excludeId?: number): Promise<GameRound[]> {
-  const params = new URLSearchParams({ score: String(score), count: String(count) })
-  if (excludeId) params.set('excludeId', String(excludeId))
+async function fetchAbilities(score: number, after?: GameAbility): Promise<GameAbility[]> {
+  const params = new URLSearchParams({ score: String(score), count: String(BUFFER) })
+  if (after) {
+    params.set('after', String(after.ability.id))
+    params.set('afterCooldown', String(after.cooldown))
+  }
   const res = await fetch(`/api/game/random?${params}`)
-  if (!res.ok) throw new Error('Failed to fetch rounds')
-  const data = await res.json()
-  return data.rounds
+  if (!res.ok) throw new Error(`Failed to fetch abilities: ${res.status}`)
+  return (await res.json()).abilities
+}
+
+function readBest(): number {
+  try {
+    return Number(JSON.parse(localStorage.getItem(HIGH_SCORE_KEY) ?? '0')) || 0
+  } catch {
+    return 0
+  }
 }
 
 export function CooldownClash() {
-  const [state, dispatch] = useReducer(gameReducer, initialState)
-  const [storedHighScore, setStoredHighScore] = useLocalStorage('cooldown-clash-highscore', 0)
-  const [sessionStartHighScore, setSessionStartHighScore] = useState<number>(storedHighScore)
-  const isFetchingRef = useRef(false)
-  const prevPhaseRef = useRef<string>(state.phase)
-  const [animatedRoundId, setAnimatedRoundId] = useState<string | null>(null)
-  const [initialLoadComplete, setInitialLoadComplete] = useState(false)
-  const [showContent, setShowContent] = useState(false)
-  const isMobile = useIsMobile()
-  const prefersReducedMotion = useReducedMotion()
+  const [s, dispatch] = useReducer(reducer, initialState)
+  const [storedBest, setStoredBest] = useLocalStorage(HIGH_SCORE_KEY, 0)
+  const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+  // The board fades in once the first pair of splashes has loaded
+  const [ready, setReady] = useState(false)
+  const splashLoads = useRef(0)
+  const fetching = useRef(false)
+  // Next game's chain, fetched during game over so Try Again is instant
+  const [nextChain, setNextChain] = useState<GameAbility[] | null>(null)
 
-  // Generate stable ID for current round
-  const currentRoundId = state.currentRound
-    ? `${state.currentRound.left.ability.id}-${state.currentRound.right.ability.id}`
-    : null
-
-  // Check if this is a NEW round (different from what we last animated)
-  const isNewRound = currentRoundId !== animatedRoundId
-
-  // Skip animation if:
-  // 1. Same round we already processed, OR
-  // 2. New round but coming from transitioning phase (carousel already animated)
-  const skipPanelAnimation = !isNewRound ||
-    (isNewRound && prevPhaseRef.current === 'transitioning')
-
-  // Detect snap-back: just transitioned from 'transitioning' to 'playing'
-  // Must be calculated BEFORE updating prevPhaseRef to capture the transition
-  const isSnapBack = prevPhaseRef.current === 'transitioning' && state.phase === 'playing'
-
-  // Update tracking state synchronously during render (React 19 pattern for derived state)
-  // This replaces getDerivedStateFromProps - safe because we check for changes first
-  if (isNewRound && state.phase === 'playing' && animatedRoundId !== currentRoundId) {
-    setAnimatedRoundId(currentRoundId)
-  }
-
-  // Background preloader for queued round images (non-blocking)
-  const { preload: preloadImages } = useBackgroundPreloader()
-
-  // Collect current round images for initial load blocking
-  const currentRoundImages = useMemo(() => {
-    if (!state.currentRound) return []
-    const { left, right } = state.currentRound
-    return [
-      left.ability.champion.splash,
-      left.ability.champion.icon,
-      left.ability.icon,
-      right.ability.champion.splash,
-      right.ability.champion.icon,
-      right.ability.icon,
-    ]
-  }, [state.currentRound])
-
-  // Block initial render until first round images are ready
-  const currentImagesLoaded = useImagePreloaderWithState(currentRoundImages)
-
-  // Preload queued round images in the background (non-blocking)
   useEffect(() => {
-    if (state.roundQueue.length === 0) return
-
-    const queuedImages = state.roundQueue
-      .flatMap(({ left, right }) => [
-        left.ability.champion.splash,
-        left.ability.champion.icon,
-        left.ability.icon,
-        right.ability.champion.splash,
-        right.ability.champion.icon,
-        right.ability.icon,
-      ])
-      .filter((url): url is string => url !== null)
-
-    preloadImages(queuedImages)
-  }, [state.roundQueue, preloadImages])
-
-  // Handle initial load: wait for first round images, then show content permanently
-  useEffect(() => {
-    if (initialLoadComplete) return
-
-    if (currentImagesLoaded && state.currentRound) {
-      // Delay showing content to ensure opacity 0 is painted first
-      // This guarantees the fade-in animation plays even when images are cached
-      const rafId = requestAnimationFrame(() => {
-        setShowContent(true)
-        setInitialLoadComplete(true)
-      })
-      return () => cancelAnimationFrame(rafId)
-    }
-  }, [currentImagesLoaded, state.currentRound, initialLoadComplete])
-
-  // Sync high score from localStorage on mount
-  useEffect(() => {
-    if (storedHighScore > 0) {
-      dispatch({ type: 'SET_HIGH_SCORE', highScore: storedHighScore })
-      // Also sync sessionStartHighScore on initial load (when it's still 0)
-      setSessionStartHighScore(prev => prev === 0 ? storedHighScore : prev)
-    }
-  }, [storedHighScore])
-
-  // Update localStorage when high score changes
-  useEffect(() => {
-    if (state.highScore > storedHighScore) {
-      setStoredHighScore(state.highScore)
-    }
-  }, [state.highScore, storedHighScore, setStoredHighScore])
-
-  // Update prevPhaseRef AFTER render commits
-  // This prevents race conditions where setAnimatedRoundId triggers a re-render
-  // and the ref is already updated before the second render's isSnapBack check
-  useEffect(() => {
-    prevPhaseRef.current = state.phase
-  }, [state.phase])
-
-  // Start game
-  const startGame = useCallback(async () => {
-    try {
-      const rounds = await fetchRounds(0, 1 + QUEUE_SIZE)  // 1 current + queue
-      dispatch({ type: 'START_GAME', round: rounds[0], queue: rounds.slice(1) })
-    } catch (error) {
-      console.error('Failed to start game:', error)
-    }
+    fetchAbilities(0)
+      .then((chain) => dispatch({ type: 'start', chain, best: readBest() }))
+      .catch(console.error)
   }, [])
 
-  // Auto-start on mount
-  useEffect(() => {
-    if (state.phase === 'idle') {
-      startGame()
-    }
-  }, [state.phase, startGame])
-
-  // Handle guess
-  const handleGuess = useCallback((choice: GuessChoice) => {
-    dispatch({ type: 'GUESS', choice })
+  const onSplashLoad = useCallback(() => {
+    if (++splashLoads.current >= 2) setReady(true)
   }, [])
 
-  // Handle reveal timing
+  // Don't wait forever on a slow or missing splash
   useEffect(() => {
-    if (state.phase === 'revealing') {
-      const timer = setTimeout(() => {
-        dispatch({ type: 'REVEAL_COMPLETE' })
-      }, TIMING.REVEAL_DELAY)
-      return () => clearTimeout(timer)
-    }
-  }, [state.phase])
+    if (s.status === 'loading') return
+    const timer = setTimeout(() => setReady(true), 2500)
+    return () => clearTimeout(timer)
+  }, [s.status])
 
-  // Handle transition timing (desktop only - mobile uses onAnimationComplete)
   useEffect(() => {
-    if (state.phase === 'transitioning' && !isMobile) {
-      const timer = setTimeout(() => {
-        dispatch({ type: 'TRANSITION_COMPLETE' })
-      }, TIMING.DESKTOP_TRANSITION)
-      return () => clearTimeout(timer)
-    }
-  }, [state.phase, isMobile])
+    if (s.score > storedBest) setStoredBest(s.score)
+  }, [s.score, storedBest, setStoredBest])
 
-  // ID of the last ability on the right side (used to prevent duplicates in queue refill)
-  const lastRightAbilityId = state.roundQueue.length > 0
-    ? state.roundQueue[state.roundQueue.length - 1].right.ability.id
-    : state.currentRound?.right.ability.id
-
-  // Keep queue filled with QUEUE_SIZE rounds ahead
   useEffect(() => {
-    const queueDeficit = QUEUE_SIZE - state.roundQueue.length
-    if (state.phase === 'playing' && queueDeficit > 0 && !isFetchingRef.current) {
-      isFetchingRef.current = true
-      // Exclude the last right ability to prevent duplicates when new rounds are appended
-      fetchRounds(state.score, queueDeficit, lastRightAbilityId)
-        .then((rounds) => {
-          dispatch({ type: 'QUEUE_ROUNDS', rounds })
-        })
-        .catch(console.error)
-        .finally(() => {
-          isFetchingRef.current = false
-        })
-    }
-  }, [state.phase, state.roundQueue.length, state.score, lastRightAbilityId])
+    if (s.status !== 'revealed') return
+    const timer = setTimeout(() => dispatch({ type: 'next', instant: reduceMotion }), REVEAL_MS)
+    return () => clearTimeout(timer)
+  }, [s.status, s.chain.length, reduceMotion])
 
-  // Keyboard controls: Up arrow = higher, Down arrow = lower
+  // Keep the chain topped up, continuing from its last ability
+  const last = s.chain.at(-1)
+  const needsMore = (s.status === 'guessing' || s.status === 'revealed') && s.chain.length - s.index <= BUFFER
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (state.phase !== 'playing') return
+    if (!needsMore || !last || fetching.current) return
+    fetching.current = true
+    const game = s.game
+    fetchAbilities(s.score, last)
+      .then((abilities) => dispatch({ type: 'append', game, abilities }))
+      .catch(console.error)
+      .finally(() => { fetching.current = false })
+  }, [needsMore, last, s.game, s.score])
 
-      if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        handleGuess('higher')
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        handleGuess('lower')
-      }
+  useEffect(() => {
+    if (s.status !== 'over') return
+    let current = true
+    fetchAbilities(0).then((chain) => current && setNextChain(chain)).catch(console.error)
+    return () => { current = false }
+  }, [s.status])
+
+  const restart = useCallback(async () => {
+    const chain = nextChain ?? (await fetchAbilities(0).catch(() => null))
+    if (!chain) return
+    setNextChain(null)
+    dispatch({ type: 'start', chain, best: readBest() })
+  }, [nextChain])
+
+  const guess = useCallback((choice: GuessChoice) => dispatch({ type: 'guess', choice }), [])
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const choice = e.key === 'ArrowUp' ? 'higher' : e.key === 'ArrowDown' ? 'lower' : null
+      if (!choice) return
+      e.preventDefault()
+      dispatch({ type: 'guess', choice })
     }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
 
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [state.phase, handleGuess])
-
-  const handleRestart = useCallback(() => {
-    // Capture current high score as the baseline for next session
-    setSessionStartHighScore(storedHighScore)
-    // Reset loading states for new game
-    setInitialLoadComplete(false)
-    setShowContent(false)
-    dispatch({ type: 'RESTART' })
-  }, [storedHighScore])
-
-  const isRevealing = state.phase === 'revealing' || state.phase === 'transitioning'
-  const isNewHighScore = state.score === state.highScore && state.score > storedHighScore
-
-  // Show overlay-only when no content ready yet
-  if (state.phase === 'idle' || !state.currentRound) {
-    return <TransitionOverlay prefersReducedMotion={prefersReducedMotion ?? false} />
-  }
+  const sliding = s.status === 'sliding'
+  const answerShown = s.status === 'revealed' || sliding || s.status === 'over'
 
   return (
     <>
-      {/* Game content - starts invisible, fades in when ready */}
-      <motion.div
-      className="relative h-full w-full overflow-hidden"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: showContent ? 1 : 0 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
-    >
-      {/* Header - minimal floating bar with viewport-scaled sizing for mobile */}
-      <header className="absolute top-0 left-0 right-0 z-30 px-3 md:px-4 pt-[max(1.5vh,env(safe-area-inset-top))] md:pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <div className="flex items-center justify-between">
-          {/* Back button - circular, scales with viewport on mobile using clamp() */}
-          <Link
-            href="/"
-            className="
-              flex items-center justify-center
-              w-[clamp(1.75rem,4.5vh,2.5rem)] h-[clamp(1.75rem,4.5vh,2.5rem)]
-              md:w-10 md:h-10
-              rounded-full
-              bg-black/50 backdrop-blur-md
-              border border-gold/20
-              text-foreground/60 hover:text-foreground
-              hover:border-gold/40
-              transition-colors duration-200
-            "
-          >
-            <ArrowLeft className="w-[clamp(0.875rem,2vh,1.25rem)] h-[clamp(0.875rem,2vh,1.25rem)] md:w-5 md:h-5" />
-          </Link>
-
-          <ScoreDisplay
-            score={state.score}
-            highScore={sessionStartHighScore}
-            lives={state.lives}
-          />
-
-          {/* Spacer for balance - matches back button sizing */}
-          <div className="w-[clamp(1.75rem,4.5vh,2.5rem)] md:w-10" />
-        </div>
-      </header>
-
-      {/* Split container */}
-      <div
-        className="flex flex-col md:flex-row h-full w-full"
-        style={{ perspective: '1000px' }}
-        role="region"
-        aria-label="Ability comparison"
-      >
-        {isMobile ? (
-          // Mobile: Stable 3-panel DOM structure with Framer Motion animations
-          <div className="relative h-full w-full overflow-hidden">
-            {/* Panel 1: Top (exits during transition) */}
-            <motion.div
-              className="absolute inset-x-0 h-1/2"
-              style={{ top: 0 }}
-              variants={mobilePanel1Variants}
-              initial={false}
-              animate={
-                !isSnapBack && state.phase === 'transitioning' && state.roundQueue[0]
-                  ? 'exit'
-                  : 'static'
-              }
-              transition={isSnapBack ? { duration: 0 } : (prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition)}
+      <div className={cn('relative h-full w-full overflow-hidden transition-opacity duration-400 ease-(--ease-out)', ready ? 'opacity-100' : 'opacity-0')}>
+        <header className="absolute top-0 left-0 right-0 z-30 px-3 md:px-4 pt-[max(1.5vh,env(safe-area-inset-top))] md:pt-[max(0.75rem,env(safe-area-inset-top))]">
+          <div className="flex items-center justify-between">
+            <Link
+              href="/"
+              aria-label="Back to menu"
+              className="flex items-center justify-center w-[clamp(1.75rem,4.5vh,2.5rem)] h-[clamp(1.75rem,4.5vh,2.5rem)] md:w-10 md:h-10 rounded-full bg-black/50 backdrop-blur-md border border-gold/20 text-foreground/60 hover:text-foreground hover:border-gold/40 transition-colors duration-200"
             >
-              <SplitPanel
-                gameAbility={state.currentRound.left}
-                showCooldown={true}
-                side="left"
-                isCorrect={null}
-                skipAnimation={skipPanelAnimation}
-              />
-            </motion.div>
-
-            {/* Panel 2: Middle (shifts up during transition) */}
-            <motion.div
-              className="absolute inset-x-0 h-1/2"
-              style={{ top: 0 }}
-              variants={mobilePanel2Variants}
-              initial={false}
-              animate={
-                !isSnapBack && state.phase === 'transitioning' && state.roundQueue[0]
-                  ? 'shift'
-                  : 'static'
-              }
-              transition={isSnapBack ? { duration: 0 } : (prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition)}
-              onAnimationComplete={(definition) => {
-                // Only fire when shifting animation completes (not on mount or snap-back)
-                if (definition === 'shift' && state.phase === 'transitioning') {
-                  dispatch({ type: 'TRANSITION_COMPLETE' })
-                }
-              }}
-            >
-              <SplitPanel
-                gameAbility={state.currentRound.right}
-                showCooldown={isRevealing}
-                side="right"
-                isCorrect={isRevealing ? state.lastGuessCorrect : null}
-                onGuess={handleGuess}
-                guessDisabled={state.phase !== 'playing'}
-                skipAnimation={skipPanelAnimation}
-              />
-            </motion.div>
-
-            {/* Panel 3: Bottom (enters during transition, hidden otherwise) */}
-            <motion.div
-              className={`absolute inset-x-0 h-1/2 ${
-                !(state.phase === 'transitioning' && state.roundQueue[0])
-                  ? 'pointer-events-none'
-                  : ''
-              }`}
-              style={{ top: 0 }}
-              variants={mobilePanel3Variants}
-              initial={false}
-              animate={
-                !isSnapBack && state.phase === 'transitioning' && state.roundQueue[0]
-                  ? 'enter'
-                  : 'hidden'
-              }
-              transition={isSnapBack ? { duration: 0 } : (prefersReducedMotion ? { duration: 0 } : mobileCarouselTransition)}
-            >
-              {state.roundQueue[0] ? (
-                <SplitPanel
-                  gameAbility={state.roundQueue[0].left}
-                  showCooldown={false}
-                  side="right"
-                  isCorrect={null}
-                  skipAnimation={true}
-                  onGuess={handleGuess}
-                  guessDisabled={true}
-                />
-              ) : (
-                // Placeholder panel when queue is empty (rare edge case)
-                <div className="h-full bg-dark-blue" />
-              )}
-            </motion.div>
+              <ArrowLeft className="w-[clamp(0.875rem,2vh,1.25rem)] h-[clamp(0.875rem,2vh,1.25rem)] md:w-5 md:h-5" />
+            </Link>
+            <ScoreDisplay score={s.score} best={s.bestAtStart} lives={s.lives} maxLives={LIVES} />
+            <div className="w-[clamp(1.75rem,4.5vh,2.5rem)] md:w-10" />
           </div>
-        ) : (
-          // Desktop: Unified rendering for both transitioning and normal states
-          // Using stable keys prevents remounting when phase changes
-          <>
-            {/* Exiting left panel - only visible during transition */}
-            {state.phase === 'transitioning' && state.roundQueue[0] && (
-              <div className="absolute inset-y-0 left-0 w-1/2 z-10 gpu-accelerated">
-                <SplitPanel
-                  gameAbility={state.currentRound.left}
-                  showCooldown={true}
-                  side="left"
-                  isCorrect={null}
-                  exitAnimation="left"
-                />
-              </div>
+        </header>
+
+        <div className="relative h-full w-full overflow-hidden" role="region" aria-label="Ability comparison">
+          {/*
+            Track of three panels (current pair + the next ability), stacked on
+            mobile and side by side on desktop. Sliding moves it one panel; when
+            the transition ends, index advances and the transform snaps back in
+            the same render, so the panels never visibly jump.
+          */}
+          <div
+            className={cn(
+              'flex h-[150%] flex-col md:h-full md:w-[150%] md:flex-row',
+              '[--slide:translate3d(0,-33.3333%,0)] md:[--slide:translate3d(-33.3333%,0,0)]',
+              sliding && 'transition-transform duration-450 ease-(--ease-drawer)'
             )}
+            style={{ transform: sliding ? 'var(--slide)' : undefined }}
+            onTransitionEnd={(e) => e.target === e.currentTarget && dispatch({ type: 'advance' })}
+          >
+            {s.chain.slice(s.index, s.index + 3).map((gameAbility, i) => (
+              <SplitPanel
+                key={`${s.game}-${s.index + i}`}
+                gameAbility={gameAbility}
+                revealed={i === 0 || (i === 1 && answerShown)}
+                animateReveal={i === 1}
+                correct={i === 1 ? s.correct : null}
+                onGuess={i === 1 && s.status === 'guessing' ? guess : undefined}
+                onSplashLoad={onSplashLoad}
+                entering={s.game > 1}
+              />
+            ))}
+          </div>
+          <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 hidden h-32 w-px -translate-x-1/2 -translate-y-1/2 bg-gold/30 md:block" />
+        </div>
 
-            {/* Left panel - stable across phase changes */}
-            <SplitPanel
-              key={`left-${state.phase === 'transitioning' && state.roundQueue[0] ? state.currentRound.right.ability.id : state.currentRound.left.ability.id}`}
-              gameAbility={state.phase === 'transitioning' && state.roundQueue[0] ? state.currentRound.right : state.currentRound.left}
-              showCooldown={true}
-              side="left"
-              isCorrect={state.phase === 'transitioning' ? state.lastGuessCorrect : null}
-              enterAnimation={state.phase === 'transitioning' && state.roundQueue[0] ? 'shift-left' : undefined}
-              skipAnimation={state.phase !== 'transitioning' ? skipPanelAnimation : undefined}
-            />
+        <GuessButtons onGuess={guess} hidden={s.status !== 'guessing'} />
 
-            {/* VS divider - zero-height/width flex item */}
-            <div className="relative z-20 flex items-center justify-center h-0 md:h-auto md:w-0 shrink-0">
-              <VsDivider />
-            </div>
-
-            {/* Right panel - stable across phase changes */}
-            <SplitPanel
-              key={`right-${state.phase === 'transitioning' && state.roundQueue[0] ? state.roundQueue[0].left.ability.id : state.currentRound.right.ability.id}`}
-              gameAbility={state.phase === 'transitioning' && state.roundQueue[0] ? state.roundQueue[0].left : state.currentRound.right}
-              showCooldown={state.phase === 'transitioning' ? false : isRevealing}
-              side="right"
-              isCorrect={state.phase === 'transitioning' ? null : (isRevealing ? state.lastGuessCorrect : null)}
-              onGuess={handleGuess}
-              guessDisabled={state.phase !== 'playing'}
-              enterAnimation={state.phase === 'transitioning' && state.roundQueue[0] ? 'right' : undefined}
-              skipAnimation={state.phase !== 'transitioning' ? skipPanelAnimation : undefined}
-            />
-          </>
-        )}
+        <GameOver
+          open={s.status === 'over'}
+          score={s.score}
+          best={Math.max(s.bestAtStart, s.score)}
+          isNewBest={s.score > s.bestAtStart}
+          onRestart={restart}
+        />
       </div>
 
-      {/* Mobile guess buttons - fixed at bottom, hidden on desktop via CSS */}
-      <GuessButtons
-        variant="fixed"
-        onGuess={handleGuess}
-        disabled={state.phase !== 'playing'}
-        hidden={isRevealing}
-      />
-
-      <GameOver
-        open={state.phase === 'gameover'}
-        score={state.score}
-        highScore={state.highScore}
-        isNewHighScore={isNewHighScore}
-        onRestart={handleRestart}
-      />
-    </motion.div>
-
-      {/* Transition overlay - exits when content ready */}
-      <AnimatePresence>
-        {!showContent && (
-          <TransitionOverlay prefersReducedMotion={prefersReducedMotion ?? false} />
+      {/* First load: cover until the opening pair is ready */}
+      <div
+        className={cn(
+          'fixed inset-0 z-50 flex items-center justify-center bg-[#0f0d0a] transition-opacity duration-300 ease-(--ease-out)',
+          ready && 'pointer-events-none opacity-0'
         )}
-      </AnimatePresence>
+        aria-hidden={ready}
+        role="status"
+        aria-label="Loading"
+      >
+        <div
+          className="w-32 h-32 rounded-full opacity-30 animate-breathe"
+          style={{ background: 'radial-gradient(circle, rgba(201,162,39,0.3) 0%, transparent 70%)' }}
+        />
+      </div>
     </>
   )
 }

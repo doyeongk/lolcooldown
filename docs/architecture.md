@@ -1,82 +1,61 @@
 # Architecture
 
-## Overview
+## Pages
 
-lolcooldown is a Next.js 16 application using React 19 with server and client components. The game fetches ability data from a PostgreSQL database via Prisma and renders an interactive guessing game.
+| Route | File | Notes |
+|-------|------|-------|
+| `/` | `src/app/page.tsx` | Server component. Reads base splashes from the DB, renders `IconWall`, `GoldParticles` and the `HomeScreen` client component. |
+| `/play/random` | `src/app/play/random/page.tsx` | Renders `CooldownClash`. |
+| `/api/game/random` | `src/app/api/game/random/route.ts` | Returns the next abilities of a game (below). |
+| `/images/...` | `src/app/images/[...path]/route.ts` | Serves images the seed downloaded after the server started; Next only snapshots `public/` at boot. |
 
-## Component Hierarchy
+## Game state
 
-```
-page.tsx (Server Component)
-└── CooldownClash (Client Component - 'use client')
-    ├── TransitionOverlay - Loading state overlay
-    ├── Header
-    │   ├── Link (Back button)
-    │   └── ScoreDisplay
-    ├── SplitPanel (left) - Ability display with splash background
-    │   ├── AbilityIcon - Icon with tooltip
-    │   └── LevelPips - Visual level indicator
-    ├── VsDivider - Desktop VS separator
-    ├── SplitPanel (right) - Ability with guess interaction
-    │   ├── ClickZones (desktop) - Higher/Lower buttons
-    │   └── [same children as left]
-    ├── GuessButtons (mobile) - Fixed bottom buttons
-    └── GameOver (Dialog) - Score display and restart
-```
-
-## Client vs Server Boundaries
-
-**Server Components:**
-- `page.tsx` files - Static shell, metadata
-- API routes - Data fetching from database
-
-**Client Components:**
-- `CooldownClash` and all game UI - Interactive state
-- Uses `'use client'` directive
-- Cannot import server-only modules (Prisma, pg)
-
-## Data Flow
+`src/components/game/CooldownClash.tsx` owns the whole game in one `useReducer`.
+A game is a **chain** of abilities. Round *n* compares `chain[index]` (left/top) with
+`chain[index + 1]` (right/bottom); after the reveal the track slides one panel along
+and `index` advances, so the right ability becomes the left one.
 
 ```
-1. Page load
-   └── CooldownClash mounts
-       └── useEffect triggers startGame()
-           └── fetch('/api/game/random')
-
-2. API route handler
-   └── getValidAbilities() (React cache)
-       └── Prisma query → abilities with champions
-   └── generateRound() → GameRound
-
-3. Client receives GameRound
-   └── dispatch({ type: 'START_GAME', round, queue })
-   └── Image preloader begins
-       └── Current round: blocking (shows loading)
-       └── Queue: background (non-blocking)
+loading → guessing → revealed → sliding → guessing …
+                         ↘ over (no lives left) → restart → guessing
 ```
 
-## Image Preloading Strategy
+- `guess` scores the round (ties count as correct) and moves to `revealed`.
+- After `REVEAL_MS`, `next` either ends the game or starts the slide; with
+  reduced motion it advances instantly.
+- The slide is a CSS transform on a three-panel track; `transitionend` dispatches
+  `advance`, which moves `index` and clears the transform in the same render.
+- The chain is topped up in the background so at least `BUFFER` abilities are
+  always loaded ahead. During game over the next game's chain is prefetched, so
+  Try Again is instant.
 
-Images use a queue-based preloader with GPU readiness:
+## API: `GET /api/game/random`
 
-1. **Current round images** - Blocks UI until loaded
-2. **Queued round images** - Loads in background during gameplay
-3. **decode() API** - Ensures GPU texture is ready before display
+| Param | Default | Meaning |
+|-------|---------|---------|
+| `score` | `0` | Sets difficulty (`src/lib/game/difficulty.ts`) |
+| `count` | `4` | Abilities to return, clamped to 1–10 |
+| `after`, `afterCooldown` | – | Last ability the client holds, so the first new one is slot-matched to it and avoids a tie |
 
-Key files:
-- `src/lib/hooks/useImagePreloader.ts`
-- `src/lib/hooks/useImagePreloaderWithState.ts`
+Malformed numbers fall back to defaults. Response: `{ abilities: GameAbility[] }`
+(see `src/types/game.ts`). Only the rolled cooldown for each ability is sent, not
+its per-rank table; scoring is client-side, so that one value is visible in the
+network tab.
 
-## Caching
+Abilities are read once per hour through `createCachedFetcher` (`src/lib/data/cache.ts`).
 
-**React cache():**
-- `getValidAbilities()` cached per request lifecycle
-- Prevents duplicate database queries within same render
+## Data
 
-**Browser cache:**
-- Images cached via Next.js Image optimization
-- Local images in `public/images/` never re-fetched
+`src/scripts/seed.ts` pulls champions, abilities and skins from Community Dragon
+into Postgres (`prisma/schema.prisma`) and caches icons, base splashes and tiles in
+`public/images/`. Non-base skin splashes load from `raw.communitydragon.org`.
+Re-running the seed picks up new champions and skins without a rebuild
+(`.github/workflows/reseed.yml` does this on a schedule in production).
 
-**localStorage:**
-- High score persisted across sessions
-- Uses `useSyncExternalStore` for React 19 compatibility
+## Motion
+
+All motion is CSS: keyframes and `@utility` classes in `src/app/globals.css`, with
+the `--ease-out` and `--ease-drawer` curves. The `prefers-reduced-motion` block at
+the end of that file turns movement off and keeps short opacity fades. Follow the
+Emil Kowalski skills in `.agents/skills/` when adding or changing motion.
