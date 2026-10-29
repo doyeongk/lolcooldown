@@ -129,63 +129,18 @@ async function fetchChampion(id: number): Promise<CDragonChampion> {
   return response.json();
 }
 
-async function downloadChampionIcon(
-  championKey: string,
-  assetPath: string
-): Promise<string> {
+/**
+ * Caches a CDragon asset under public/images and returns its local web path,
+ * or the remote CDragon URL if the download fails (so the row is never broken).
+ */
+async function cacheImage(assetPath: string, relPath: string): Promise<string> {
   const url = getCdragonUrl(assetPath);
-  const ext = path.extname(assetPath) || ".png";
-  const localPath = path.join(IMAGES_DIR, "champions", `${championKey}${ext}`);
-  const webPath = `/images/champions/${championKey}${ext}`;
-
-  await downloadImage(url, localPath);
-  return webPath;
+  const ok = await downloadImage(url, path.join(IMAGES_DIR, relPath));
+  return ok ? `/images/${relPath}` : url;
 }
 
-async function downloadAbilityIcon(
-  championKey: string,
-  slot: string,
-  assetPath: string
-): Promise<string> {
-  const url = getCdragonUrl(assetPath);
-  const ext = path.extname(assetPath) || ".png";
-  const localPath = path.join(
-    IMAGES_DIR,
-    "abilities",
-    championKey,
-    `${slot}${ext}`
-  );
-  const webPath = `/images/abilities/${championKey}/${slot}${ext}`;
-
-  await downloadImage(url, localPath);
-  return webPath;
-}
-
-async function downloadSkinSplash(
-  skinId: number,
-  assetPath: string
-): Promise<string> {
-  const url = getCdragonUrl(assetPath);
-  const ext = path.extname(assetPath) || ".jpg";
-  const localPath = path.join(IMAGES_DIR, "splashes", `${skinId}${ext}`);
-  const webPath = `/images/splashes/${skinId}${ext}`;
-
-  await downloadImage(url, localPath);
-  return webPath;
-}
-
-async function downloadSkinTile(
-  skinId: number,
-  assetPath: string
-): Promise<string> {
-  const url = getCdragonUrl(assetPath);
-  const ext = path.extname(assetPath) || ".jpg";
-  const localPath = path.join(IMAGES_DIR, "tiles", `${skinId}${ext}`);
-  const webPath = `/images/tiles/${skinId}${ext}`;
-
-  await downloadImage(url, localPath);
-  return webPath;
-}
+const extOf = (assetPath: string, fallback: string) =>
+  path.extname(assetPath).toLowerCase() || fallback;
 
 async function seedChampion(
   summary: CDragonChampionSummary,
@@ -195,26 +150,24 @@ async function seedChampion(
   const championKey = champion.alias.toLowerCase();
 
   // Download champion icon
-  const championIconPath = await downloadChampionIcon(
-    championKey,
-    summary.squarePortraitPath
+  const championIconPath = await cacheImage(
+    summary.squarePortraitPath,
+    `champions/${championKey}${extOf(summary.squarePortraitPath, ".png")}`
   );
 
   // Download ability icons
-  const passiveIconPath = await downloadAbilityIcon(
-    championKey,
-    "P",
-    champion.passive.abilityIconPath
+  const passiveIconPath = await cacheImage(
+    champion.passive.abilityIconPath,
+    `abilities/${championKey}/P${extOf(champion.passive.abilityIconPath, ".png")}`
   );
 
   const spellIcons: Record<string, string> = {};
   for (const spell of champion.spells) {
     const slot = slotMap[spell.spellKey];
     if (!slot) continue;
-    spellIcons[slot] = await downloadAbilityIcon(
-      championKey,
-      slot,
-      spell.abilityIconPath
+    spellIcons[slot] = await cacheImage(
+      spell.abilityIconPath,
+      `abilities/${championKey}/${slot}${extOf(spell.abilityIconPath, ".png")}`
     );
   }
 
@@ -227,8 +180,14 @@ async function seedChampion(
     // Only download base skin to save space/time, others use CDragon
     if (skin.isBase) {
       skinPaths[skin.id] = {
-        splashPath: await downloadSkinSplash(skin.id, skin.splashPath),
-        tilePath: await downloadSkinTile(skin.id, skin.tilePath),
+        splashPath: await cacheImage(
+          skin.splashPath,
+          `splashes/${skin.id}${extOf(skin.splashPath, ".jpg")}`
+        ),
+        tilePath: await cacheImage(
+          skin.tilePath,
+          `tiles/${skin.id}${extOf(skin.tilePath, ".jpg")}`
+        ),
       };
     } else {
       skinPaths[skin.id] = {

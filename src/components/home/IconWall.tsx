@@ -5,8 +5,6 @@ import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { useReducedMotion } from "@/lib/motion"
 import { useIsMobile } from "@/lib/hooks/useMediaQuery"
-import { CHAMPION_SPLASHES } from "@/lib/data/champion-splashes"
-import { shuffleArray } from "@/lib/data/champion-icons"
 
 // Splash art dimensions (1.7:1 aspect ratio) - large for cinematic feel
 const SPLASH_SIZE = {
@@ -112,7 +110,17 @@ function SplashRow({ splashes, speed, offset, size, disableAnimation, rowIndex, 
   )
 }
 
-export const IconWall = memo(function IconWall() {
+/** Fisher-Yates shuffle */
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array]
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+  }
+  return shuffled
+}
+
+export const IconWall = memo(function IconWall({ splashes }: { splashes: string[] }) {
   const reducedMotion = useReducedMotion()
   const isMobile = useIsMobile()
   const [mounted, setMounted] = useState(false)
@@ -129,7 +137,7 @@ export const IconWall = memo(function IconWall() {
 
   // Shuffle and distribute splashes across rows
   const rowData = useMemo(() => {
-    const shuffled = shuffleArray(CHAMPION_SPLASHES)
+    const shuffled = shuffleArray(splashes)
     // Roughly 12-15 splashes per row to ensure we fill width + extra for loop
     const splashesPerRow = 15
     const rows: string[][] = []
@@ -144,9 +152,9 @@ export const IconWall = memo(function IconWall() {
     }
 
     return rows
-  }, [rowCount])
+  }, [splashes])
 
-  if (!mounted) {
+  if (!mounted || splashes.length === 0) {
     return null
   }
 

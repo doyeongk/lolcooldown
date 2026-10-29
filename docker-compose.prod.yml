@@ -9,6 +9,27 @@ services:
     environment:
       - DATABASE_URL=postgresql://lolcd:${DB_PASSWORD}@postgres:5432/lolcooldown
       - NODE_ENV=production
+    volumes:
+      # Shared with the seed service so newly seeded images are served without a rebuild
+      - images:/app/public/images
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - lolcooldown
+
+  # One-off: refresh champions, abilities and skins from Community Dragon.
+  #   docker compose --env-file .env.prod -f docker-compose.prod.yml --profile tools run --rm seed
+  seed:
+    build:
+      context: .
+      target: builder
+    profiles: [tools]
+    command: ["npx", "tsx", "src/scripts/seed.ts"]
+    environment:
+      - DATABASE_URL=postgresql://lolcd:${DB_PASSWORD}@postgres:5432/lolcooldown
+    volumes:
+      - images:/app/public/images
     depends_on:
       postgres:
         condition: service_healthy
@@ -39,6 +60,7 @@ services:
 
 volumes:
   postgres_data:
+  images:
 
 networks:
   lolcooldown:

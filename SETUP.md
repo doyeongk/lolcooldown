@@ -148,6 +148,20 @@ To fetch fresh champion data:
 npm run db:seed
 ```
 
+### Production data refresh
+
+New champions and skins are picked up without a redeploy. The `Refresh champion data`
+workflow (`.github/workflows/reseed.yml`) runs weekly and on demand, executing the
+`seed` compose service on the server:
+
+```bash
+docker compose --env-file .env.prod -f docker-compose.prod.yml --profile tools run --rm seed
+```
+
+The seed writes images into the shared `images` volume, which the app serves via
+`src/app/images/[...path]/route.ts` (Next.js only snapshots `public/` at startup).
+The app re-reads the database through a one-hour in-memory cache.
+
 ### Lint Code
 
 ```bash
