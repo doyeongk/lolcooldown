@@ -1,105 +1,32 @@
 # Game Logic
 
-## Game Rules
+## Rules
 
-1. Two abilities shown side-by-side
-2. Player guesses if the right ability has a higher or lower cooldown
-3. Correct guess: +1 score
-4. Wrong guess: -1 life
-5. Ties count as correct (same cooldown)
-6. Game ends when lives reach 0
+1. Two abilities are shown side by side (stacked on mobile).
+2. Guess whether the right ability's cooldown is higher or lower than the left one's.
+3. A correct guess scores 1 point. Ties count as correct.
+4. A wrong guess costs one of 3 lives; at 0 lives the game is over.
+5. The best score is kept in localStorage (`cooldown-clash-highscore`).
 
-## Scoring
+## Difficulty
 
-- **Starting lives:** 3
-- **Score increment:** 1 per correct guess
-- **High score:** Persisted in localStorage
+`src/lib/game/difficulty.ts`, based on the current score:
 
-## Difficulty Scaling
+| Score | Difficulty | Ability rank |
+|-------|------------|--------------|
+| 0–9 | beginner | Always rank 1 |
+| 10–19 | medium | Random: 1–5 for Q/W/E, 1–3 for R |
+| 20–29 | hard | Same as medium |
+| 30+ | expert | Same as medium |
 
-Difficulty adjusts based on current score:
+The cooldown at a rank is `cooldowns[min(rank, cooldowns.length) - 1]`.
 
-| Score Range | Difficulty | Ability Levels |
-|-------------|------------|----------------|
-| 0-9 | beginner | Always level 1 |
-| 10-19 | medium | Random 1-5 (Q/W/E) or 1-3 (R) |
-| 20-29 | hard | Random 1-5 (Q/W/E) or 1-3 (R) |
-| 30+ | expert | Random 1-5 (Q/W/E) or 1-3 (R) |
+## Matching (`generateChain` in `src/lib/data/abilities.ts`)
 
-```typescript
-function getDifficultyForScore(score: number): Difficulty {
-  if (score < 10) return 'beginner'
-  if (score < 20) return 'medium'
-  if (score < 30) return 'hard'
-  return 'expert'
-}
-```
+Each new ability is compared with the one before it, so it:
 
-Location: `src/lib/game/difficulty.ts`
-
-## Ability Slot Matching
-
-To keep comparisons fair, abilities are matched by slot type:
-
-| Left Ability | Matched With |
-|--------------|--------------|
-| Q, W, E | Q, W, E + transform ults |
-| R (normal) | R only (excluding transform ults) |
-| R (transform) | Q, W, E + other transform ults |
-
-## Transform Ultimate Champions
-
-Some champions have R abilities with very short cooldowns (transform/toggle ultimates). These are treated as basic abilities for matching purposes:
-
-```typescript
-const TRANSFORM_ULT_CHAMPIONS = [
-  'Zoe',        // R returns her to cast position
-  "Kog'Maw",    // R is spammable mortar
-  'LeBlanc',    // R mimics last ability
-  'Teemo',      // R places mushrooms
-  'Corki',      // R has charges
-  'Nidalee',    // R transforms
-  'Jayce',      // R transforms
-  'Anivia',     // R toggles
-  "Kha'Zix"     // R has charges
-]
-```
-
-Location: `src/lib/data/abilities.ts`
-
-## Round Generation Rules
-
-When generating a round (`generateRound`):
-
-1. **No self-matches:** Left and right must be different abilities
-2. **Slot matching:** Follows rules above
-3. **No guaranteed ties:** Attempts to avoid same cooldown (not guaranteed)
-4. **Max attempts:** 100 retries before accepting any valid pair
-
-## Cooldown Calculation
-
-Cooldowns vary by ability rank (level):
-
-```typescript
-function getCooldownAtLevel(cooldowns: number[], level: number): number {
-  const index = Math.min(level - 1, cooldowns.length - 1)
-  return cooldowns[index]
-}
-```
-
-- Level 1 = `cooldowns[0]`
-- Level 5 = `cooldowns[4]` (or last available if shorter)
-
-## Queue Continuity
-
-To prevent jarring transitions, the queue system ensures:
-
-1. `excludeId` parameter prevents duplicate abilities in consecutive rounds
-2. Right ability of current round becomes left ability of next round
-3. Queue refills when below `QUEUE_SIZE = 3`
-
-```
-Round N:   [A, B]
-Round N+1: [B, C]  ← B carries over
-Round N+2: [C, D]  ← C carries over
-```
+- **is slot-matched:** true ultimates only face true ultimates, and everything else faces Q/W/E.
+  The R of Zoe, Kog'Maw, LeBlanc, Teemo, Corki, Nidalee, Jayce, Anivia and Kha'Zix is a
+  transform, toggle or charge ult, so it counts as a basic ability;
+- **is never the same ability** as its predecessor;
+- **avoids an equal cooldown,** retrying up to 100 times before accepting a tie.

@@ -1,53 +1,17 @@
-import { cache } from 'react'
-
-// Long-lived in-memory cache with TTL
-interface CacheEntry<T> {
-  data: T
-  expiresAt: number
-}
-
-const memoryCache = new Map<string, CacheEntry<unknown>>()
-
 const ONE_HOUR_MS = 60 * 60 * 1000
 
 /**
- * Creates a cached fetcher with both:
- * 1. Long-lived memory cache (1 hour TTL) - persists across requests
- * 2. React's cache() - per-request deduplication for concurrent calls
+ * Memoises an async fetcher in memory for `ttlMs`. Caches the promise, so
+ * concurrent callers share one query; a rejected fetch is not cached.
  */
-export function createCachedFetcher<T>(
-  fetcher: () => Promise<T>,
-  options?: { key?: string; ttlMs?: number }
-): () => Promise<T> {
-  const cacheKey = options?.key ?? fetcher.toString()
-  const ttlMs = options?.ttlMs ?? ONE_HOUR_MS
-
-  async function fetchWithMemoryCache(): Promise<T> {
-    const now = Date.now()
-    const cached = memoryCache.get(cacheKey) as CacheEntry<T> | undefined
-
-    if (cached && cached.expiresAt > now) {
-      return cached.data
+export function createCachedFetcher<T>(fetcher: () => Promise<T>, ttlMs = ONE_HOUR_MS): () => Promise<T> {
+  let entry: { data: Promise<T>; expiresAt: number } | null = null
+  return () => {
+    if (!entry || entry.expiresAt < Date.now()) {
+      const data = fetcher()
+      entry = { data, expiresAt: Date.now() + ttlMs }
+      data.catch(() => { entry = null })
     }
-
-    const data = await fetcher()
-
-    memoryCache.set(cacheKey, {
-      data,
-      expiresAt: now + ttlMs,
-    })
-
-    return data
+    return entry.data
   }
-
-  // Wrap with React's cache for per-request deduplication
-  return cache(fetchWithMemoryCache)
-}
-
-/**
- * Clears all entries from the memory cache.
- * Useful for testing or forcing a refresh after deployment.
- */
-export function clearMemoryCache(): void {
-  memoryCache.clear()
 }

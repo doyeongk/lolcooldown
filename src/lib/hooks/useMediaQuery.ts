@@ -24,10 +24,3 @@ export function useMediaQuery(query: string): boolean {
 
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 }
-
-/**
- * Convenience hook for mobile detection (< 768px).
- */
-export function useIsMobile(): boolean {
-  return useMediaQuery('(max-width: 767px)')
-}

@@ -1,63 +1,35 @@
 import { prisma } from '@/lib/db'
 import { createCachedFetcher } from './cache'
-import type { Difficulty, GameAbility, GameRound } from '@/types/game'
+import type { Difficulty, GameAbility } from '@/types/game'
 
-const VALID_SLOTS = ['Q', 'W', 'E', 'R']
-const BASIC_SLOTS = ['Q', 'W', 'E']
+// Champions whose R behaves like a basic ability (transform/toggle/charge ults)
+const TRANSFORM_ULT_CHAMPIONS = new Set([
+  'Zoe', "Kog'Maw", 'LeBlanc', 'Teemo', 'Corki', 'Nidalee', 'Jayce', 'Anivia', "Kha'Zix",
+])
 
-// Champions whose R abilities have very short cooldowns (transform/toggle ults)
-// These can be matched against Q/W/E abilities
-const TRANSFORM_ULT_CHAMPIONS = [
-  'Zoe', "Kog'Maw", 'LeBlanc', 'Teemo', 'Corki',
-  'Nidalee', 'Jayce', 'Anivia', "Kha'Zix"
-]
-
-/** Server-side ability record: every skin splash, so each round can pick one. */
-interface AbilityRecord {
+export interface AbilityRecord {
   id: number
   name: string
   description: string | null
   slot: string
   icon: string | null
   cooldowns: number[]
-  champion: { id: number; name: string; splashes: string[] }
+  champion: { name: string; splashes: string[] }
 }
 
 export const getValidAbilities = createCachedFetcher(async (): Promise<AbilityRecord[]> => {
   const abilities = await prisma.ability.findMany({
-    where: {
-      slot: { in: VALID_SLOTS },
-      cooldowns: { isEmpty: false },
-    },
+    where: { slot: { in: ['Q', 'W', 'E', 'R'] }, cooldowns: { isEmpty: false } },
     select: {
-      id: true,
-      name: true,
-      description: true,
-      slot: true,
-      icon: true,
-      cooldowns: true,
-      champion: {
-        select: {
-          id: true,
-          name: true,
-          skins: {
-            where: { splashPath: { not: null } },
-            select: { splashPath: true },
-          },
-        },
-      },
+      id: true, name: true, description: true, slot: true, icon: true, cooldowns: true,
+      champion: { select: { name: true, skins: { where: { splashPath: { not: null } }, select: { splashPath: true } } } },
     },
   })
-
   return abilities
     .filter(a => a.cooldowns.some(cd => cd > 0))
     .map(({ champion, ...a }) => ({
       ...a,
-      champion: {
-        id: champion.id,
-        name: champion.name,
-        splashes: champion.skins.map(s => s.splashPath as string),
-      },
+      champion: { name: champion.name, splashes: champion.skins.map(s => s.splashPath as string) },
     }))
 })
 
@@ -68,120 +40,50 @@ export const getBaseSplashes = createCachedFetcher(async (): Promise<string[]> =
     select: { splashPath: true },
   })
   return skins.map(s => s.splashPath as string)
-}, { key: 'base-splashes' })
+})
 
-function getRandomLevel(difficulty: Difficulty, slot: string): number {
-  if (difficulty === 'beginner') return 1
-  const maxRank = slot === 'R' ? 3 : 5
-  return Math.floor(Math.random() * maxRank) + 1
-}
+const pickRandom = <T,>(items: T[]): T => items[Math.floor(Math.random() * items.length)]
 
-function getCooldownAtLevel(cooldowns: number[], level: number): number {
-  const index = Math.min(level - 1, cooldowns.length - 1)
-  return cooldowns[index]
-}
+/** Real ultimates only face real ultimates; everything else (incl. transform ults) faces Q/W/E. */
+const isTrueUlt = (a: AbilityRecord) => a.slot === 'R' && !TRANSFORM_ULT_CHAMPIONS.has(a.champion.name)
 
-function pickRandom<T>(items: T[]): T {
-  return items[Math.floor(Math.random() * items.length)]
-}
-
-interface Pick {
-  record: AbilityRecord
-  level: number
-  cooldown: number
-}
-
-function pickRandomAbility(
-  abilities: AbilityRecord[],
-  excludeId: number | null,
-  difficulty: Difficulty
-): Pick {
-  let record: AbilityRecord
-  let attempts = 0
-  const maxAttempts = 100
-
-  do {
-    record = pickRandom(abilities)
-    attempts++
-  } while (record.id === excludeId && attempts < maxAttempts)
-
-  const level = getRandomLevel(difficulty, record.slot)
-  const cooldown = getCooldownAtLevel(record.cooldowns, level)
-
-  return { record, level, cooldown }
-}
-
-/** Shapes a pick for the client, choosing a random skin splash per round. */
-function toGameAbility({ record, level, cooldown }: Pick): GameAbility {
-  const { champion } = record
+function roll(record: AbilityRecord, difficulty: Difficulty): GameAbility {
+  const maxRank = record.slot === 'R' ? 3 : 5
+  const level = difficulty === 'beginner' ? 1 : Math.floor(Math.random() * maxRank) + 1
+  const { cooldowns, champion, ...ability } = record
   return {
     ability: {
-      id: record.id,
-      name: record.name,
-      description: record.description,
-      slot: record.slot,
-      icon: record.icon,
-      champion: {
-        id: champion.id,
-        name: champion.name,
-        splash: champion.splashes.length > 0 ? pickRandom(champion.splashes) : null,
-      },
+      ...ability,
+      champion: { name: champion.name, splash: champion.splashes.length ? pickRandom(champion.splashes) : null },
     },
     level,
-    cooldown,
+    cooldown: cooldowns[Math.min(level, cooldowns.length) - 1],
   }
 }
 
-function isTransformUlt(ability: AbilityRecord): boolean {
-  return ability.slot === 'R' && TRANSFORM_ULT_CHAMPIONS.includes(ability.champion.name)
-}
-
-function getMatchingSlots(ability: AbilityRecord): string[] {
-  // R abilities match only with other R abilities, unless it's a transform ult
-  if (ability.slot === 'R' && !isTransformUlt(ability)) {
-    return ['R']
-  }
-  // Q/W/E match with Q/W/E, and transform ults can also be matched
-  return BASIC_SLOTS
-}
-
-export function generateRound(
+/**
+ * Builds the next `count` abilities of a game. Each one is compared against the
+ * one before it, so each is slot-matched to its predecessor, never repeats it,
+ * and avoids an equal cooldown when possible (see docs/game-logic.md).
+ */
+export function generateChain(
   abilities: AbilityRecord[],
   difficulty: Difficulty,
-  excludeFromLeftId: number | null
-): GameRound {
-  const left = pickRandomAbility(abilities, excludeFromLeftId, difficulty)
-  const matchingSlots = getMatchingSlots(left.record)
-
-  // Filter abilities to only matching slots (and exclude transform ults when left is R)
-  const filteredAbilities = abilities.filter(a => {
-    if (!matchingSlots.includes(a.slot)) return false
-    // If left is a regular R, only match with other regular Rs
-    if (left.record.slot === 'R' && !isTransformUlt(left.record)) {
-      return a.slot === 'R' && !isTransformUlt(a)
+  count: number,
+  after: { record: AbilityRecord; cooldown: number } | null
+): GameAbility[] {
+  const chain: GameAbility[] = []
+  let prev = after
+  for (let i = 0; i < count; i++) {
+    const pool = prev ? abilities.filter(a => a.id !== prev!.record.id && isTrueUlt(a) === isTrueUlt(prev!.record)) : abilities
+    let record = pickRandom(pool)
+    let next = roll(record, difficulty)
+    for (let attempt = 0; prev && next.cooldown === prev.cooldown && attempt < 100; attempt++) {
+      record = pickRandom(pool)
+      next = roll(record, difficulty)
     }
-    // If left is Q/W/E or transform ult, match with Q/W/E and transform ults
-    if (a.slot === 'R') {
-      return isTransformUlt(a)
-    }
-    return true
-  })
-
-  let right: Pick
-  let attempts = 0
-  const maxAttempts = 100
-
-  // Avoid self-matches and, where possible, ties (see docs/game-logic.md)
-  do {
-    right = pickRandomAbility(filteredAbilities, left.record.id, difficulty)
-    attempts++
-  } while (
-    (left.cooldown === right.cooldown || left.record.id === right.record.id) &&
-    attempts < maxAttempts
-  )
-
-  return { left: toGameAbility(left), right: toGameAbility(right) }
+    chain.push(next)
+    prev = { record, cooldown: next.cooldown }
+  }
+  return chain
 }
-
-// Re-export from shared location for backwards compatibility
-export { getDifficultyForScore } from '@/lib/game/difficulty'

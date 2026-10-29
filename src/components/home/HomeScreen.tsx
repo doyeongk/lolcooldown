@@ -1,154 +1,69 @@
 "use client"
 
 import Link from "next/link"
-import dynamic from "next/dynamic"
-import { motion } from "framer-motion"
-import { GameModeCard } from "@/components/home/GameModeCard"
-import { IconWall } from "@/components/home/IconWall"
 import { useLocalStorage } from "@/lib/hooks/useLocalStorage"
+import { HIGH_SCORE_KEY } from "@/lib/game/difficulty"
 
-// Client-only: uses Math.random() for particle positions
-const GoldParticles = dynamic(
-  () => import("@/components/home/GoldParticles").then((mod) => mod.GoldParticles),
-  { ssr: false }
-)
+// One orchestrated entrance: wordmark, tagline, then the mode card
+const enter = (delayMs: number, rise = 20) =>
+  ({ animationDelay: `${delayMs}ms`, "--fade-y": `${rise}px` }) as React.CSSProperties
 
-// Easing curve for smooth animations
-const easeOut = [0.22, 1, 0.36, 1] as const
-
-// Staggered animation variants
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.2,
-    },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: easeOut,
-    },
-  },
-}
-
-const cardContainerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.5,
-    },
-  },
-}
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 15 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: easeOut,
-    },
-  },
-}
-
-export function HomeScreen({ splashes }: { splashes: string[] }) {
-  const [highScore] = useLocalStorage<number>("lolcooldown-highscore", 0)
+export function HomeScreen() {
+  const [highScore] = useLocalStorage<number>(HIGH_SCORE_KEY, 0)
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-4">
-      {/* Background layers */}
-      <IconWall splashes={splashes} />
-      <GoldParticles />
-
-      {/* Content container - centered with subtle elevation */}
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
+    <>
+      <div
         className="relative flex flex-col items-center text-center pt-8"
-        style={{
-          // Subtle drop shadow creates "floating" effect
-          filter: "drop-shadow(0 4px 24px rgba(0, 0, 0, 0.4))",
-        }}
+        style={{ filter: "drop-shadow(0 4px 24px rgba(0, 0, 0, 0.4))" }}
       >
-        {/* Logo with enhanced gold glow for depth */}
-        <motion.h1
-          variants={itemVariants}
-          className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black italic tracking-tight"
+        <h1
+          className="animate-fade-up text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black italic tracking-tight"
           style={{
+            ...enter(200),
             textShadow: "0 0 60px rgba(var(--gold-rgb), 0.4), 0 0 120px rgba(var(--gold-rgb), 0.2)",
           }}
         >
           <span className="text-gold">LOL</span>
           <span className="text-foreground">COOLDOWN</span>
-        </motion.h1>
+        </h1>
 
-        {/* Tagline - editorial, not generic */}
-        <motion.p
-          variants={itemVariants}
-          className="mt-6 text-xs sm:text-sm tracking-[0.2em] uppercase text-foreground/50"
+        <p
+          className="animate-fade-up mt-6 text-xs sm:text-sm tracking-[0.2em] uppercase text-foreground/50"
+          style={enter(350)}
         >
           Which ability cools down faster?
-        </motion.p>
+        </p>
 
-        {/* Game Mode Cards */}
-        <motion.div
-          variants={cardContainerVariants}
-          initial="hidden"
-          animate="visible"
-          className="mt-16 w-full max-w-sm space-y-3"
-        >
-{/* TODO: Re-enable when "Main Champions" gamemode is implemented
-          <motion.div variants={cardVariants}>
-            <GameModeCard
-              title="Choose Your Champion"
-              description="Test your main's abilities"
-              href="/play/main"
-              variant="primary"
-            />
-          </motion.div>
-*/}
-          <motion.div variants={cardVariants}>
-            <GameModeCard
-              title="Random Champions"
-              description="Any champion, any ability"
-              href="/play/random"
-              variant="primary"
-            />
-          </motion.div>
-        </motion.div>
-
-        {/* High Score */}
-        {highScore > 0 && (
-          <motion.div
-            variants={itemVariants}
-            className="mt-10 text-center"
+        <div className="animate-fade-up mt-16 w-full max-w-sm" style={{ ...enter(500, 15), animationDuration: "400ms" }}>
+          <Link
+            href="/play/random"
+            className="group relative block px-6 py-5 bg-gradient-to-b from-black/50 to-black/60 backdrop-blur-sm border border-gold/50 transition-[translate,scale,border-color,box-shadow] duration-300 ease-(--ease-out) hover:translate-x-1 hover:border-gold hover:shadow-[0_0_20px_rgba(227,207,116,0.2)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
           >
+            {/* Corner accents */}
+            <span className="absolute -top-px -left-px w-3 h-3 border-t border-l border-gold transition-colors duration-300 group-hover:border-foreground" />
+            <span className="absolute -bottom-px -right-px w-3 h-3 border-b border-r border-gold transition-colors duration-300 group-hover:border-foreground" />
+            <h2 className="text-base font-semibold tracking-wide uppercase text-gold transition-colors duration-300 group-hover:text-foreground">
+              Random Champions
+            </h2>
+            <p className="mt-0.5 text-sm text-foreground/40">Any champion, any ability</p>
+            {/* Inner glow on hover */}
+            <span
+              className="absolute inset-0 opacity-0 transition-opacity duration-300 pointer-events-none group-hover:opacity-100"
+              style={{ boxShadow: "inset 0 0 24px rgba(var(--gold-rgb), 0.08)" }}
+            />
+          </Link>
+        </div>
+
+        {highScore > 0 && (
+          <div className="animate-fade-up mt-10 text-center" style={enter(500)}>
             <p className="text-xs text-foreground/40 uppercase tracking-wider">Best Streak</p>
             <p className="text-2xl font-bold text-gold mt-1">{highScore}</p>
-          </motion.div>
+          </div>
         )}
-      </motion.div>
+      </div>
 
-      {/* Footer */}
-      <motion.footer
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1, duration: 0.5 }}
-        className="absolute bottom-6 text-sm text-foreground/30"
-      >
+      <footer className="animate-fade-up absolute bottom-6 text-sm text-foreground/30" style={{ ...enter(1000, 0) }}>
         <Link
           href="https://github.com/doyeongk/lolcooldown"
           className="hover:text-foreground/50 transition-colors"
@@ -157,7 +72,7 @@ export function HomeScreen({ splashes }: { splashes: string[] }) {
         >
           GitHub
         </Link>
-      </motion.footer>
-    </main>
+      </footer>
+    </>
   )
 }
