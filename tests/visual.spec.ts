@@ -7,7 +7,7 @@ test.describe("Visual regression tests", () => {
   })
 
   test("play page renders correctly", async ({ page }) => {
-    await page.goto("/play")
+    await page.goto("/play/random")
     // Wait for game to load
     await page.waitForSelector("[data-testid='game-container']", { timeout: 10000 }).catch(() => {
       // If no test id, wait for any content
