@@ -14,6 +14,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # The server only accepts SSH from its LAN and Tailscale, so the runner joins the tailnet as tag:ci
+      # (ephemeral node, removed after the job) and deploys to the tailnet-only sshd on 100.83.116.12:2222.
+      - name: Join Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          ping: 100.83.116.12
+
       - name: Setup SSH
         env:
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
@@ -21,13 +31,11 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H poby.duckdns.org >> ~/.ssh/known_hosts
+          echo "[100.83.116.12]:2222 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAdzw7JwX6Q5I9hCKBA/dgDQuPU11baFnwiggtsOM90i" >> ~/.ssh/known_hosts
 
       - name: Deploy
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
         run: |
-          ssh -i ~/.ssh/deploy_key "$DEPLOY_HOST" '
+          ssh -i ~/.ssh/deploy_key -p 2222 do@100.83.116.12 '
             cd /home/do/Code/lolcooldown &&
             git checkout -- . &&
             git pull &&
