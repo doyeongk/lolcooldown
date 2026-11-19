@@ -1,6 +1,10 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        # Set by scripts/autodeploy.sh; check-live.sh compares it with GitHub's main.
+        GIT_SHA: ${GIT_SHA:-unknown}
     env_file: .env.prod
     container_name: lolcooldown-app
     restart: unless-stopped

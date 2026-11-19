@@ -150,9 +150,9 @@ npm run db:seed
 
 ### Production data refresh
 
-New champions and skins are picked up without a redeploy. The `Refresh champion data`
-workflow (`.github/workflows/reseed.yml`) runs weekly and on demand, executing the
-`seed` compose service on the server:
+New champions and skins are picked up without a redeploy. On the server,
+`lolcooldown-reseed.timer` runs `scripts/reseed.sh` weekly (or now:
+`systemctl --user start lolcooldown-reseed`), executing the `seed` compose service:
 
 ```bash
 docker compose --env-file .env.prod -f docker-compose.prod.yml --profile tools run --rm seed

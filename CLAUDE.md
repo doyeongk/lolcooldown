@@ -38,11 +38,19 @@ npm run db:studio    # Visual database editor
 
 ## Deployment
 
+Pushing to `main` deploys: on the server, `lolcooldown-deploy.timer` runs `scripts/autodeploy.sh` every
+minute, which fast-forwards the live checkout, builds, runs `docker compose up -d` and waits for the app.
+A commit that fails isn't retried until the next push; see `journalctl --user -u lolcooldown-deploy`.
+`scripts/check-live.sh` confirms the running image is GitHub's main and the public site answers.
+`lolcooldown-reseed.timer` runs `scripts/reseed.sh` on Thursdays at 03:00 UTC.
+
+Install the timers once on the server:
+
 ```bash
-npm run deploy       # Requires DEPLOY_HOST in .env.local
+systemctl --user enable --now ~/Code/lolcooldown/deploy/systemd/lolcooldown-{deploy,reseed}.{service,timer}
 ```
 
-Runs `scripts/deploy.sh` which SSHs to server, pulls, builds Docker, and restarts.
+`npm run deploy` (`scripts/deploy.sh`) still deploys over SSH by hand; it needs DEPLOY_HOST in .env.local.
 
 ## Game Modes
 

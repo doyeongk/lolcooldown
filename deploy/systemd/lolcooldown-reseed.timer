@@ -1,0 +1,9 @@
+[Unit]
+Description=Refresh lolcooldown's champion data weekly, after the usual Wednesday patch
+
+[Timer]
+OnCalendar=Thu 03:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

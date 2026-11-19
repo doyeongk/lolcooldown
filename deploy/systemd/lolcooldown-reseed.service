@@ -1,0 +1,6 @@
+[Unit]
+Description=Refresh lolcooldown's champion data from Community Dragon
+
+[Service]
+Type=oneshot
+ExecStart=%h/Code/lolcooldown/scripts/reseed.sh

@@ -1,0 +1,6 @@
+[Unit]
+Description=Deploy lolcooldown when GitHub's main moves (DOS-487)
+
+[Service]
+Type=oneshot
+ExecStart=%h/Code/lolcooldown/scripts/autodeploy.sh

@@ -40,7 +40,7 @@ Difficulty scales as your streak grows — from beginner-friendly matchups to ex
 - **Animation:** Framer Motion
 - **Database:** PostgreSQL + Prisma 7
 - **Data:** Community Dragon API
-- **Deployment:** Docker + GitHub Actions
+- **Deployment:** Docker; the server pulls and redeploys `main` itself
 
 ## Quick Start
 
